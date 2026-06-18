@@ -3,6 +3,16 @@ import { generateMockLifeEvent } from "./mock-ai.js";
 import { buildPlayerVisibleNpcIdentity } from "./localization.js";
 import { assertValidRunState } from "./run-validator.js";
 import { ensureStoryState, recordSimulationOutcome } from "./story-state.js";
+import {
+  applyAttributeLayerDelta,
+  applyExposureDelta,
+  applyGrowthEvidence,
+  applyRealizedDelta,
+  ensureGrowthLedger,
+  recalculateGrowthLedgerForRun,
+  setExposureValue,
+  setRealizedValue,
+} from "./growth-ledger.js";
 
 export function applyAiResponseToRun(run, response) {
   const validation = validateAiResponse(response);
@@ -17,11 +27,12 @@ export function applyAiResponseToRun(run, response) {
   }
 
   const nextRun = structuredClone(run);
+  ensureGrowthLedger(nextRun);
 
   nextRun.player.age = response.timeSpan.ageEnd;
   nextRun.player.lifeStage = lifeStageForAge(response.timeSpan.ageEnd);
   applyStatePatch(nextRun, response.statePatch);
-  applyAgeManifestationFloor(nextRun);
+  recalculateGrowthLedgerForRun(nextRun);
 
   nextRun.eventHistory.push({
     turnId: response.turnId,
@@ -66,9 +77,8 @@ export function lifeStageForAge(age) {
   return "oldAge";
 }
 
-// Attribute layers gradually "manifest" with age: 当前表现 (manifested) starts as a small fraction
-// of 潜能 (potential = base allocation + talent bonus) and rises smoothly to full by adulthood.
-// familyBackground (出身/底蕴) is known from birth, so it is not gated by age.
+// Legacy compatibility only. Authority now lives in growth-ledger.js:
+// potential can be high immediately, but effective power is capped by maturity and realized evidence.
 const AGE_MANIFESTATION_KEYS = ["appearance", "intelligence", "constitution", "luck"];
 const FULL_MANIFESTATION_AGE = 18;
 
@@ -78,23 +88,15 @@ export function manifestationRatioForAge(age) {
   return 0.1 + (a / FULL_MANIFESTATION_AGE) * 0.9;
 }
 
-// Raise each age-gated attribute's manifested value to its age-appropriate floor (capped at
-// potential). Events/AI may push manifested higher than the floor; this only enforces the
-// deterministic age baseline so growth is visible over the life regardless of AI output.
+// Compatibility shim for older callers. Do not reintroduce the old "age alone realizes potential"
+// behavior here; the growth ledger is the single authority.
 function applyAgeManifestationFloor(run) {
-  const age = run?.player?.age ?? 0;
-  const ratio = manifestationRatioForAge(age);
-  for (const key of AGE_MANIFESTATION_KEYS) {
-    const attribute = run?.player?.attributes?.[key];
-    if (!attribute) continue;
-    const floor = Math.min(attribute.potential, Math.floor(attribute.potential * ratio));
-    if (attribute.manifested < floor) {
-      attribute.manifested = floor;
-    }
-  }
+  recalculateGrowthLedgerForRun(run);
 }
 
 function applyStatePatch(run, statePatch) {
+  ensureGrowthLedger(run);
+
   for (const change of statePatch.progressionChanges ?? []) {
     applyProgressionChange(run, change);
   }
@@ -114,6 +116,8 @@ function applyStatePatch(run, statePatch) {
   for (const change of statePatch.exposureChanges ?? []) {
     applyExposureChange(run, change);
   }
+
+  applyGrowthEvidence(run, statePatch.growthEvidenceChanges ?? []);
 
   for (const change of statePatch.relationshipChanges ?? []) {
     applyRelationshipChange(run, change);
@@ -288,16 +292,13 @@ function applyAttributeChange(run, change) {
   const amount = change.amount ?? 0;
   const sourceLayer = change.sourceLayer ?? "growthBonus";
 
-  if (typeof attribute[sourceLayer] === "number") {
-    attribute[sourceLayer] += amount;
-  }
-
   if (change.applyToPotential !== false) {
-    attribute.potential = Math.max(0, attribute.potential + amount);
+    applyAttributeLayerDelta(run, change.target, sourceLayer, amount);
   }
   if (change.applyToManifested !== false) {
-    attribute.manifested = clampManifested(attribute, attribute.manifested + amount);
+    applyRealizedDelta(run, change.target, amount);
   }
+  recalculateGrowthLedgerForRun(run);
 }
 
 function applyManifestationChange(run, change) {
@@ -305,7 +306,12 @@ function applyManifestationChange(run, change) {
 
   const attribute = run.player.attributes[change.target];
   const nextValue = typeof change.value === "number" ? change.value : attribute.manifested + (change.amount ?? 0);
-  attribute.manifested = clampManifested(attribute, nextValue, change.clampToPotential !== false);
+  if (typeof change.value === "number") {
+    setRealizedValue(run, change.target, nextValue);
+  } else {
+    applyRealizedDelta(run, change.target, change.amount ?? 0);
+  }
+  recalculateGrowthLedgerForRun(run);
 }
 
 function applyExposureChange(run, change) {
@@ -314,7 +320,12 @@ function applyExposureChange(run, change) {
   if (run.player.attributes[change.target]) {
     const attribute = run.player.attributes[change.target];
     const nextValue = typeof change.value === "number" ? change.value : attribute.exposure + (change.amount ?? 0);
-    attribute.exposure = Math.max(0, Math.floor(nextValue));
+    if (typeof change.value === "number") {
+      setExposureValue(run, change.target, nextValue);
+    } else {
+      applyExposureDelta(run, change.target, change.amount ?? 0);
+    }
+    recalculateGrowthLedgerForRun(run);
     return;
   }
 

@@ -8,19 +8,28 @@ The player character's starting allocation and talents define destiny, potential
 
 They do not mean every attribute fully appears at birth.
 
-AI must write each life stage using only the portion currently manifested at that age, plus the current exposure level.
+AI must write each life stage using only the engine-owned current effective value and capability package, plus the current exposure level.
 
-## Three Attribute Layers
+The authoritative implementation lives in `src/growth-ledger.js`. `player.attributes` remains a compatibility/display layer, but the source of truth is `player.growthLedger`.
 
-Every core attribute should support three layers:
+## Growth Ledger Layers
+
+Every core attribute should support these engine-owned layers:
 
 1. Potential value
    - The maximum or destiny-level value implied by starting points, talents, identity, and growth systems.
    - Represents what the player character may eventually become.
-2. Manifested value
-   - The currently visible and usable attribute value at the current age and life stage.
-   - AI should use this value for age-appropriate narration, event checks, and NPC reactions.
-3. Exposure value
+2. Realized value
+   - The part of potential already justified by age, training, choices, evidence, and long-term development.
+3. Current effective value
+   - The currently usable value after maturity caps and temporary modifiers.
+   - AI should use this value and the capability package for narration, event checks, and NPC reactions.
+4. Maturity cap
+   - The age-stage ceiling that prevents infants and children from using adult-level power.
+   - Age 18 removes the hard cap, but does not automatically realize all potential.
+5. Locked potential
+   - Potential that still exists but has not been realized.
+6. Exposure value
    - How much the outside world has noticed the abnormality.
    - Determines whether family, NPCs, sects, institutions, cults, companies, or hostile forces react.
 
@@ -34,26 +43,24 @@ Potential:
   Family Background 20
   Luck 200
 
-Birth manifestation:
+Birth current effective:
   Appearance 12
   Intelligence 6
   Constitution 10
   Family Background 20
   Luck hidden
 
-Age 10 manifestation:
+Age 10 current effective:
   Appearance 30
   Intelligence 35
   Constitution 40
   Family Background 20
   Luck partially manifested
 
-Adult manifestation:
-  Appearance 100
-  Intelligence 80
-  Constitution 150
-  Family Background 20
-  Luck 200
+Adult:
+  Hard maturity cap removed
+  Realized value still depends on evidence, training, choices, route progress, and world systems
+  Locked potential can remain locked until later
 ```
 
 ## Exposure Scale
@@ -68,23 +75,24 @@ Adult manifestation:
 
 Exposure does not only mean public fame. It can also mean medical records, supernatural traces, fate disturbance, cult attention, sect detection, media attention, corporate monitoring, or enemy divination.
 
-## Default Manifestation Ratios
+## Default Maturity Stages
 
-These are default ratios. Talents, world rules, identity, and events may override them.
+These are default expression stages. Talents, world rules, identity, and events may add evidence, but they do not let age alone cash out all potential.
 
-| Stage | Age | Default Manifestation Ratio |
-|---|---:|---:|
-| Birth | 0 | 5%-15% |
-| Early childhood | 1-6 | 10%-30% |
-| Youth | 7-12 | 30%-50% |
-| Adolescence | 13-18 | 50%-80% |
-| Adulthood | 18+ | 80%-100% |
+| Stage | Age | Expression Rule |
+|---|---:|---|
+| Birth | 0 | Infant body limit; only vitality, reaction, sensory, family-background, or omen-level expression. |
+| Early childhood | 1-3 | Life force, reaction, perception, early memory, and mild above-peer traits. |
+| Childhood | 4-6 | Same-age advantages can appear, but adult combat/social/knowledge authority stays locked. |
+| Youth | 7-12 | Child-stage capability package; training, study, and pressure can realize more. |
+| Adolescence | 13-17 | Larger capability package, but full potential still needs evidence and route progress. |
+| Adulthood | 18+ | The hard age cap is removed; locked potential remains locked until realized. |
 
 Rules:
 
 - Family Background usually manifests immediately because birth family, bloodline, identity, sect origin, and social resources are starting conditions.
 - Luck may remain hidden and manifest as event tendency instead of a visible number.
-- Mythic talents can alter manifestation ratios.
+- Mythic talents can alter evidence, exposure, triggers, and capability packages.
 - Some talents may manifest early, late, conditionally, or almost invisibly.
 
 Examples:
@@ -395,9 +403,26 @@ Examples in a cultivation world:
 | High manifestation, high Luck | More likely to meet benefactors. |
 | High manifestation, no protection | Easy to suffer bone theft, stolen opportunities, or hostile recruitment. |
 
+## Growth Evidence Rule
+
+AI cannot directly set current effective power.
+
+When a scene justifies growth, AI may submit:
+
+```json
+{
+  "attribute": "constitution",
+  "amount": 1,
+  "source": "daily_chores",
+  "reason": "长期劈柴和跑腿让体力基础提升"
+}
+```
+
+The engine records this evidence, increases realized value when valid, recalculates current effective value, and keeps locked potential separate.
+
 ## UI Rule
 
-After talents and point allocation, the player may see potential values.
+After talents and point allocation, the player may see potential values, realized values, current effective values, and locked potential.
 
 Example:
 
@@ -415,12 +440,18 @@ The simulation should separately compute the birth manifested values.
 Example:
 
 ```text
-Current Manifestation At Birth:
+Current Effective At Birth:
   Appearance 12
   Intelligence 6
   Constitution 10
   Family Background 20
   Luck hidden
+
+Locked Potential:
+  Appearance 108
+  Intelligence 74
+  Constitution 140
+  Luck 200
 ```
 
 This lets the player know the character is extraordinary without forcing AI to write impossible infant scenes.
@@ -442,4 +473,4 @@ Incorrect:
 AI describes a newborn as having fully adult, world-shattering beauty.
 ```
 
-Potential defines destiny. Manifestation defines current expression. Exposure defines who notices.
+Potential defines destiny. Realized growth defines what has been earned or unlocked. Current effective value defines what can actually be used now. Locked potential defines what still waits. Exposure defines who notices.

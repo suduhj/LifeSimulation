@@ -57,6 +57,9 @@ export function applySimulationOutcomeToResponse(response, outcome, age = respon
   if (!response || !outcome) return response;
   const next = structuredClone(response);
   next.statePatch ??= {};
+  next.statePatch.growthEvidenceChanges = Array.isArray(next.statePatch.growthEvidenceChanges)
+    ? next.statePatch.growthEvidenceChanges
+    : [];
   next.statePatch.worldStateChanges = [
     ...(Array.isArray(next.statePatch.worldStateChanges) ? next.statePatch.worldStateChanges : []),
     buildStoryStatePatch(outcome, age),

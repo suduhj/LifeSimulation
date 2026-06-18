@@ -116,6 +116,7 @@ export function generateFreeformClarificationRequest({ run, sourceEvent, inputTe
       progressionChanges: [],
       worldStateChanges: [],
       memoryUpdates: [],
+      growthEvidenceChanges: [],
       scoreDelta: 0,
     },
     internal: {

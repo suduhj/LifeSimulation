@@ -27,4 +27,9 @@ describe("AI event response schema reference", () => {
     assert.equal(schema.properties.visibleChanges.type, "array");
     assert.equal(schema.properties.visibleChanges.items.required.includes("text"), true);
   });
+
+  it("documents AI growth evidence as a statePatch array", () => {
+    assert.ok(schema.properties.statePatch.required.includes("growthEvidenceChanges"));
+    assert.equal(schema.properties.statePatch.properties.growthEvidenceChanges.type, "array");
+  });
 });

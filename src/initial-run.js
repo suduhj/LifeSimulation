@@ -2,6 +2,7 @@ import { createRng } from "./random.js";
 import { generateInitialImportantNPCs } from "./npc-generator.js";
 import { getPersonalityOption } from "./personality-options.js";
 import { createEmptyStoryState } from "./story-state.js";
+import { createGrowthLedgerFromAttributes, syncAttributesFromGrowthLedger } from "./growth-ledger.js";
 
 const ATTRIBUTE_KEYS = ["appearance", "intelligence", "constitution", "familyBackground", "luck"];
 const DEFAULT_ALLOCATION = {
@@ -41,6 +42,7 @@ export function createInitialRun({
   const talentDraw = talentDrawResult.talents;
   const selectedTalents = chooseStartingTalents(talentDraw, keptTalentIds);
   const attributes = buildAttributes(allocation, selectedTalents);
+  const growthLedger = createGrowthLedgerFromAttributes(attributes, 0);
   const personality = getPersonalityOption(playerProfile.personality);
   const runId = `run_${worldId}_${seed}`;
 
@@ -69,6 +71,7 @@ export function createInitialRun({
         exposure: talent.exposure ?? talent.effects?.exposureBonus ?? 0,
       })),
       attributes,
+      growthLedger,
     },
     setup: {
       identitySeed: identity,
@@ -99,6 +102,7 @@ export function createInitialRun({
       },
     ],
   };
+  syncAttributesFromGrowthLedger(run);
   run.importantNPCs = generateInitialImportantNPCs({ world, runId, seed });
   return run;
 }

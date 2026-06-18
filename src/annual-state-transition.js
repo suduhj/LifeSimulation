@@ -150,6 +150,9 @@ export function applyAnnualFactPackageToResponse(response, annualFactPackage) {
   ];
 
   next.statePatch ??= {};
+  next.statePatch.growthEvidenceChanges = Array.isArray(next.statePatch.growthEvidenceChanges)
+    ? next.statePatch.growthEvidenceChanges
+    : [];
   next.statePatch.worldStateChanges = [
     ...(Array.isArray(next.statePatch.worldStateChanges) ? next.statePatch.worldStateChanges : []),
     buildStoryStatePatch(outcome, annualFactPackage.age),

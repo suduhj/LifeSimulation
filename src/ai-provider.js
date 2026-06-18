@@ -8,6 +8,7 @@ import { firstActionAge, generateOpeningSequence } from "./opening-sequence.js";
 import { isUsableProviderValue } from "./provider-config.js";
 import { assertStoryContract } from "./story-contract-validator.js";
 import { talentLabel, visibleTalentName } from "./localization.js";
+import { buildCapabilityPackages, buildDevelopmentalExpression } from "./capability-package.js";
 
 const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
 const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash";
@@ -310,6 +311,8 @@ function buildSystemPrompt({ responseType = "life_event", interactionMode } = {}
     "schemaVersion 必须是 mvp.ai_event_response.v1。",
     `本次只生成 responseType=${responseType} 的 JSON 响应。`,
     "AI 只能提出 statePatch；权威存档由游戏引擎验证后修改。",
+    "属性成长以引擎的 growthLedger / capabilityPackages / developmentalExpression 为准；AI 不得直接决定 effective、realized 或 maturityCap。",
+    "如果剧情确实带来成长，只能在 statePatch.growthEvidenceChanges 提交证据，由引擎审核后兑现；不要把潜能直接写成已经掌握的能力。",
     "不得把 hiddenStateNotes 或 NPC 隐藏秘密直接泄露到 playerText，除非存档已经揭露。",
     "NPC 有 playerVisible 与 hiddenInfo 两层。playerText 只能使用 playerVisible 中主角当前知道的称呼；hiddenInfo、真实身份、内部ID、未发现的幕后关系只能用于一致性，不能直接写给玩家。",
     "普通玩家可见文本必须全中文，严禁输出英文ID、原始字段名、内部 role、内部 seedId、hiddenHooks、unresolvedThreads、manifested、potential、exposure、未命名天赋、未知天赋、重要人物、未知身份等占位或后台词。信息缺失时要用已知中文称呼重写或不写，不要暴露缺失状态。",
@@ -543,6 +546,7 @@ const CONSEQUENCE_PATCH_KEYS = [
   "progressionChanges",
   "worldStateChanges",
   "memoryUpdates",
+  "growthEvidenceChanges",
 ];
 
 function isConsequentialResolution(response) {
@@ -809,6 +813,7 @@ function normalizeStatePatch(statePatch) {
     progressionChanges: [],
     worldStateChanges: [],
     memoryUpdates: [],
+    growthEvidenceChanges: [],
     scoreDelta: 0,
   };
   if (!statePatch || typeof statePatch !== "object" || Array.isArray(statePatch)) {
@@ -825,6 +830,7 @@ function normalizeStatePatch(statePatch) {
     "progressionChanges",
     "worldStateChanges",
     "memoryUpdates",
+    "growthEvidenceChanges",
   ]) {
     if (!Array.isArray(normalized[key])) normalized[key] = [];
   }
@@ -1082,6 +1088,8 @@ function chooseFirstActionAge(run) {
 }
 
 function buildRunPromptSnapshot(run) {
+  const capabilityPackages = buildCapabilityPackages(run);
+  const developmentalExpression = buildDevelopmentalExpression(run);
   return {
     runId: run.runId,
     worldId: run.worldId,
@@ -1100,6 +1108,9 @@ function buildRunPromptSnapshot(run) {
         effects: talent.effects,
       })),
       attributes: run.player.attributes,
+      growthLedger: run.player.growthLedger,
+      capabilityPackages,
+      developmentalExpression,
     },
     worldState: run.worldState,
     importantNPCs: run.importantNPCs.map((npc) => ({

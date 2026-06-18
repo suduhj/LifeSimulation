@@ -8,7 +8,8 @@ This project is a multi-world AI life simulator. The current playable MVP suppor
 - DeepSeek or generic OpenAI-compatible AI providers
 - Offline mock mode for deterministic development
 - Character setup, 20-point attributes, draw 5 talents / keep 3
-- Potential / manifested / exposure attribute layers
+- Growth Ledger attribute authority: potential, realized/current effective value, locked potential, maturity cap, and exposure
+- Capability packages and developmental-expression limits so children do not receive adult power just because they have mythic potential
 - 3 AI-generated choices plus a separate optional free-form action
 - State-first story continuity: structured facts/thread stages are authoritative, while AI only renders prose inside the next-event contract
 - Five-axis lightweight world simulation: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence are tracked as structured `storyState.axes`
@@ -32,6 +33,8 @@ http://127.0.0.1:5181
 If port `5181` is unavailable on your system, the server prints the fallback URL it selected. Do not use port `5173` for this project because that port is reserved for `music_agent`. Do not use port `0001` either; Chromium blocks port 1 as an unsafe port.
 
 The browser UI lets you choose a world, create a player character, allocate 20 attribute points, draw 5 talents, keep 3, start a life, choose 1/2/3, or submit a separate free-form attempted action.
+
+Attribute bonuses from talents enter long-term potential first. The engine-owned Growth Ledger decides how much has been realized, what is currently effective at the character's age, and how much potential is still locked. The UI displays current, realized, potential, locked potential, and attention values so mythic talents can feel exciting without turning infants or children into adults.
 
 The web frontend never receives AI provider keys. DeepSeek/OpenAI-compatible requests go through the local Node backend.
 
@@ -128,6 +131,8 @@ OPENAI_COMPATIBLE_MODEL=your-model-id
 ## Save And Continue
 
 In the web playtest, click `保存` after a run starts. The page shows the saved local JSON path and fills the `继续存档` path field. To continue later, start `npm run web`, enter that path in `继续存档`, choose the AI mode, and click `载入存档`.
+
+Save files from before the Growth Ledger layer are migrated on load: the engine rebuilds `player.growthLedger` from legacy attribute layers, syncs current/realized/locked values back to `player.attributes`, and then runs the normal save validator.
 
 Save to a chosen file:
 

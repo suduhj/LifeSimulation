@@ -1,4 +1,5 @@
 import { validateAiResponse } from "./ai-response-validator.js";
+import { rebuildGrowthLedgerFromAttributes } from "./growth-ledger.js";
 
 export const DEV_PRESETS = [
   { id: "ordinary_person", name: "标准普通人", allocation: { appearance: 4, intelligence: 4, constitution: 4, familyBackground: 4, luck: 4 } },
@@ -96,6 +97,7 @@ export function applyDevPresetToRun(run, presetId) {
   if (preset.devTalentId) {
     addDevTalent(nextRun, preset.devTalentId);
   }
+  rebuildGrowthLedgerFromAttributes(nextRun);
   nextRun.memory.push({ type: "dev_preset", text: `Applied dev preset ${preset.id}.` });
   nextRun.worldState.flags ??= [];
   if (!nextRun.worldState.flags.includes("dev_mode_used")) nextRun.worldState.flags.push("dev_mode_used");
@@ -105,6 +107,7 @@ export function applyDevPresetToRun(run, presetId) {
 export function applyDevTalentToRun(run, talentId) {
   const nextRun = structuredClone(run);
   addDevTalent(nextRun, talentId);
+  rebuildGrowthLedgerFromAttributes(nextRun);
   nextRun.memory.push({ type: "dev_talent", text: `Applied dev-only talent ${talentId}.` });
   nextRun.worldState.flags ??= [];
   if (!nextRun.worldState.flags.includes("dev_mode_used")) nextRun.worldState.flags.push("dev_mode_used");
@@ -208,6 +211,7 @@ export function buildDevScenarioResponse({ run, scenarioId } = {}) {
       progressionChanges: [{ target: scenarioItem.progressTarget, amount: scenarioItem.amount, source: `dev_${scenarioItem.id}` }],
       worldStateChanges: [{ target: "lastDevScenario", value: scenarioItem.id, source: "dev_tools" }],
       memoryUpdates: [{ type: "dev_scenario", text: `Triggered dev scenario ${scenarioItem.id}.` }],
+      growthEvidenceChanges: [],
       scoreDelta: 0,
     },
     internal: {
@@ -322,7 +326,9 @@ function addDevTalent(run, talentId) {
   for (const [key, amount] of Object.entries(talent.effects.attributePotential ?? {})) {
     const attribute = run.player.attributes[key];
     if (!attribute) continue;
-    attribute.talentBonus = (attribute.talentBonus ?? 0) + amount;
+    const talentPotential = (attribute.talentPotential ?? attribute.talentBonus ?? 0) + amount;
+    attribute.talentPotential = talentPotential;
+    attribute.talentBonus = talentPotential;
     attribute.potential += amount;
     const ratio = talent.effects.manifestedRatio ?? (talent.manifestationType === "immediate" ? 0.5 : 0.1);
     attribute.manifested = key === "familyBackground" ? attribute.potential : Math.max(attribute.manifested, Math.floor(attribute.potential * ratio));

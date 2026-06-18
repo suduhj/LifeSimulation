@@ -76,6 +76,8 @@ const manifestationLabels = {
 const attributeLayerLabels = {
   potential: "天赋潜能",
   manifested: "当前表现",
+  realized: "已兑现",
+  lockedPotential: "未兑现潜能",
   exposure: "异常关注",
 };
 
@@ -404,7 +406,9 @@ const npcTemplateLabels = {
 
 const attributeHelpText = {
   manifested: "当前表现：这个年龄真正表现出来、能影响事件判定的能力。",
+  realized: "已兑现：已经通过年龄、训练、环境和剧情证据兑现出来的成长。",
   potential: "天赋潜能：这个属性未来可能达到的高度，不代表现在已经完全拥有。",
+  lockedPotential: "未兑现潜能：仍然被年龄、训练、环境或剧情条件锁住的部分。",
   exposure: "异常关注：外界察觉你异常的可能性。越高越容易引来关注、保护、嫉妒、争夺、研究或危险。",
 };
 
@@ -901,7 +905,10 @@ function renderDevDebugInfo() {
     mode: "dev_only",
     potentialValues: mapAttributes(run.player.attributes, "potential"),
     manifestedValues: mapAttributes(run.player.attributes, "manifested"),
+    realizedValues: mapAttributes(run.player.attributes, "realized"),
+    lockedPotentialValues: mapAttributes(run.player.attributes, "lockedPotential"),
     exposureValues: mapAttributes(run.player.attributes, "exposure"),
+    growthLedger: run.player.growthLedger,
     worldProgress: run.worldState?.progress ?? {},
     npcHiddenSummary: (run.importantNPCs ?? []).map((npc) => ({
       id: npc.id,
@@ -1085,14 +1092,17 @@ function renderFateAttributeLines(run) {
     const label = run.worldId === "cultivation" ? `${worldSpecificLabel}（${baseLabel}）` : baseLabel;
     const attr = run.player.attributes?.[key] ?? {};
     const base = allocation[key] ?? attr.base ?? 0;
-    const talentBonus = attr.talentBonus ?? 0;
-    const potential = attr.potential ?? (base + talentBonus);
-    const manifested = attr.manifested ?? 0;
-    // Show how talents lift each attribute (基础 + 天赋 = 潜能) and how much has manifested so far.
+    const ledger = run.player.growthLedger?.attributes?.[key] ?? {};
+    const talentBonus = ledger.talentPotential ?? attr.talentPotential ?? attr.talentBonus ?? 0;
+    const potential = ledger.potential ?? attr.potential ?? (base + talentBonus);
+    const effective = ledger.effective ?? attr.effective ?? attr.manifested ?? 0;
+    const realized = ledger.realized ?? attr.realized ?? attr.manifested ?? effective;
+    const lockedPotential = ledger.lockedPotential ?? attr.lockedPotential ?? Math.max(0, potential - realized);
+    // Show how talents lift each attribute (基础 + 天赋 = 潜能) and what is actually usable now.
     const potentialText = talentBonus > 0
       ? `潜能 ${potential}（基础 ${base} + 天赋 ${talentBonus}）`
       : `潜能 ${potential}（基础 ${base}）`;
-    return `${label}：${potentialText}，当前 ${manifested}`;
+    return `${label}：${potentialText}，当前 ${effective}，已兑现 ${realized}，未兑现 ${lockedPotential}`;
   });
 }
 
@@ -1402,7 +1412,7 @@ function renderRun(run) {
     ...lines.map((line) => `<div class="summary-line">${escapeHtml(line)}</div>`),
     talentPositionLine ? `<div class="summary-line">${escapeHtml(talentPositionLine)}</div>` : "",
     renderSummaryTalents(run.player.talents ?? []),
-    renderSummaryAttributes(run.player.attributes, run.worldId),
+    renderSummaryAttributes(run.player.attributes, run.worldId, run.player.growthLedger),
     ...renderProgressLines(run.worldState?.progress ?? {}).map((line) => `<div class="summary-line">${escapeHtml(line)}</div>`),
     `<div class="summary-line">${escapeHtml(renderNpcLine(run.importantNPCs ?? []))}</div>`,
     `<div class="summary-line">${escapeHtml(renderFactionLine(run.factions ?? []))}</div>`,
@@ -1467,15 +1477,23 @@ function formatResolutionMeta(resolution) {
   return parts.join(" / ") || "行动后果";
 }
 
-function renderSummaryAttributes(attributes, worldId) {
+function renderSummaryAttributes(attributes, worldId, growthLedger) {
   const items = attrKeys.map((key) => {
     const attr = attributes[key] ?? {};
+    const ledger = growthLedger?.attributes?.[key] ?? {};
+    const current = ledger.effective ?? attr.effective ?? attr.manifested ?? 0;
+    const realized = ledger.realized ?? attr.realized ?? attr.manifested ?? current;
+    const potential = ledger.potential ?? attr.potential ?? 0;
+    const lockedPotential = ledger.lockedPotential ?? attr.lockedPotential ?? Math.max(0, potential - realized);
+    const exposure = ledger.exposure ?? attr.exposure ?? 0;
     return `
       <div class="attribute-summary-row">
         <strong>${escapeHtml(attrLabel(key, worldId))}</strong>
-        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.manifested)}">当前</button> ${escapeHtml(attr.manifested ?? 0)}</span>
-        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.potential)}">潜能</button> ${escapeHtml(attr.potential ?? 0)}</span>
-        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.exposure)}">关注</button> ${escapeHtml(attr.exposure ?? 0)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.manifested)}">当前</button> ${escapeHtml(current)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.realized)}">已兑现</button> ${escapeHtml(realized)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.potential)}">潜能</button> ${escapeHtml(potential)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.lockedPotential)}">未兑现</button> ${escapeHtml(lockedPotential)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.exposure)}">关注</button> ${escapeHtml(exposure)}</span>
       </div>
     `;
   }).join("");

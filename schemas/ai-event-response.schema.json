@@ -242,6 +242,7 @@
         "progressionChanges",
         "worldStateChanges",
         "memoryUpdates",
+        "growthEvidenceChanges",
         "scoreDelta"
       ],
       "properties": {
@@ -254,6 +255,22 @@
         "progressionChanges": { "type": "array" },
         "worldStateChanges": { "type": "array" },
         "memoryUpdates": { "type": "array" },
+        "growthEvidenceChanges": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["attribute", "amount", "source", "reason"],
+            "properties": {
+              "attribute": {
+                "enum": ["appearance", "intelligence", "constitution", "familyBackground", "luck"]
+              },
+              "amount": { "type": "number" },
+              "source": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 1 }
+            },
+            "additionalProperties": true
+          }
+        },
         "scoreDelta": { "type": "number" }
       },
       "additionalProperties": true

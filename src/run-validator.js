@@ -3,11 +3,30 @@ const ATTRIBUTE_LAYERS = [
   "base",
   "identityBonus",
   "talentBonus",
+  "talentPotential",
   "growthBonus",
   "temporaryModifier",
   "permanentModifier",
   "potential",
   "manifested",
+  "effective",
+  "realized",
+  "maturityCap",
+  "lockedPotential",
+  "exposure",
+];
+const GROWTH_LEDGER_LAYERS = [
+  "base",
+  "identityBonus",
+  "talentPotential",
+  "growthBonus",
+  "temporaryModifier",
+  "permanentModifier",
+  "potential",
+  "maturityCap",
+  "realized",
+  "effective",
+  "lockedPotential",
   "exposure",
 ];
 const LIFE_STAGES = new Set(["birth", "childhood", "adolescence", "youth", "adulthood", "middleAge", "oldAge"]);
@@ -75,6 +94,7 @@ function validatePlayer(player, errors) {
   requireString(player.identitySeedId, "player.identitySeedId", errors);
   requireArray(player.talents, "player.talents", errors);
   requireObject(player.attributes, "player.attributes", errors);
+  requireObject(player.growthLedger, "player.growthLedger", errors);
 
   player.talents?.forEach((talent, index) => {
     requireObject(talent, `player.talents[${index}]`, errors);
@@ -85,6 +105,7 @@ function validatePlayer(player, errors) {
   for (const key of ATTRIBUTE_KEYS) {
     validateAttribute(player.attributes?.[key], `player.attributes.${key}`, errors);
   }
+  validateGrowthLedger(player.growthLedger, "player.growthLedger", errors);
 }
 
 function validateAttribute(attribute, label, errors) {
@@ -99,6 +120,33 @@ function validateAttribute(attribute, label, errors) {
   }
   if (typeof attribute.exposure === "number" && attribute.exposure < 0) {
     errors.push(`${label}.exposure must be non-negative`);
+  }
+}
+
+function validateGrowthLedger(ledger, label, errors) {
+  if (!ledger || typeof ledger !== "object" || Array.isArray(ledger)) return;
+  requireEqual(ledger.schemaVersion, "mvp.growth_ledger.v1", `${label}.schemaVersion`, errors);
+  requireString(ledger.authority, `${label}.authority`, errors);
+  requireObject(ledger.attributes, `${label}.attributes`, errors);
+
+  for (const key of ATTRIBUTE_KEYS) {
+    const entry = ledger.attributes?.[key];
+    requireObject(entry, `${label}.attributes.${key}`, errors);
+    if (!entry || typeof entry !== "object" || Array.isArray(entry)) continue;
+    for (const layer of GROWTH_LEDGER_LAYERS) {
+      requireNumber(entry[layer], `${label}.attributes.${key}.${layer}`, errors);
+    }
+    requireArray(entry.milestones, `${label}.attributes.${key}.milestones`, errors);
+    requireArray(entry.evidence, `${label}.attributes.${key}.evidence`, errors);
+    if (typeof entry.effective === "number" && typeof entry.potential === "number" && entry.effective > entry.potential) {
+      errors.push(`${label}.attributes.${key}.effective must not exceed potential`);
+    }
+    if (typeof entry.realized === "number" && typeof entry.potential === "number" && entry.realized > entry.potential) {
+      errors.push(`${label}.attributes.${key}.realized must not exceed potential`);
+    }
+    if (typeof entry.lockedPotential === "number" && entry.lockedPotential < 0) {
+      errors.push(`${label}.attributes.${key}.lockedPotential must be non-negative`);
+    }
   }
 }
 

@@ -49,6 +49,8 @@ describe("web UI contract", () => {
     assert.match(app, /pleasant_smile: "亲和笑容"/);
     assert.match(app, /天赋潜能/);
     assert.match(app, /当前表现/);
+    assert.match(app, /已兑现/);
+    assert.match(app, /未兑现潜能/);
     assert.match(app, /异常关注/);
     assert.match(app, /renderSummaryTalents/);
     assert.match(app, /renderSummaryAttributes/);
@@ -143,7 +145,9 @@ describe("web UI contract", () => {
     assert.match(app, /\$\{worldSpecificLabel\}（\$\{baseLabel\}）/);
     assert.match(app, /基础 \$\{base\} \+ 天赋 \$\{talentBonus\}/);
     assert.match(app, /潜能 \$\{potential\}/);
-    assert.match(app, /当前 \$\{manifested\}/);
+    assert.match(app, /当前 \$\{effective\}/);
+    assert.match(app, /已兑现 \$\{realized\}/);
+    assert.match(app, /未兑现 \$\{lockedPotential\}/);
     assert.match(opening, /opening\.earlyLifeTimeline/);
     assert.match(opening, /describeDestinyPreview/);
     assert.match(opening, /buildEarlyLifeTimeline/);

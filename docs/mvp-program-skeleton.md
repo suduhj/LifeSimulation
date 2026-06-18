@@ -9,20 +9,21 @@ The skeleton is not the full game yet. It proves the core runtime path that the 
 1. Load the three MVP worlds from `worlds/`.
 2. Create an initial run from world, name, gender, personality direction, identity seed, rarity-weighted draw-5-keep-3 talents, player-kept 3 talents, and 20-point attributes.
 3. Generate 3-5 initial important NPCs from the selected world's NPC template pool.
-4. Track attribute layers: base, identity bonus, talent bonus, growth bonus, temporary modifier, permanent modifier, potential, manifested, and exposure.
-5. Load world-specific event, NPC, faction, and location seed pools as searchable runtime context.
-6. Select one of the seven event source types using world-specific weights.
-7. Generate AI life events from either soft content seeds or open world/context rules, without treating pools as fixed scripts.
-8. Validate each AI response against the MVP protocol rules.
-9. Apply accepted `statePatch` changes to the run.
-10. Resolve player choices and free-form attempted actions into `action_resolution` responses with provider support.
-11. Convert resolved player actions into lightweight state-first story facts: intent, simulation outcome, closed facts, thread stage, next pressure, forbidden repeat scene skeletons, and five-axis pressure deltas.
-12. Track five engine-owned story axes in `worldState.storyState.axes`: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence.
-13. Generate an annual fact package for cross-year branches. The package names the new yearly life delta, selects a primary axis and secondary axis, declares required state changes, background threads, and forbidden event shapes before AI prose is generated.
-14. Generate the next playable life event from a narrative director contract. The annual fact package owns the year's main life delta and selected axes; tracked threads such as clues, family pressure, institutions, resources, and world danger can support it as background instead of replaying a settled discovery or repeated scene structure.
-15. Save and load portable run JSON with MVP run-state validation.
-16. Run a developer-facing command-line setup, event loop, status summary display, and MVP short-run ending summary.
-17. Start every new life with a non-interactive opening sequence: birth background card, fate preview, and automatic early-year progression to the first meaningful branch.
+4. Track attribute growth through the engine-owned Growth Ledger: base, identity bonus, talent potential, growth bonus, temporary modifier, permanent modifier, potential, maturity cap, realized value, current effective value, locked potential, milestones, evidence, and exposure.
+5. Generate capability packages and developmental-expression limits from age, effective attributes, milestones, and world ID so AI prose cannot treat locked potential as current ability.
+6. Load world-specific event, NPC, faction, and location seed pools as searchable runtime context.
+7. Select one of the seven event source types using world-specific weights.
+8. Generate AI life events from either soft content seeds or open world/context rules, without treating pools as fixed scripts.
+9. Validate each AI response against the MVP protocol rules.
+10. Apply accepted `statePatch` changes to the run; AI growth can only enter as `growthEvidenceChanges`, which the engine converts into realized growth.
+11. Resolve player choices and free-form attempted actions into `action_resolution` responses with provider support.
+12. Convert resolved player actions into lightweight state-first story facts: intent, simulation outcome, closed facts, thread stage, next pressure, forbidden repeat scene skeletons, and five-axis pressure deltas.
+13. Track five engine-owned story axes in `worldState.storyState.axes`: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence.
+14. Generate an annual fact package for cross-year branches. The package names the new yearly life delta, selects a primary axis and secondary axis, declares required state changes, background threads, and forbidden event shapes before AI prose is generated.
+15. Generate the next playable life event from a narrative director contract. The annual fact package owns the year's main life delta and selected axes; tracked threads such as clues, family pressure, institutions, resources, and world danger can support it as background instead of replaying a settled discovery or repeated scene structure.
+16. Save and load portable run JSON with MVP run-state validation.
+17. Run a developer-facing command-line setup, event loop, status summary display, and MVP short-run ending summary.
+18. Start every new life with a non-interactive opening sequence: birth background card, fate preview, and automatic early-year progression to the first meaningful branch.
 
 The real player-facing playtest target is a web version. The current CLI is useful for engine smoke tests, scripted runs, save validation, and AI provider validation, but it should not be treated as the final playable surface for testers.
 
@@ -97,6 +98,8 @@ Open `http://127.0.0.1:5181`. If port `5181` is unavailable, use the fallback UR
 The browser UI talks to the local Node backend. AI provider keys stay in `.env` or shell environment variables on the server side; frontend files must not read `.env`, receive API keys, construct provider auth headers, or call provider APIs directly.
 
 The ordinary browser UI is Chinese-first. Backend IDs, schema fields, selected seeds, validation flags, save paths, and provider diagnostics are not ordinary player-facing text. The frontend must localize world names, talent names, rarity labels, manifestation types, progress labels, risk labels, and summaries from stable runtime IDs. Developer-only details may live behind the developer panel, but the normal player flow should feel like a life simulator, not a JSON/debug console.
+
+Attribute displays must use player-facing Growth Ledger language: `当前` for current effective ability, `已兑现` for realized growth, `潜能` for total potential, `未兑现` for still-locked potential, and `关注` for exposure/attention. Ordinary UI should not show raw backend labels such as `effective`, `realized`, `maturityCap`, or `growthLedger`.
 
 Ordinary UI must not patch missing player-visible names with generic placeholders. If a selected talent, NPC, or identity has no safe Chinese display label, the engine/frontend should repair the mapping or hide the undiscovered item instead of showing "未命名天赋", "未知天赋", "重要人物", "未知身份", "身份尚不明确", or an English backend ID.
 
@@ -263,6 +266,8 @@ World IDs:
 
 - `src/world-loader.js`: loads MVP world runtime JSON.
 - `src/initial-run.js`: creates the first run state.
+- `src/growth-ledger.js`: owns attribute potential, maturity caps, realized growth, effective current ability, locked potential, growth evidence, and compatibility sync back to `player.attributes`.
+- `src/capability-package.js`: turns the Growth Ledger into age/world-appropriate capabilities, check tags, forbidden actions, and developmental-expression limits for AI rendering.
 - `src/npc-generator.js`: generates initial important NPCs from world templates.
 - `src/event-source-selector.js`: chooses the weighted event source and soft seed context for the next AI turn.
 - `src/annual-state-transition.js`: builds an engine-owned annual fact package for cross-year branches, selects the year's primary life delta plus primary/secondary story axes, detects stale yearly shapes, and produces the story-state patch for annual facts and featured-axis updates.
@@ -284,10 +289,10 @@ World IDs:
 - `src/web-server.js`: local web playtest server and backend API proxy. Defaults to port `5181`, with fallback ports if the OS denies or occupies that port.
 - `src/dev-tools.js`: local GM/tester-mode catalog, opening presets, test-only talents, scenario injection responses, and copyable debug reports. These are `dev_only/testOnly` tools and are not part of ordinary player content pools.
 - `src/ai-response-validator.js`: validates MVP AI response rules that JSON schema alone cannot express.
-- `src/run-loop.js`: applies accepted AI responses and advances a run.
-- `src/run-validator.js`: validates MVP run/save shape before save/load acceptance.
-- `src/run-summary.js`: formats player-facing run summaries for attributes, progress, statuses, important NPC relationships, and factions.
-- `src/save-store.js`: saves and loads portable run JSON.
+- `src/run-loop.js`: applies accepted AI responses and advances a run, including converting `growthEvidenceChanges` into realized ledger growth.
+- `src/run-validator.js`: validates MVP run/save shape before save/load acceptance, including required Growth Ledger entries.
+- `src/run-summary.js`: formats player-facing run summaries for current/realized/potential/locked attribute growth, progress, statuses, important NPC relationships, and factions.
+- `src/save-store.js`: saves and loads portable run JSON. Legacy `mvp.run.v1` saves that predate `player.growthLedger` are migrated on load before strict validation.
 - `src/cli.js`: prints a smoke-test demo.
 - `src/play-cli.js`: runs the interactive or scripted CLI playtest.
 - `src/index.js`: public exports for tests and future app layers.
@@ -309,6 +314,8 @@ World IDs:
 - Non-interactive response types may have 0 choices.
 - State changes are proposed in `statePatch`; player-facing display changes are in `visibleChanges`.
 - The run loop now applies progression, world-state, attribute, manifestation, exposure, relationship, important NPC, faction, status, memory, ending, and score patches into the authoritative run.
+- The run loop treats the Growth Ledger as the authority for attributes. Compatibility `manifestationChanges` adjust realized growth, while `growthEvidenceChanges` is the preferred AI-facing route for growth evidence. Age alone does not cash out all potential, even at adulthood.
+- Capability packages and developmental-expression contracts are included in AI prompts so high potential cannot be rendered as infant combat power, adult strength, or fully awakened mythic talent unless the ledger has made that capability effective.
 - Continuity-critical story facts now live in `worldState.storyState`. AI output text is not the authority for whether a thread has been discovered, identified, closed, or advanced; the engine records those facts and passes a narrative contract into the next event.
 - Five-axis pressure now lives in `worldState.storyState.axes`. The director chooses a primary and secondary axis from engine-owned pressure signals, so repeated scenes are avoided by a general state mechanism rather than a one-off cooldown for a single plotline.
 - The current state-first MVP protects the cultivation jade-talisman/lingyinfu thread from repeated first-discovery loops. When the thread is identified, later events may keep the stored object and mountain pull as background pressure, but they must not rediscover the same object and footsteps.
@@ -321,9 +328,9 @@ World IDs:
 - Event pools are not event whitelists. If no seed fits, or if the selected source is not `seed_pool`, AI may generate a fitting event from world rules and current save context.
 - Player free-form actions are first-class attempted actions. They must be interpreted, risk-checked, optionally clarified, resolved, remembered, and allowed to reshape later AI context when the result is validated by the engine.
 - The setup wizard can be driven interactively or by `--setup-script` for smoke tests. Setup scripts accept both the old 5-part format and the newer 6-part format with personality direction.
-- CLI play displays a run summary with personality direction, attribute potential/manifested/exposure values, world progress, player statuses, important NPC relationship labels with rough ranges, and faction summaries.
+- CLI play displays a run summary with personality direction, attribute current/realized/potential/locked/exposure values, world progress, player statuses, important NPC relationship labels with rough ranges, and faction summaries.
 - MVP short-run endings use `ending_summary`, `interactionMode: "ending"`, 0 choices, and a final `worldStateChanges` patch that stores `run.ending`. In real AI mode, the provider writes the biography-style ending summary and score proposal before the engine validates it.
-- Save files are plain JSON for early debugging and portability, but load/save rejects malformed JSON or structurally invalid MVP runs.
+- Save files are plain JSON for early debugging and portability. Load/save rejects malformed JSON or structurally invalid MVP runs, while legacy `mvp.run.v1` saves without a Growth Ledger are first migrated into the current authority shape and then validated.
 - Runtime world data remains separate from human-facing Markdown.
 - Faction and location pools are now runtime JSON for all three MVP worlds and are included in real-AI prompt context as generation constraints and hooks, not fixed scenes.
 - The three MVP worlds meet the minimum fuller playtest content target reported by `npm run audit:content -- --strict`; ideal counts remain a later expansion target.

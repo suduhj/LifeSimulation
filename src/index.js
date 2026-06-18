@@ -14,6 +14,20 @@ export { loadDotEnvFile, loadProjectEnv } from "./env-loader.js";
 export { TALENT_RARITY_PROBABILITIES, createInitialRun, drawStartingTalents } from "./initial-run.js";
 export { assessFreeformClarification, generateFreeformClarificationRequest } from "./freeform-clarification.js";
 export { generateFreeformResolution } from "./freeform-resolution.js";
+export { buildCapabilityPackages, buildDevelopmentalExpression } from "./capability-package.js";
+export {
+  ATTRIBUTE_KEYS,
+  GROWTH_LEDGER_SCHEMA_VERSION,
+  applyGrowthEvidence,
+  createGrowthLedgerFromAttributes,
+  developmentStageForAge,
+  ensureGrowthLedger,
+  maturityCapForAge,
+  rebuildGrowthLedgerFromAttributes,
+  recalculateGrowthLedger,
+  recalculateGrowthLedgerForRun,
+  syncAttributesFromGrowthLedger,
+} from "./growth-ledger.js";
 export { generateMockLifeEvent } from "./mock-ai.js";
 export { buildNextEventContract } from "./narrative-director.js";
 export { generateInitialImportantNPCs } from "./npc-generator.js";

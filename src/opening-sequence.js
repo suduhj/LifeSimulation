@@ -102,6 +102,7 @@ export function generateOpeningSequence({ run, worlds, seed = 1 } = {}) {
           text: `Opening background generated at seed ${seed}; first meaningful branch begins around age ${actionAge}.`,
         },
       ],
+      growthEvidenceChanges: [],
       scoreDelta: 0,
     },
     internal: {

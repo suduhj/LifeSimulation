@@ -13,7 +13,7 @@ The AI may write narrative, interpret player intent, suggest consequences, and p
 Each life-simulation event follows this flow:
 
 1. Engine loads the current save.
-2. Engine determines world, age, life stage, location, identity, talents, attributes, manifested values, exposure values, important NPCs, factions, memory, and world-specific progress.
+2. Engine determines world, age, life stage, location, identity, talents, Growth Ledger values, capability packages, developmental-expression limits, exposure values, important NPCs, factions, memory, and world-specific progress.
 3. Engine selects one event source from the world's weighted event-source table.
 4. If the source is `seed_pool`, the engine filters content pools and selects 1-3 relevant soft seeds.
 5. If the source is not `seed_pool`, the engine sends the source instruction and may send no event seeds.
@@ -54,7 +54,8 @@ For `life_event`, the engine prompt should include:
 - selected world ID and world design summary
 - current run ID and turn ID
 - player character age, life stage, identity, gender, talents, and attribute layers
-- current manifested values, not only potential values
+- Growth Ledger summary: potential, realized value, current effective value, maturity cap, locked potential, evidence, milestones, and exposure
+- capability packages and developmental-expression limits, including allowed expressions, locked capabilities, check tags, and forbidden actions
 - current exposure values and who may notice them
 - important NPC visible state, hidden state summary, and relationship labels
 - faction state and faction relationship summary
@@ -92,6 +93,8 @@ Hidden state may guide foreshadowing and consistency, but must not be directly r
 NPC identity is layered. The prompt may include `playerVisible` and `hiddenInfo`, but player-facing text must use only `playerVisible` or other surface-level wording justified by the current scene. Raw NPC IDs, true templates, true roles, hidden factions, future route functions, and "you later learn..." spoilers belong only in `internal`, GM/debug output, or backend memory. If the story reveals a hidden identity, the response must also propose an `importantNPCUpdates` patch that updates the NPC's player-visible identity.
 
 Ordinary player-facing text must be Chinese and must not expose backend IDs, raw schema keys, or missing-data placeholders. Do not output raw labels such as `poor_scholar_child`, `sacrifice`, `exploiter`, `lover`, `NPC_4`, `manifested`, `potential`, or `exposure`, and do not replace missing names with player-facing placeholders such as "未命名天赋", "未知天赋", "重要人物", "未知身份", or "身份尚不明确". If safe Chinese player-visible wording is unavailable, the AI should omit the undiscovered item or write around the known scene facts.
+
+For attribute growth, AI prose must follow the engine-provided capability package. Potential means destiny or future ceiling, not current ability. Current checks and narration use `effective`/current capability only, and player-facing prose should express this as ordinary Chinese such as "当前能表现", "还没有完全兑现", or age-appropriate ability, not raw field names.
 
 Backend context sent only for reasoning and continuity — `recentMemory`, `recentEvents`, `eventGeneration` (including `sourceType`), `continuityRules`, `immediatePriorResolution`, `selectedSeeds`, and `internal` — must never be copied verbatim or paraphrased into `playerText`. In particular, `playerText` (title, body, and choice text) must never contain English sentences, raw snake_case IDs such as `noble_dynasty_child`, or backend concept words such as `素材种子`, `seed`, `sourceType`, `事件来源`, or `run started`. Rewrite any such backend information as pure in-world Chinese that the player character can actually perceive, or omit it.
 
@@ -242,12 +245,13 @@ It should include arrays for:
 - progression changes
 - world-state changes
 - memory updates
+- growth evidence changes
 - score delta
 
 The current MVP run loop applies these patches conservatively:
 
-- `attributeChanges`: adjusts a named attribute source layer, potential, and manifested value unless flags say otherwise.
-- `manifestationChanges`: adjusts or sets the current manifested value for an attribute, clamped to potential by default.
+- `attributeChanges`: compatibility path that adjusts a named attribute source layer and realized growth unless flags say otherwise.
+- `manifestationChanges`: compatibility path that adjusts or sets realized growth for an attribute, still capped by the Growth Ledger.
 - `exposureChanges`: adjusts an attribute exposure value, or a run-level exposure counter such as official attention.
 - `relationshipChanges`: adjusts a known important NPC relationship dimension.
 - `importantNPCUpdates`: updates an existing important NPC, or creates one only when `create: true` is present.
@@ -256,9 +260,23 @@ The current MVP run loop applies these patches conservatively:
 - `progressionChanges`: adjusts world progress bars such as realm, truth exposure, or survival days.
 - `worldStateChanges`: sets simple world-state fields, appends flags, updates nested paths, or stores final ending data.
 - `memoryUpdates`: appends run memory entries.
+- `growthEvidenceChanges`: preferred growth path. AI may submit evidence such as training, chores, study, injury recovery, or practice; the engine decides how much realized growth actually becomes effective.
 - `scoreDelta`: adjusts the run score.
 
 The engine does not allow AI to replace the whole save. Patches must target specific fields.
+
+AI must not directly author or overwrite `effective`, `realized`, `maturityCap`, or `lockedPotential`. Those values are recalculated by `src/growth-ledger.js`.
+
+Example growth evidence:
+
+```json
+{
+  "attribute": "constitution",
+  "amount": 1,
+  "source": "daily_chores",
+  "reason": "长期劈柴、跑腿和恢复训练让体力基础有了可验证增长"
+}
+```
 
 `visibleChanges` must separately list what the player should see this turn.
 
@@ -293,7 +311,8 @@ The engine must reject or repair AI output when:
 - normal playable events do not provide 3 rich choices
 - non-interactive response types pretend to be normal playable events
 - event uses another world's mechanics without justification
-- AI treats potential value as fully manifested at birth
+- AI treats potential value as fully effective at birth, childhood, or any age without ledger support
+- AI turns locked capabilities from the capability package into already-owned facts
 - AI grants success just because the player typed it
 - AI invents the outcome of an important or risky check when the engine already provided a result
 - AI leaks hidden information in player-facing text before the save has revealed it
@@ -329,8 +348,10 @@ Use this as the shape of the system/developer prompt, not as final wording:
 You are the fate narrator and world host for a multi-world AI life simulator.
 Return only raw JSON matching schemaVersion mvp.ai_event_response.v1.
 The engine owns state. You only propose narrative and statePatch changes.
-Use current manifested values for age-appropriate narration.
+Use Growth Ledger current effective values and capability packages for age-appropriate narration.
 Use potential values only for destiny and long-term tendency.
+If growth is justified, submit statePatch.growthEvidenceChanges; do not directly author effective, realized, maturityCap, or lockedPotential.
+Do not narrate locked capabilities as already usable.
 Use exposure values to decide who notices abnormalities.
 Keep the selected world distinct. Do not import mechanics from other worlds unless the context explicitly allows it.
 Use eventGeneration.sourceType and sourceInstruction. Only sourceType=seed_pool requires selected content seeds.
