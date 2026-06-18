@@ -35,7 +35,13 @@ export function formatRunSummary(run) {
 function buildAttributeSummary(run) {
   return Object.entries(run.player.attributes ?? {}).map(([key, attribute]) => {
     const label = ATTRIBUTE_LABELS[key] ?? key;
-    return `${label}潜力${attribute.potential}/显化${attribute.manifested}/暴露${attribute.exposure}`;
+    const ledger = run.player.growthLedger?.attributes?.[key];
+    const current = ledger?.effective ?? attribute.effective ?? attribute.manifested ?? 0;
+    const realized = ledger?.realized ?? attribute.realized ?? attribute.manifested ?? current;
+    const potential = ledger?.potential ?? attribute.potential ?? 0;
+    const locked = ledger?.lockedPotential ?? Math.max(0, potential - realized);
+    const exposure = ledger?.exposure ?? attribute.exposure ?? 0;
+    return `${label}当前${current}/已兑现${realized}/潜力${potential}/未兑现${locked}/关注${exposure}`;
   });
 }
 

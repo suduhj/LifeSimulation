@@ -99,6 +99,7 @@ export function generateMockLifeEvent({ run, worlds, seed = 1, eventContract } =
           text: `Mock event generated from ${generationContext.sourceType}:${eventSeed.id}.`,
         },
       ],
+      growthEvidenceChanges: [],
       scoreDelta: 0,
     },
     internal: {

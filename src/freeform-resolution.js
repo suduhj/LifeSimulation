@@ -94,6 +94,7 @@ export function generateFreeformResolution({ run, sourceEvent, inputText, seed =
           text: `Resolved free-form action: ${inputText}`,
         },
       ],
+      growthEvidenceChanges: [],
       scoreDelta: 0,
     },
     internal: {

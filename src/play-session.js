@@ -136,6 +136,9 @@ function buildStoredEndingSummary({ run, worlds, seed, endingAge }) {
           source: "loaded_save",
         },
       ],
+      growthEvidenceChanges: Array.isArray(response.statePatch?.growthEvidenceChanges)
+        ? response.statePatch.growthEvidenceChanges
+        : [],
       scoreDelta: 0,
     },
   };

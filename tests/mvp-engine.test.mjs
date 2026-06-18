@@ -64,6 +64,9 @@ describe("MVP engine skeleton", () => {
     assert.equal(run.player.attributes.intelligence.base, 8);
     assert.ok(run.player.attributes.intelligence.potential >= 8);
     assert.ok(run.player.attributes.intelligence.manifested <= run.player.attributes.intelligence.potential);
+    assert.equal(run.player.growthLedger.schemaVersion, "mvp.growth_ledger.v1");
+    assert.equal(run.player.growthLedger.attributes.intelligence.base, 8);
+    assert.equal(run.player.attributes.intelligence.manifested, run.player.growthLedger.attributes.intelligence.effective);
     assert.ok(run.worldState.progress);
     assert.ok(run.importantNPCs.length >= 3);
     assert.ok(run.importantNPCs.length <= 5);
@@ -373,7 +376,15 @@ describe("MVP engine skeleton", () => {
 
     const applied = applyAiResponseToRun(run, response);
 
-    assert.equal(applied.player.attributes.intelligence.manifested, run.player.attributes.intelligence.manifested + 3);
+    assert.equal(
+      applied.player.growthLedger.attributes.intelligence.realized,
+      run.player.growthLedger.attributes.intelligence.realized + 3,
+    );
+    assert.equal(applied.player.attributes.intelligence.manifested, applied.player.growthLedger.attributes.intelligence.effective);
+    assert.ok(
+      applied.player.growthLedger.attributes.intelligence.effective <= applied.player.growthLedger.attributes.intelligence.maturityCap,
+      "manifested/effective must obey the maturity cap even after manifestationChanges",
+    );
     assert.equal(applied.player.attributes.luck.exposure, run.player.attributes.luck.exposure + 12);
     assert.equal(applied.exposure.official_attention, 5);
     assert.ok(applied.worldState.flags.includes("first_official_trace"));

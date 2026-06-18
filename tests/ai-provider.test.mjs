@@ -114,6 +114,10 @@ describe("AI provider adapter", () => {
     assert.equal(userPrompt.eventGeneration.aiAdaptation, "must_adapt");
     assert.equal(userPrompt.eventGeneration.allowAiFreeGenerationWhenNoSeedFits, true);
     assert.equal(userPrompt.run.player.personality.id, "pragmatic");
+    assert.equal(userPrompt.run.player.developmentalExpression.authority, "engine_growth_ledger");
+    assert.ok(userPrompt.run.player.developmentalExpression.forbiddenActions.includes("adult_combat_power"));
+    assert.ok(userPrompt.run.player.capabilityPackages.attributes.constitution);
+    assert.equal(userPrompt.run.player.capabilityPackages.attributes.constitution.attribute, "constitution");
     assert.equal(typeof userPrompt.eventGeneration.sourceInstruction, "string");
     assert.ok(userPrompt.world.factionSeeds.length >= 8);
     assert.ok(userPrompt.world.locationSeeds.length >= 10);
@@ -1147,6 +1151,7 @@ function isResolutionConsequential(resolution) {
     "progressionChanges",
     "worldStateChanges",
     "memoryUpdates",
+    "growthEvidenceChanges",
   ].some((key) => Array.isArray(patch[key]) && patch[key].length > 0);
 }
 
@@ -1195,6 +1200,7 @@ function emptyStatePatch() {
     progressionChanges: [],
     worldStateChanges: [],
     memoryUpdates: [],
+    growthEvidenceChanges: [],
     scoreDelta: 0,
   };
 }

@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
+import { ensureGrowthLedger } from "./growth-ledger.js";
 import { assertValidRunState } from "./run-validator.js";
 
 export function saveRunToFile(run, filePath) {
@@ -19,5 +20,14 @@ export function loadRunFromFile(filePath) {
   } catch (error) {
     throw new Error(`Could not parse save file ${absolutePath}: ${error.message}`);
   }
+  migrateLoadedRun(parsed);
   return assertValidRunState(parsed, `save file ${absolutePath}`);
+}
+
+function migrateLoadedRun(run) {
+  if (!run || typeof run !== "object" || Array.isArray(run)) return run;
+  if (run.schemaVersion !== "mvp.run.v1") return run;
+  if (!run.player || typeof run.player !== "object" || Array.isArray(run.player)) return run;
+  ensureGrowthLedger(run);
+  return run;
 }

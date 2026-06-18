@@ -101,6 +101,7 @@ export function generateChoiceResolution({ run, sourceEvent, choiceId, seed = 1 
           text: `Resolved ${choice.id} from ${sourceEvent.event.eventId}.`,
         },
       ],
+      growthEvidenceChanges: [],
       scoreDelta: 0,
     },
     internal: {

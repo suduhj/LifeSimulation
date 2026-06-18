@@ -130,7 +130,9 @@ describe("interactive play session", () => {
     const lines = formatRunSummary(run);
 
     assert.ok(lines.some((line) => line.includes("角色状态")));
-    assert.ok(lines.some((line) => line.includes("颜值潜力")));
+    assert.ok(lines.some((line) => line.includes("颜值当前")));
+    assert.ok(lines.some((line) => line.includes("已兑现")));
+    assert.ok(lines.some((line) => line.includes("未兑现")));
     assert.ok(lines.some((line) => line.includes("世界进度")));
     assert.ok(lines.some((line) => line.includes("被注意")));
     assert.ok(lines.some((line) => line.includes("重要NPC")));

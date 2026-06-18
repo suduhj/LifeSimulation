@@ -1,28 +1,35 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { loadMvpWorlds } from "../src/index.js";
+import { loadMvpWorlds, maturityCapForAge, recalculateGrowthLedgerForRun } from "../src/index.js";
 import { createInitialRun } from "../src/initial-run.js";
 import { manifestationRatioForAge, runMockTurns } from "../src/run-loop.js";
 
 const AGE_KEYS = ["appearance", "intelligence", "constitution", "luck"];
 
 describe("age-based attribute manifestation", () => {
-  it("ratio rises from 0.1 at birth to 1.0 by adulthood", () => {
-    assert.ok(Math.abs(manifestationRatioForAge(0) - 0.1) < 1e-9);
-    assert.equal(manifestationRatioForAge(18), 1);
-    assert.equal(manifestationRatioForAge(40), 1);
-    const mid = manifestationRatioForAge(9);
-    assert.ok(mid > 0.5 && mid < 0.6, `mid-life ratio should be ~0.55, got ${mid}`);
+  it("maturity cap rises by life stage and stops being a hard cap in adulthood", () => {
+    assert.ok(maturityCapForAge(0, "constitution", 100) < maturityCapForAge(7, "constitution", 100));
+    assert.ok(maturityCapForAge(7, "constitution", 100) < maturityCapForAge(13, "constitution", 100));
+    assert.equal(maturityCapForAge(18, "constitution", 100), Number.MAX_SAFE_INTEGER);
+    assert.equal(manifestationRatioForAge(18), 1, "legacy ratio remains exported for compatibility only");
   });
 
-  it("manifested stays within potential and reaches it by adulthood", () => {
+  it("manifested stays within potential but no longer reaches full potential just from becoming adult", () => {
     const worlds = loadMvpWorlds();
     const run = createInitialRun({
       worlds,
       worldId: "cultivation",
       seed: 42,
-      playerProfile: { name: "林岚", gender: "male", personality: "curious" },
+      playerProfile: { name: "Lin Lan", gender: "male", personality: "curious" },
+      allocation: {
+        appearance: 4,
+        intelligence: 6,
+        constitution: 6,
+        familyBackground: 2,
+        luck: 2,
+      },
+      keptTalentIds: ["chaos_spirit_embryo", "strong_blood", "steady_hands"],
     });
 
     for (const key of AGE_KEYS) {
@@ -30,16 +37,19 @@ describe("age-based attribute manifestation", () => {
       assert.ok(attr.manifested <= attr.potential, `${key} manifested must not exceed potential at birth`);
     }
 
-    const aged = runMockTurns({ run, worlds, turns: 25, seed: 100 });
-    assert.ok(aged.player.age >= 18, `expected adulthood, got age ${aged.player.age}`);
+    run.player.age = 18;
+    recalculateGrowthLedgerForRun(run);
     for (const key of AGE_KEYS) {
-      const attr = aged.player.attributes[key];
+      const attr = run.player.attributes[key];
       assert.ok(attr.manifested <= attr.potential, `${key} manifested must not exceed potential`);
-      assert.equal(attr.manifested, attr.potential, `${key} should be fully manifested by adulthood`);
     }
+    assert.ok(
+      run.player.attributes.constitution.manifested < run.player.attributes.constitution.potential,
+      "adulthood removes the hard cap but does not automatically realize all mythic potential",
+    );
   });
 
-  it("manifested grows monotonically toward potential as age advances", () => {
+  it("manifested grows monotonically within the ledger as age advances", () => {
     const worlds = loadMvpWorlds();
     let run = createInitialRun({
       worlds,

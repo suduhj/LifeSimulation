@@ -112,6 +112,7 @@ export function generateMvpEndingSummary({ run, worlds, seed = 1, endingAge = 6 
           text: `Ended with ${endingSeed.id}, score ${score}.`,
         },
       ],
+      growthEvidenceChanges: [],
       scoreDelta: score,
     },
     internal: {

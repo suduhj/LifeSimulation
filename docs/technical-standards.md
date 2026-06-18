@@ -49,13 +49,15 @@ After formal life begins, the frontend should append resolved consequences to a 
 
 Ordinary player-facing rendering must suppress empty event/result cards. If an AI response is missing required player-facing text for a playable response, the provider repair/validation path should repair or reject it before the frontend has to display it.
 
-The hidden `GM / 调试` surface is a local tester tool. It may call dev-only backend APIs and display technical fields such as selected seeds, raw AI JSON, validation results, hidden NPC summaries, potential/manifested/exposure values, and world progress. Ordinary player UI must not show these fields.
+The hidden `GM / 调试` surface is a local tester tool. It may call dev-only backend APIs and display technical fields such as selected seeds, raw AI JSON, validation results, hidden NPC summaries, growth-ledger values, potential/current/realized/locked/exposure values, and world progress. Ordinary player UI must not show raw backend field names.
 
 ## Architecture Principles
 
 - Build around the core loop: free player action, AI reasonable judgment, validated world-state changes, and continued life progression.
 - Do not turn the game into a fixed-plot game, event-card game, or preset-route picker.
 - Keep deterministic game rules separate from AI-generated prose.
+- Use the Growth Ledger as the authoritative attribute-growth layer. Talent points enter potential immediately, but effective current ability comes only from realized growth, age maturity caps, temporary modifiers, and validated growth evidence.
+- Generate capability packages and developmental-expression limits from age, effective values, milestones, and world ID. AI may render these limits in prose, but it must not turn locked capabilities into facts.
 - Use state-first life simulation for continuity-critical story facts: player actions first become structured intents and simulation outcomes, the engine records authoritative `worldState.storyState` facts/closed facts/thread stages/forbidden repeats, the narrative director issues an event contract for the next branch, and AI/mock providers render prose inside that contract.
 - Track five lightweight story axes inside `worldState.storyState.axes`: `lifePressure`, `talentManifestation`, `npcRelationship`, `worldOpportunity`, and `choiceConsequence`. These axes are engine-owned pressure signals, not player-facing prose. Player actions and annual events may add deltas to them; the narrative director uses them to pick a primary and secondary axis for the next event contract.
 - Use annual state transition packages as the default cross-year director: the engine must first produce an `annualFactPackage` with the year's primary life delta, primary/secondary axes, required state changes, background threads, and forbidden event shapes. AI/mock providers may render the package, but they must not make an ongoing thread become the year's main event unless the package selected it as the primary delta.
@@ -63,7 +65,7 @@ The hidden `GM / 调试` surface is a local tester tool. It may call dev-only ba
 - Real AI provider failures may fall back to local safe mock generation to keep a playtest session alive, but fallback responses must be clearly marked with `provider_fallback` in `internal.validationFlags` and must still pass the same state-patch validation path before changing the run.
 - Store world lore, talent definitions, attribute rules, and event schemas as structured data.
 - Use stable IDs for worlds, talents, events, NPCs, and endings.
-- Make save files portable and debuggable. Save/load boundaries must validate the MVP run shape and fail clearly on malformed or structurally invalid saves.
+- Make save files portable and debuggable. Save/load boundaries must validate the MVP run shape and fail clearly on malformed or structurally invalid saves. Legacy `mvp.run.v1` saves that predate the Growth Ledger should be migrated into `player.growthLedger` before strict validation.
 - Separate human/AI-developer design docs from runtime data. Use `.md` for world explanation and `.json` for game-readable configuration.
 - Keep runtime JSON mostly ASCII and stable-ID driven when possible. Human-facing Chinese labels and prose should live in Markdown or localization tables, not inside core config fields that must validate reliably across Windows tooling.
 - Player-facing CLI text, mock output, provider system prompts, docs examples, and tests must stay readable UTF-8 Chinese when they contain Chinese. Do not leave mojibake or replacement characters in files.
@@ -147,7 +149,8 @@ AI should not directly own the authoritative game state. The game engine should 
 - Valid choices
 - Event constraints
 - Current age and permitted time-span range
-- Potential values, current manifested values, and exposure values
+- Growth Ledger snapshot: potential, realized value, current effective value, maturity cap, locked potential, evidence, milestones, and exposure values
+- Capability packages and developmental-expression contracts, including allowed expressions, locked capabilities, check tags, and forbidden actions
 - Identity, talents, attributes, relationships, and world-specific progression state
 - Desired output schema
 - Story-state contract when available: closed facts, active thread stage, next pressure, required inclusions, forbidden repeats, and choice-intent direction. The AI may render these into player-facing Chinese prose, but must not reopen a closed fact or repeat a forbidden scene skeleton.
@@ -175,7 +178,7 @@ AI should return:
 - Important NPC misjudgment risk and reduction factors
 - Important NPC promotion from faction member layers, including promotion reason and memory activation
 - Faction join, creation, creation-requirement check, world-specific requirement check, low-threshold faction scale check, growth axis weights, growth, stage, resource, member, base, territory, cohesion, reputation, enemy, ally, hidden agenda, and collapse-risk changes
-- Proposed manifestation and exposure changes
+- Proposed growth evidence, manifestation compatibility changes, and exposure changes
 - Suggested choices 1/2/3
 - Optional 4th-entry free-form action interpretation
 - Optional world-state changes
@@ -237,7 +240,7 @@ Attributes:
 
 - Attribute keys are `appearance`, `intelligence`, `constitution`, `familyBackground`, and `luck`.
 - `stressResilience`, `socialCharm`, and `combatAbility` are derived capabilities, not core attributes.
-- Each attribute should track potential value, manifested value, and exposure value.
+- Each attribute should track an engine-owned ledger entry: base, identity bonus, talent potential, growth bonus, temporary modifier, permanent modifier, potential, maturity cap, realized value, effective/current value, locked potential, milestones, evidence, and exposure.
 - Attribute setup supports random rolling and free allocation.
 - Free allocation has a base point cap of 20.
 - Single-attribute mortal range is 0-20, with 4 as ordinary person baseline.
@@ -245,7 +248,8 @@ Attributes:
 - Starting or mortal-stage talent-enhanced attributes may reach the 20-60 range depending on rarity and source.
 - Cultivation realms, supernatural systems, divine sources, and late-game growth can exceed 60 according to scaling rules.
 - Attribute values must preserve source layers: base allocation, identity bonus, talent bonus, growth bonus, temporary state modifier, and permanent injury modifier.
-- AI must use current manifested value for age-appropriate narration and checks, not full potential value.
+- AI must use the capability package and current effective value for age-appropriate narration and checks, not full potential value.
+- AI may propose growth only through structured `growthEvidenceChanges`; it must not directly author `effective`, `realized`, or `maturityCap`.
 - Exposure determines outside discovery, attention, protection, recruitment, research, pursuit, worship, containment, or assassination.
 
 Talents:
@@ -285,7 +289,15 @@ Core entities:
 - Identity
 - AttributeSet
 - AttributeLayer
+- GrowthLedger
+- GrowthEvidence
+- CapabilityPackage
+- DevelopmentalExpression
 - PotentialValue
+- RealizedValue
+- EffectiveValue
+- MaturityCap
+- LockedPotentialValue
 - ManifestedValue
 - ExposureValue
 - Talent
@@ -374,6 +386,7 @@ Core entities:
 - `npm test` must pass for local MVP tooling.
 - `npm run validate:data` must pass after runtime JSON edits.
 - Unit tests for deterministic rules, talent effects, attribute calculations, and save/load.
+- Regression tests for Growth Ledger behavior: talent bonuses enter potential without immediate adult effective power, maturity caps prevent infant/child overexpression, adulthood does not auto-realize all potential, `growthEvidenceChanges` is the route to realized growth, and legacy saves without `player.growthLedger` migrate on load before validation.
 - Schema validation tests for AI response formats.
 - Integration tests for a complete short life run.
 - Regression tests for state-first continuity: closed story facts must not be reopened, forbidden scene skeletons must not repeat, and mock/provider fallback must consume the same event contract as normal generation.
