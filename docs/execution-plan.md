@@ -127,3 +127,35 @@ At the end of each development session:
 3. List decisions made.
 4. List remaining todos.
 5. Update docs when standards or scope changed.
+
+## GitHub PR Workflow Rule
+
+Feature work should land through branches and pull requests, not direct pushes to `main`.
+
+When a PR is stacked on another feature branch, merging the stacked PR only updates its base branch. It does not automatically update `main`. Example:
+
+```text
+feature/event-sourced-life-runtime -> feature/growth-ledger-engine
+feature/growth-ledger-engine -> main
+```
+
+If the second PR is merged after the first base branch was already merged to `main`, create a follow-up PR from the updated base branch back into `main`:
+
+```text
+feature/growth-ledger-engine -> main
+```
+
+Use this local check when the Pull Requests page shows no open PRs but `main` still seems behind:
+
+```bash
+git fetch origin
+git log --oneline main..origin/<feature-branch>
+git diff --stat main...origin/<feature-branch>
+```
+
+If those commands show missing commits or diffs, open a new PR from that feature branch to `main`. After it is merged, update local `main` with:
+
+```bash
+git switch main
+git pull
+```

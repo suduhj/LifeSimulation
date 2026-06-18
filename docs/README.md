@@ -19,7 +19,7 @@ This folder contains the working standards for the AI life simulator project.
 - [Cthulhu Life World](./world-cthulhu-life.md): dedicated design skeleton for the Cthulhu MVP world.
 - [Technical Standards](./technical-standards.md): stack decisions, architecture rules, AI integration boundaries, and data handling.
 - [Design Standards](./design-standards.md): UX principles, UI direction, content tone, and accessibility expectations.
-- [Execution Plan](./execution-plan.md): phased implementation order, acceptance gates, and testing expectations.
+- [Execution Plan](./execution-plan.md): phased implementation order, acceptance gates, testing expectations, and GitHub stacked-PR workflow rules.
 - [Development Logging](./development-logging.md): how to maintain daily completed work and todo records.
 
 Key current UX requirement: the web playtest uses a step-by-step creation flow, then a scrolling life timeline. Details live in [Product Requirements](./product-requirements.md), [Design Standards](./design-standards.md), [MVP Program Skeleton](./mvp-program-skeleton.md), and [AI Output Protocol](./ai-output-protocol.md).
@@ -70,3 +70,5 @@ Validation commands:
 ## Working Rule
 
 When the project changes, update the relevant standard document before or during implementation. Do not let code drift away from the documented product, technical, and design decisions.
+
+When using stacked PRs, remember that merging a child PR into a feature branch does not update `main`. The follow-up branch-to-main PR rule is documented in [Execution Plan](./execution-plan.md).
