@@ -50,6 +50,7 @@ export { buildRunSummary, formatRunSummary } from "./run-summary.js";
 export { applyAiResponseToRun, lifeStageForAge, runMockTurns } from "./run-loop.js";
 export { assertValidRunState, validateRunState } from "./run-validator.js";
 export { loadRunFromFile, saveRunToFile } from "./save-store.js";
+export { buildPanelViews, getAttributePanelView, getMainPanelView, getStoryPanelView } from "./selectors/index.js";
 export { applySimulationOutcomeToResponse, simulateActionOutcome } from "./simulation-kernel.js";
 export {
   STORY_AXIS_IDS,
