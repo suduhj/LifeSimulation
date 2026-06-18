@@ -985,6 +985,19 @@ function buildTimelineFromLoadedSession(session) {
   if (!isOpeningPreview(session)) {
     entries.push(...buildOpeningTimeline(session));
   }
+  const storyTimeline = currentPanelViews(session)?.story?.timeline ?? [];
+  for (const item of storyTimeline) {
+    const entry = {
+      kind: item.kind ?? "event",
+      age: item.age,
+      title: item.title ?? "",
+      body: item.body ?? "",
+      changes: [],
+    };
+    if (isRenderableTimelineEntry(entry) && !entries.some((existing) => existing.age === entry.age && existing.title === entry.title)) {
+      entries.push(entry);
+    }
+  }
   if (session?.currentEvent) {
     entries.push(timelineEntryFromEvent(session.currentEvent, "event"));
   }
@@ -1395,16 +1408,27 @@ function renderEvent(event, session) {
 }
 
 function renderRun(run) {
-  const lines = [
-    `角色：${run.player.name}｜${genderLabel(run.player.gender)}｜${run.player.age} 岁`,
-    `世界：${worldLabel(run.worldId)}`,
-    `性格倾向：${personalityLabel(run.player.personality?.id ?? run.player.personality)}`,
-    `经历事件：${run.eventHistoryCount ?? 0}`,
-    `当前评分：${run.score ?? 0}`,
-  ];
+  const panelViews = currentPanelViews();
+  const mainPanel = panelViews?.main;
+  const lines = mainPanel?.summaryLines?.length
+    ? [
+      ...mainPanel.summaryLines,
+      `经历事件：${run.eventHistoryCount ?? 0}`,
+      `当前评分：${run.score ?? 0}`,
+    ]
+    : [
+      `角色：${run.player.name}｜${genderLabel(run.player.gender)}｜${run.player.age} 岁`,
+      `世界：${worldLabel(run.worldId)}`,
+      `性格倾向：${personalityLabel(run.player.personality?.id ?? run.player.personality)}`,
+      `经历事件：${run.eventHistoryCount ?? 0}`,
+      `当前评分：${run.score ?? 0}`,
+    ];
 
   if (run.ending?.completed) {
     lines.push(`人生结局：${run.ending.name ?? "已结算"}｜总评 ${run.ending.score ?? run.score ?? 0}`);
+  }
+  if (panelViews?.story?.currentPressure) {
+    lines.push(`剧情压力：${panelViews.story.currentPressure}`);
   }
 
   const talentPositionLine = renderTalentPositionLine(run.player.talents ?? [], run.worldId);
@@ -1412,11 +1436,16 @@ function renderRun(run) {
     ...lines.map((line) => `<div class="summary-line">${escapeHtml(line)}</div>`),
     talentPositionLine ? `<div class="summary-line">${escapeHtml(talentPositionLine)}</div>` : "",
     renderSummaryTalents(run.player.talents ?? []),
-    renderSummaryAttributes(run.player.attributes, run.worldId, run.player.growthLedger),
+    renderSummaryAttributes(panelViews?.attributes, run.player.attributes, run.worldId, run.player.growthLedger),
     ...renderProgressLines(run.worldState?.progress ?? {}).map((line) => `<div class="summary-line">${escapeHtml(line)}</div>`),
     `<div class="summary-line">${escapeHtml(renderNpcLine(run.importantNPCs ?? []))}</div>`,
     `<div class="summary-line">${escapeHtml(renderFactionLine(run.factions ?? []))}</div>`,
   ].join("");
+}
+
+function currentPanelViews(session) {
+  if (!session) return state.session?.panelViews ?? state.session?.run?.panelViews ?? {};
+  return session?.panelViews ?? session?.run?.panelViews ?? {};
 }
 
 function renderVisibleChanges(changes = []) {
@@ -1477,7 +1506,24 @@ function formatResolutionMeta(resolution) {
   return parts.join(" / ") || "行动后果";
 }
 
-function renderSummaryAttributes(attributes, worldId, growthLedger) {
+function renderSummaryAttributes(attributePanel, attributes, worldId, growthLedger) {
+  if (attributePanel?.attributes?.length) {
+    const items = attributePanel.attributes.map((attribute) => `
+      <div class="attribute-summary-row">
+        <strong>${escapeHtml(attribute.name)}</strong>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.manifested)}">当前</button> ${escapeHtml(attribute.current ?? 0)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.realized)}">已兑现</button> ${escapeHtml(attribute.realized ?? 0)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.potential)}">潜能</button> ${escapeHtml(attribute.potential ?? 0)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.lockedPotential)}">未兑现</button> ${escapeHtml(attribute.locked ?? 0)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.exposure)}">关注</button> ${escapeHtml(attribute.exposure ?? 0)}</span>
+        <span>${escapeHtml(attribute.peerLabel ?? "")}</span>
+        <span>${escapeHtml(attribute.potentialLabel ?? "")}</span>
+        <span>${escapeHtml(attribute.exposureLabel ?? "")}</span>
+      </div>
+    `).join("");
+    return `<div class="summary-block"><h3>${escapeHtml(attributePanel.title ?? "当前属性")}</h3><div class="attribute-summary-list">${items}</div></div>`;
+  }
+
   const items = attrKeys.map((key) => {
     const attr = attributes[key] ?? {};
     const ledger = growthLedger?.attributes?.[key] ?? {};

@@ -224,4 +224,15 @@ describe("web UI contract", () => {
     assert.match(validator, /validatePlayableNarrative/);
     assert.match(validator, /fuzzySuccessLabel must not pre-announce success or resolved outcomes/);
   });
+
+  it("renders life panels from selector graph panelViews instead of recomputing raw run internals", () => {
+    const app = fs.readFileSync("web/app.js", "utf8");
+
+    assert.match(app, /function currentPanelViews/);
+    assert.match(app, /state\.session\?\.panelViews/);
+    assert.match(app, /renderSummaryAttributes\(panelViews\?\.attributes/);
+    assert.match(app, /panelViews\?\.main/);
+    assert.match(app, /panelViews\?\.story/);
+    assert.doesNotMatch(app, /renderSummaryAttributes\(run\.player\.attributes,\s*run\.worldId,\s*run\.player\.growthLedger\)/);
+  });
 });

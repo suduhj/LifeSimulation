@@ -20,6 +20,7 @@ import {
   parseTalentSelectionInput,
   saveRunToFile,
   buildGmView,
+  buildPanelViews,
   buildPlayerView,
 } from "./index.js";
 import {
@@ -356,6 +357,7 @@ function serializeSession(sessionId, entry, worlds) {
     inputRequired: session.inputRequired,
     pendingFreeformConfirmation: Boolean(session.pendingFreeformConfirmation),
     run: serializeRun(session.currentRun, worlds),
+    panelViews: buildPanelViews(session.currentRun),
     playerView: buildPlayerView(session.currentRun),
     gmView: entry.devMode ? buildGmView(session.currentRun) : undefined,
     currentEvent: serializeAiResponse(session.currentEvent, session.currentRun, worlds, { forceFatePreview: openingFatePreview }),
@@ -366,6 +368,7 @@ function serializeSession(sessionId, entry, worlds) {
 
 function serializeRun(run, worlds) {
   const playerView = buildPlayerView(run);
+  const panelViews = buildPanelViews(run);
   return {
     runId: run.runId,
     worldId: run.worldId,
@@ -392,6 +395,7 @@ function serializeRun(run, worlds) {
     score: run.score ?? 0,
     ending: run.ending,
     playerView,
+    panelViews,
     summaryLines: formatRunSummary(run),
   };
 }

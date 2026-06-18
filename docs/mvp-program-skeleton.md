@@ -24,8 +24,9 @@ The skeleton is not the full game yet. It proves the core runtime path that the 
 16. Generate the next playable life event from a narrative director contract. The annual fact package owns the year's main life delta and selected axes; tracked threads such as clues, family pressure, institutions, resources, and world danger can support it as background instead of replaying a settled discovery or repeated scene structure.
 17. Save and load portable run JSON with MVP run-state validation. Current saves include `eventLog`; load prefers `replayRun(eventLog)` over trusting the snapshot.
 18. Build PlayerView, PromptView, and GMView projections from the authoritative run so ordinary UI, AI prompts, and debug tools do not consume the same raw surface.
-19. Run a developer-facing command-line setup, event loop, status summary display, and MVP short-run ending summary.
-20. Start every new life with a non-interactive opening sequence: birth background card, fate preview, and automatic early-year progression to the first meaningful branch.
+19. Build Selector Graph panel views from the authoritative run: `panelViews.main`, `panelViews.attributes`, and `panelViews.story` are the browser panel contract, while raw run internals stay compatibility/debug data.
+20. Run a developer-facing command-line setup, event loop, status summary display, and MVP short-run ending summary.
+21. Start every new life with a non-interactive opening sequence: birth background card, fate preview, and automatic early-year progression to the first meaningful branch.
 
 The real player-facing playtest target is a web version. The current CLI is useful for engine smoke tests, scripted runs, save validation, and AI provider validation, but it should not be treated as the final playable surface for testers.
 
@@ -112,6 +113,8 @@ Open `http://127.0.0.1:5181`. If port `5181` is unavailable, use the fallback UR
 The browser UI talks to the local Node backend. AI provider keys stay in `.env` or shell environment variables on the server side; frontend files must not read `.env`, receive API keys, construct provider auth headers, or call provider APIs directly.
 
 The ordinary browser UI is Chinese-first. Backend IDs, schema fields, selected seeds, validation flags, save paths, and provider diagnostics are not ordinary player-facing text. The frontend must localize world names, talent names, rarity labels, manifestation types, progress labels, risk labels, and summaries from stable runtime IDs. Developer-only details may live behind the developer panel, but the normal player flow should feel like a life simulator, not a JSON/debug console.
+
+Ordinary browser panels use `panelViews` from the Selector Graph. Main status should read `panelViews.main`; current/realized/potential/locked/exposure rows should read `panelViews.attributes`; story/timeline support data should read `panelViews.story`. The web client may keep legacy `run` fallbacks for older payloads, but new ordinary UI code should not recompute panel state from `player.growthLedger`, raw `storyState`, or event-log internals.
 
 Attribute displays must use player-facing Growth Ledger language: `当前` for current effective ability, `已兑现` for realized growth, `潜能` for total potential, `未兑现` for still-locked potential, and `关注` for exposure/attention. Ordinary UI should not show raw backend labels such as `effective`, `realized`, `maturityCap`, or `growthLedger`.
 
@@ -290,6 +293,7 @@ World IDs:
 - `src/domain/projections/player-view.js`: ordinary player projection with label-first, hidden-info-free data.
 - `src/domain/projections/prompt-view.js`: AI prompt projection with capability packages, developmental-expression limits, and structured state context.
 - `src/domain/projections/gm-view.js`: developer/debug projection with full run and hidden information.
+- `src/selectors/`: Selector Graph read layer that builds `panelViews.main`, `panelViews.attributes`, and `panelViews.story` for browser panels.
 - `src/growth-ledger.js`: owns attribute potential, maturity caps, realized growth, effective current ability, locked potential, growth evidence, and compatibility sync back to `player.attributes`.
 - `src/capability-package.js`: turns the Growth Ledger into age/world-appropriate capabilities, check tags, forbidden actions, and developmental-expression limits for AI rendering.
 - `src/npc-generator.js`: generates initial important NPCs from world templates.
@@ -341,7 +345,7 @@ World IDs:
 - State changes are proposed in `statePatch`; player-facing display changes are in `visibleChanges`.
 - The run loop no longer applies `statePatch` directly. Accepted patches become DomainEvents, reducers settle them into the authoritative run projection, and invariants guard the transition before save/display.
 - The event log is the replay authority for current saves. The run snapshot remains for compatibility and debugging, but load uses `replayRun(eventLog)` when present.
-- Ordinary UI receives PlayerView alongside legacy compatibility fields. New ordinary display work should read PlayerView first; raw run internals belong to GM/debug surfaces.
+- Ordinary UI receives PlayerView and Selector Graph `panelViews` alongside legacy compatibility fields. New ordinary display work should read `panelViews` for page panels and PlayerView for compact player-safe data; raw run internals belong to GM/debug surfaces.
 - The run loop treats the Growth Ledger as the authority for attributes. Compatibility `manifestationChanges` adjust realized growth, while `growthEvidenceChanges` is the preferred AI-facing route for growth evidence. Age alone does not cash out all potential, even at adulthood.
 - Capability packages and developmental-expression contracts are included in AI prompts so high potential cannot be rendered as infant combat power, adult strength, or fully awakened mythic talent unless the ledger has made that capability effective.
 - Continuity-critical story facts now live in `worldState.storyState`. AI output text is not the authority for whether a thread has been discovered, identified, closed, or advanced; the engine records those facts and passes a narrative contract into the next event.
