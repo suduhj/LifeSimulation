@@ -11,6 +11,7 @@ This project is a multi-world AI life simulator. The current playable MVP suppor
 - Potential / manifested / exposure attribute layers
 - 3 AI-generated choices plus a separate optional free-form action
 - State-first story continuity: structured facts/thread stages are authoritative, while AI only renders prose inside the next-event contract
+- Five-axis lightweight world simulation: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence are tracked as structured `storyState.axes`
 - Annual Year Tick director: every cross-year branch gets an engine-owned yearly life delta; repeated yearly shapes are blocked across family, education, social, institution, resource, health, relationship, route, and world-pressure domains
 - Persistent important NPCs, local saves, endings, and scoring
 

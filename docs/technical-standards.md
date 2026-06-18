@@ -57,7 +57,8 @@ The hidden `GM / 调试` surface is a local tester tool. It may call dev-only ba
 - Do not turn the game into a fixed-plot game, event-card game, or preset-route picker.
 - Keep deterministic game rules separate from AI-generated prose.
 - Use state-first life simulation for continuity-critical story facts: player actions first become structured intents and simulation outcomes, the engine records authoritative `worldState.storyState` facts/closed facts/thread stages/forbidden repeats, the narrative director issues an event contract for the next branch, and AI/mock providers render prose inside that contract.
-- Use annual state transition packages as the default cross-year director: the engine must first produce an `annualFactPackage` with the year's primary life delta, required state changes, background threads, and forbidden event shapes. AI/mock providers may render the package, but they must not make an ongoing thread become the year's main event unless the package selected it as the primary delta.
+- Track five lightweight story axes inside `worldState.storyState.axes`: `lifePressure`, `talentManifestation`, `npcRelationship`, `worldOpportunity`, and `choiceConsequence`. These axes are engine-owned pressure signals, not player-facing prose. Player actions and annual events may add deltas to them; the narrative director uses them to pick a primary and secondary axis for the next event contract.
+- Use annual state transition packages as the default cross-year director: the engine must first produce an `annualFactPackage` with the year's primary life delta, primary/secondary axes, required state changes, background threads, and forbidden event shapes. AI/mock providers may render the package, but they must not make an ongoing thread become the year's main event unless the package selected it as the primary delta.
 - Treat AI output as untrusted content that must be validated before it changes game state.
 - Real AI provider failures may fall back to local safe mock generation to keep a playtest session alive, but fallback responses must be clearly marked with `provider_fallback` in `internal.validationFlags` and must still pass the same state-patch validation path before changing the run.
 - Store world lore, talent definitions, attribute rules, and event schemas as structured data.
@@ -150,7 +151,7 @@ AI should not directly own the authoritative game state. The game engine should 
 - Identity, talents, attributes, relationships, and world-specific progression state
 - Desired output schema
 - Story-state contract when available: closed facts, active thread stage, next pressure, required inclusions, forbidden repeats, and choice-intent direction. The AI may render these into player-facing Chinese prose, but must not reopen a closed fact or repeat a forbidden scene skeleton.
-- Annual fact package when available: yearly life-delta purpose, primary domain/type, required state changes, background threads, event-shape history, and forbidden yearly event shapes. The AI may use ongoing threads as background or supporting pressure, but the package's primary delta is the authority for what this year is about. The engine writes the annual delta back to `worldState.storyState` through a state patch; prose is never the authority for the year's facts.
+- Annual fact package when available: yearly life-delta purpose, primary domain/type, primary axis, secondary axis, required state changes, background threads, event-shape history, and forbidden yearly event shapes. The AI may use ongoing threads as background or supporting pressure, but the package's primary delta and selected axes are the authority for what this year is about. The engine writes the annual delta and featured-axis updates back to `worldState.storyState` through a state patch; prose is never the authority for the year's facts.
 
 AI should return:
 
@@ -356,6 +357,7 @@ Core entities:
 - TimeStep
 - Ending
 - StoryState
+- StoryAxis
 - StoryThread
 - StoryFact
 - ClosedFact

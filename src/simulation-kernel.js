@@ -10,6 +10,26 @@ export function simulateActionOutcome({ run, sourceEvent, action, intent } = {})
       ],
       factsClosed: ["jade_talisman_first_discovery"],
       forbiddenRepeats: ["forest_jade_object_footsteps_choice_skeleton"],
+      axisUpdates: [
+        {
+          axisId: "choiceConsequence",
+          amount: 4,
+          reason: "jade_talisman_choice_created_family_consequence",
+          source: "simulation_kernel",
+        },
+        {
+          axisId: "npcRelationship",
+          amount: 2,
+          reason: "parents_reacted_to_jade_talisman_truth",
+          source: "simulation_kernel",
+        },
+        {
+          axisId: "lifePressure",
+          amount: 1,
+          reason: "family_restriction_changed_daily_life",
+          source: "simulation_kernel",
+        },
+      ],
       threadUpdates: [
         {
           threadId: "jade_talisman",
@@ -27,6 +47,7 @@ export function simulateActionOutcome({ run, sourceEvent, action, intent } = {})
     factsAdded: [],
     factsClosed: [],
     forbiddenRepeats: [],
+    axisUpdates: [],
     threadUpdates: [],
     memoryText: buildGenericMemory(action),
   };

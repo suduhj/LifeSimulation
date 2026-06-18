@@ -1,4 +1,9 @@
-import { buildStoryStatePatch, ensureStoryState } from "./story-state.js";
+import {
+  axisUpdatesForFeaturedAxes,
+  buildStoryStatePatch,
+  ensureStoryState,
+  selectStoryAxes,
+} from "./story-state.js";
 
 export const ANNUAL_FACT_PACKAGE_SCHEMA_VERSION = "mvp.annual_fact_package.v1";
 
@@ -59,12 +64,21 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
   const requiredTextSignals = requiredTextSignalsFor(primaryDelta);
   const hasRepeatedShape = forbiddenEventShapes.length > 0;
   const hasInstitutionObligation = primaryDelta.domain === "institution";
+  const selectedAxes = selectStoryAxes(storyState, {
+    preferredAxis: axisPreferenceFor(primaryDelta.domain),
+    age,
+    seed,
+  });
 
   return {
     schemaVersion: ANNUAL_FACT_PACKAGE_SCHEMA_VERSION,
     age,
     yearPurpose: purposeFor(primaryDelta),
     primaryDelta,
+    primaryAxis: selectedAxes.primaryAxis,
+    secondaryAxis: selectedAxes.secondaryAxis,
+    rankedAxes: selectedAxes.rankedAxes,
+    axisSnapshot: selectedAxes.axisSnapshot,
     requiredStateChanges,
     requiredTextSignals,
     backgroundThreads,
@@ -99,6 +113,13 @@ export function buildAnnualSimulationOutcome(annualFactPackage) {
     ],
     factsClosed: [],
     forbiddenRepeats: annualFactPackage.forbiddenEventShapes,
+    axisUpdates: axisUpdatesForFeaturedAxes({
+      primaryAxis: annualFactPackage.primaryAxis,
+      secondaryAxis: annualFactPackage.secondaryAxis,
+      age,
+      eventShape: delta.eventShape,
+    }),
+    recentEventShapes: [delta.eventShape],
     threadUpdates: [
       {
         threadId: `annual_${delta.domain}`,
@@ -313,6 +334,20 @@ function purposeFor(primaryDelta) {
     return "resolve_pending_institution_pressure";
   }
   return `advance_${primaryDelta.type}`;
+}
+
+function axisPreferenceFor(domain) {
+  return {
+    family: "lifePressure",
+    education: "lifePressure",
+    social: "npcRelationship",
+    institution: "worldOpportunity",
+    resource: "lifePressure",
+    health: "lifePressure",
+    relationship: "npcRelationship",
+    route: "choiceConsequence",
+    world_pressure: "worldOpportunity",
+  }[domain] ?? "choiceConsequence";
 }
 
 export function detectStaleAnnualEventShape(text) {

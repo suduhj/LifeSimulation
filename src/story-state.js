@@ -1,13 +1,31 @@
 export const STORY_STATE_SCHEMA_VERSION = "mvp.story_state.v1";
 
+export const STORY_AXIS_IDS = [
+  "lifePressure",
+  "talentManifestation",
+  "npcRelationship",
+  "worldOpportunity",
+  "choiceConsequence",
+];
+
+const DEFAULT_AXIS_LEVELS = {
+  lifePressure: 2,
+  talentManifestation: 1,
+  npcRelationship: 2,
+  worldOpportunity: 2,
+  choiceConsequence: 0,
+};
+
 export function createEmptyStoryState() {
   return {
     schemaVersion: STORY_STATE_SCHEMA_VERSION,
+    axes: createDefaultAxes(),
     threads: [],
     facts: [],
     closedFacts: [],
     forbiddenRepeats: [],
     activePressures: [],
+    recentEventShapes: [],
   };
 }
 
@@ -24,6 +42,8 @@ export function ensureStoryState(run) {
   current.closedFacts = Array.isArray(current.closedFacts) ? current.closedFacts : [];
   current.forbiddenRepeats = Array.isArray(current.forbiddenRepeats) ? current.forbiddenRepeats : [];
   current.activePressures = Array.isArray(current.activePressures) ? current.activePressures : [];
+  current.axes = normalizeAxes(current.axes);
+  current.recentEventShapes = Array.isArray(current.recentEventShapes) ? current.recentEventShapes : [];
   return current;
 }
 
@@ -33,6 +53,8 @@ export function recordSimulationOutcome(run, outcome = {}) {
   addUnique(storyState.facts, outcome.factsAdded ?? []);
   addUnique(storyState.closedFacts, outcome.factsClosed ?? []);
   addUnique(storyState.forbiddenRepeats, outcome.forbiddenRepeats ?? []);
+  applyAxisUpdates(storyState, outcome.axisUpdates ?? [], nextRun.player?.age ?? 0);
+  addRecentEventShapes(storyState, outcome.recentEventShapes ?? []);
 
   for (const update of outcome.threadUpdates ?? []) {
     if (!update?.threadId) continue;
@@ -62,6 +84,8 @@ export function buildStoryStatePatch(outcome = {}, age = 0) {
   addUnique(storyState.facts, outcome.factsAdded ?? []);
   addUnique(storyState.closedFacts, outcome.factsClosed ?? []);
   addUnique(storyState.forbiddenRepeats, outcome.forbiddenRepeats ?? []);
+  applyAxisUpdates(storyState, outcome.axisUpdates ?? [], age);
+  addRecentEventShapes(storyState, outcome.recentEventShapes ?? []);
   for (const update of outcome.threadUpdates ?? []) {
     if (!update?.threadId) continue;
     const thread = {
@@ -87,10 +111,124 @@ export function buildStoryStatePatch(outcome = {}, age = 0) {
   };
 }
 
+export function createDefaultAxes() {
+  return Object.fromEntries(STORY_AXIS_IDS.map((axisId) => [axisId, createAxisState(axisId)]));
+}
+
+export function normalizeAxes(axes) {
+  const normalized = createDefaultAxes();
+  if (!axes || typeof axes !== "object" || Array.isArray(axes)) return normalized;
+  for (const axisId of STORY_AXIS_IDS) {
+    const current = axes[axisId];
+    if (!current || typeof current !== "object" || Array.isArray(current)) continue;
+    normalized[axisId] = {
+      ...normalized[axisId],
+      level: clampAxisLevel(current.level ?? normalized[axisId].level),
+      recentDeltas: Array.isArray(current.recentDeltas) ? current.recentDeltas.slice(-8) : [],
+      cooldown: Math.max(0, Math.floor(Number(current.cooldown) || 0)),
+      lastFeaturedAge: Number.isFinite(current.lastFeaturedAge) ? current.lastFeaturedAge : null,
+    };
+  }
+  return normalized;
+}
+
+export function applyAxisUpdates(storyState, updates = [], age = 0) {
+  storyState.axes = normalizeAxes(storyState.axes);
+  for (const update of updates ?? []) {
+    const axisId = update?.axisId;
+    if (!STORY_AXIS_IDS.includes(axisId)) continue;
+    const axis = storyState.axes[axisId];
+    const amount = Number.isFinite(update.amount) ? update.amount : 0;
+    axis.level = clampAxisLevel(axis.level + amount);
+    if (Number.isFinite(update.cooldown)) axis.cooldown = Math.max(0, Math.floor(update.cooldown));
+    if (update.markFeatured) axis.lastFeaturedAge = Number.isFinite(update.age) ? update.age : age;
+    axis.recentDeltas.push({
+      age: Number.isFinite(update.age) ? update.age : age,
+      amount,
+      reason: update.reason ?? "",
+      source: update.source ?? "simulation_kernel",
+      eventShape: update.eventShape ?? "",
+    });
+    axis.recentDeltas = axis.recentDeltas.slice(-8);
+  }
+}
+
+export function selectStoryAxes(storyState, { preferredAxis, age = 0, seed = 1 } = {}) {
+  const axes = normalizeAxes(storyState?.axes);
+  const overridePrimaryAxis = highPressureChoiceConsequence(axes) ? "choiceConsequence" : "";
+  const ranked = STORY_AXIS_IDS
+    .map((axisId, index) => {
+      const axis = axes[axisId];
+      const cooldownPenalty = (axis.cooldown ?? 0) * 3;
+      const recencyBonus = axis.lastFeaturedAge === null ? 2 : Math.min(4, Math.max(0, age - axis.lastFeaturedAge));
+      const preferredBonus = axisId === preferredAxis ? 2 : 0;
+      const deterministicNoise = ((Number(seed) || 0) + index) % 3;
+      return {
+        axisId,
+        score: axis.level + recencyBonus + preferredBonus + deterministicNoise - cooldownPenalty,
+      };
+    })
+    .sort((a, b) => b.score - a.score || STORY_AXIS_IDS.indexOf(a.axisId) - STORY_AXIS_IDS.indexOf(b.axisId));
+  const primaryAxis = overridePrimaryAxis || ranked[0]?.axisId || "lifePressure";
+  const secondaryAxis = ranked.find((item) => item.axisId !== primaryAxis)?.axisId ?? "worldOpportunity";
+  return { primaryAxis, secondaryAxis, rankedAxes: ranked, axisSnapshot: axes };
+}
+
+export function axisUpdatesForFeaturedAxes({ primaryAxis, secondaryAxis, age, eventShape } = {}) {
+  return [
+    {
+      axisId: primaryAxis,
+      amount: -1,
+      reason: "axis_featured_as_primary",
+      source: "annual_primary_axis",
+      cooldown: 1,
+      markFeatured: true,
+      age,
+      eventShape,
+    },
+    {
+      axisId: secondaryAxis,
+      amount: 0,
+      reason: "axis_featured_as_secondary",
+      source: "annual_secondary_axis",
+      markFeatured: true,
+      age,
+      eventShape,
+    },
+  ].filter((update) => update.axisId);
+}
+
 function addUnique(target, values) {
   for (const value of values ?? []) {
     if (value && !target.includes(value)) target.push(value);
   }
+}
+
+function createAxisState(axisId) {
+  return {
+    level: DEFAULT_AXIS_LEVELS[axisId] ?? 0,
+    recentDeltas: [],
+    cooldown: 0,
+    lastFeaturedAge: null,
+  };
+}
+
+function clampAxisLevel(value) {
+  const numeric = Number.isFinite(value) ? value : 0;
+  return Math.max(0, Math.min(10, Math.round(numeric)));
+}
+
+function highPressureChoiceConsequence(axes) {
+  const choiceLevel = axes.choiceConsequence?.level ?? 0;
+  return choiceLevel >= 4;
+}
+
+function addRecentEventShapes(storyState, shapes = []) {
+  const next = [
+    ...(Array.isArray(storyState.recentEventShapes) ? storyState.recentEventShapes : []),
+    ...shapes.filter(Boolean),
+  ];
+  storyState.recentEventShapes = next.slice(-8);
 }
 
 function upsertPressure(pressures, pressure) {

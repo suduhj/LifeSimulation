@@ -1,6 +1,7 @@
 import { createRng } from "./random.js";
 import { generateInitialImportantNPCs } from "./npc-generator.js";
 import { getPersonalityOption } from "./personality-options.js";
+import { createEmptyStoryState } from "./story-state.js";
 
 const ATTRIBUTE_KEYS = ["appearance", "intelligence", "constitution", "familyBackground", "luck"];
 const DEFAULT_ALLOCATION = {
@@ -85,14 +86,7 @@ export function createInitialRun({
     worldState: {
       progress: createInitialWorldProgress(world),
       flags: [],
-      storyState: {
-        schemaVersion: "mvp.story_state.v1",
-        threads: [],
-        facts: [],
-        closedFacts: [],
-        forbiddenRepeats: [],
-        activePressures: [],
-      },
+      storyState: createEmptyStoryState(),
     },
     statuses: [],
     importantNPCs: [],
