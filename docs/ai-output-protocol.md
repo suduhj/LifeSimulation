@@ -8,6 +8,8 @@ AI output is a proposal, not authoritative state.
 
 The AI may write narrative, interpret player intent, suggest consequences, and propose state patches. The game engine must parse, validate, and approve those patches before applying them to the save.
 
+In the current runtime, approved patches are still not applied directly. The engine first converts them into DomainEvents, passes them through `transitionRun()`, checks invariants, appends them to `run.eventLog`, and only then exposes the resulting run projection.
+
 ## Generation Flow
 
 Each life-simulation event follows this flow:
@@ -20,8 +22,10 @@ Each life-simulation event follows this flow:
 6. Engine sends the selected state summary, event source context, selected seeds when relevant, world constraints, and output schema to AI.
 7. AI returns raw JSON matching `schemas/ai-event-response.schema.json`.
 8. Engine validates JSON structure and state changes.
-9. Engine applies accepted changes, rejects invalid changes, or asks the AI/player for clarification when needed.
-10. Player sees pure text life-simulator output, visible changes, 3 AI-generated choices, and an optional 4th free-form entry when interaction mode allows it.
+9. Engine converts accepted `statePatch` entries into DomainEvents.
+10. `transitionRun()` reduces DomainEvents, checks invariants, appends `eventLog`, and builds PlayerView/PromptView/GMView projections.
+11. Engine rejects invalid changes, or asks the AI/player for clarification when needed.
+12. Player sees pure text life-simulator output, visible changes, 3 AI-generated choices, and an optional 4th free-form entry when interaction mode allows it.
 
 Content seeds are inspiration and constraints, not fixed scripts. The AI must adapt them to the current save, player character, NPC relationships, world progress, and prior memory.
 
@@ -53,6 +57,7 @@ For `life_event`, the engine prompt should include:
 
 - selected world ID and world design summary
 - current run ID and turn ID
+- PromptView data produced by the engine, not an ad-hoc raw save dump
 - player character age, life stage, identity, gender, talents, and attribute layers
 - Growth Ledger summary: potential, realized value, current effective value, maturity cap, locked potential, evidence, milestones, and exposure
 - capability packages and developmental-expression limits, including allowed expressions, locked capabilities, check tags, and forbidden actions
@@ -267,6 +272,8 @@ The engine does not allow AI to replace the whole save. Patches must target spec
 
 AI must not directly author or overwrite `effective`, `realized`, `maturityCap`, or `lockedPotential`. Those values are recalculated by `src/growth-ledger.js`.
 
+AI must not author DomainEvents directly. DomainEvents are engine-owned records created after validation by `src/domain/events/patch-to-events.js`; only reducers may turn them into run state.
+
 Example growth evidence:
 
 ```json
@@ -351,6 +358,7 @@ The engine owns state. You only propose narrative and statePatch changes.
 Use Growth Ledger current effective values and capability packages for age-appropriate narration.
 Use potential values only for destiny and long-term tendency.
 If growth is justified, submit statePatch.growthEvidenceChanges; do not directly author effective, realized, maturityCap, or lockedPotential.
+Do not author DomainEvents, eventLog entries, or direct run mutations. The engine converts accepted statePatch entries into DomainEvents and reducers settle state.
 Do not narrate locked capabilities as already usable.
 Use exposure values to decide who notices abnormalities.
 Keep the selected world distinct. Do not import mechanics from other worlds unless the context explicitly allows it.

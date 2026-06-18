@@ -6,6 +6,7 @@ import { describe, it } from "node:test";
 import {
   applyAiResponseToRun,
   applyGrowthEvidence,
+  createDomainEvent,
   createInitialRun,
   ensureGrowthLedger,
   loadMvpWorlds,
@@ -13,6 +14,7 @@ import {
   maturityCapForAge,
   recalculateGrowthLedgerForRun,
   saveRunToFile,
+  transitionRun,
 } from "../src/index.js";
 import { generateMockLifeEvent } from "../src/mock-ai.js";
 
@@ -152,16 +154,26 @@ describe("growth ledger", () => {
       playerProfile: { name: "Mira", gender: "female", personality: "curious" },
     });
     ensureGrowthLedger(run);
-    applyGrowthEvidence(run, [{ attribute: "intelligence", amount: 1, source: "careful_notes", reason: "kept a diary" }]);
+    const eventSourcedRun = transitionRun({
+      run,
+      events: [
+        createDomainEvent({
+          type: "growth.evidence_added",
+          run,
+          source: "test",
+          payload: { attribute: "intelligence", amount: 1, source: "careful_notes", reason: "kept a diary" },
+        }),
+      ],
+    }).nextRun;
 
     const saveDir = path.join("tmp", "tests", `growth-ledger-${Date.now()}-${Math.random().toString(16).slice(2)}`);
     fs.mkdirSync(saveDir, { recursive: true });
     const savePath = path.join(saveDir, "run.json");
 
-    saveRunToFile(run, savePath);
+    saveRunToFile(eventSourcedRun, savePath);
     const loaded = loadRunFromFile(savePath);
 
-    assert.deepEqual(loaded.player.growthLedger, run.player.growthLedger);
+    assert.deepEqual(loaded.player.growthLedger, eventSourcedRun.player.growthLedger);
     assert.equal(loaded.player.growthLedger.attributes.intelligence.evidence.at(-1).source, "careful_notes");
   });
 

@@ -11,6 +11,12 @@ export { detectPlayerTextLeaks, validateAiResponse } from "./ai-response-validat
 export { generateChoiceResolution } from "./choice-resolution.js";
 export { generateMvpEndingSummary, shouldTriggerMvpEnding } from "./ending-generator.js";
 export { loadDotEnvFile, loadProjectEnv } from "./env-loader.js";
+export { createDomainEvent } from "./domain/events/event-factory.js";
+export { patchToDomainEvents } from "./domain/events/patch-to-events.js";
+export { buildGmView } from "./domain/projections/gm-view.js";
+export { buildPlayerView } from "./domain/projections/player-view.js";
+export { buildPromptView } from "./domain/projections/prompt-view.js";
+export { reduceRunEvent, reduceRunEvents } from "./domain/reducers/run-reducer.js";
 export { TALENT_RARITY_PROBABILITIES, createInitialRun, drawStartingTalents } from "./initial-run.js";
 export { assessFreeformClarification, generateFreeformClarificationRequest } from "./freeform-clarification.js";
 export { generateFreeformResolution } from "./freeform-resolution.js";
@@ -36,6 +42,10 @@ export { createPlaySession, createPlaySessionAsync, handlePlayerInput, handlePla
 export { buildProviderDiagnosticLines } from "./provider-diagnostics.js";
 export { getProviderConfigStatus, isUsableProviderValue } from "./provider-config.js";
 export { createRng } from "./random.js";
+export { createEventLog, ensureEventLog } from "./runtime/event-log.js";
+export { assertRunInvariants, checkRunInvariants } from "./runtime/invariants.js";
+export { replayRun } from "./runtime/replay-run.js";
+export { transitionRun } from "./runtime/transition-run.js";
 export { buildRunSummary, formatRunSummary } from "./run-summary.js";
 export { applyAiResponseToRun, lifeStageForAge, runMockTurns } from "./run-loop.js";
 export { assertValidRunState, validateRunState } from "./run-validator.js";

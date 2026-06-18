@@ -1,0 +1,105 @@
+{
+  "name": "jade thread does not reopen first discovery",
+  "eventLog": {
+    "schemaVersion": "mvp.event_log.v1",
+    "runId": "run_replay_jade",
+    "worldId": "cultivation",
+    "events": [
+      {
+        "eventId": "evt_000001",
+        "type": "run.created",
+        "runId": "run_replay_jade",
+        "worldId": "cultivation",
+        "turnId": "run_created",
+        "age": 0,
+        "source": "fixture",
+        "payload": {
+          "run": {
+            "schemaVersion": "mvp.run.v1",
+            "runId": "run_replay_jade",
+            "worldId": "cultivation",
+            "seed": 1,
+            "player": {
+              "name": "Lin Lan",
+              "gender": "female",
+              "personality": { "id": "curious", "label": "好奇探索", "aiHint": "curious" },
+              "age": 0,
+              "lifeStage": "birth",
+              "identitySeedId": "minor_clan_branch",
+              "talents": [
+                { "id": "steady_hands", "rarity": "common", "manifestationType": "stage" },
+                { "id": "pleasant_smile", "rarity": "common", "manifestationType": "stage" },
+                { "id": "strong_blood", "rarity": "fine", "manifestationType": "stage" }
+              ],
+              "attributes": {
+                "appearance": { "base": 4, "identityBonus": 0, "talentBonus": 0, "talentPotential": 0, "growthBonus": 0, "temporaryModifier": 0, "permanentModifier": 0, "potential": 4, "manifested": 3, "effective": 3, "realized": 4, "maturityCap": 3, "lockedPotential": 0, "exposure": 0 },
+                "intelligence": { "base": 4, "identityBonus": 0, "talentBonus": 0, "talentPotential": 0, "growthBonus": 0, "temporaryModifier": 0, "permanentModifier": 0, "potential": 4, "manifested": 3, "effective": 3, "realized": 4, "maturityCap": 3, "lockedPotential": 0, "exposure": 0 },
+                "constitution": { "base": 4, "identityBonus": 0, "talentBonus": 0, "talentPotential": 0, "growthBonus": 0, "temporaryModifier": 0, "permanentModifier": 0, "potential": 4, "manifested": 3, "effective": 3, "realized": 4, "maturityCap": 3, "lockedPotential": 0, "exposure": 0 },
+                "familyBackground": { "base": 4, "identityBonus": 0, "talentBonus": 0, "talentPotential": 0, "growthBonus": 0, "temporaryModifier": 0, "permanentModifier": 0, "potential": 4, "manifested": 4, "effective": 4, "realized": 4, "maturityCap": 9007199254740991, "lockedPotential": 0, "exposure": 4 },
+                "luck": { "base": 4, "identityBonus": 0, "talentBonus": 0, "talentPotential": 0, "growthBonus": 0, "temporaryModifier": 0, "permanentModifier": 0, "potential": 4, "manifested": 3, "effective": 3, "realized": 4, "maturityCap": 3, "lockedPotential": 0, "exposure": 0 }
+              },
+              "growthLedger": {
+                "schemaVersion": "mvp.growth_ledger.v1",
+                "authority": "engine",
+                "attributes": {}
+              }
+            },
+            "setup": {
+              "identitySeed": { "id": "minor_clan_branch" },
+              "talentDraw": ["steady_hands", "pleasant_smile", "strong_blood", "minor_luck", "clear_memory"],
+              "keptTalentIds": ["steady_hands", "pleasant_smile", "strong_blood"],
+              "allocation": { "appearance": 4, "intelligence": 4, "constitution": 4, "familyBackground": 4, "luck": 4 }
+            },
+            "worldState": {
+              "progress": { "cultivation_foundation": 0 },
+              "flags": [],
+              "storyState": {
+                "schemaVersion": "mvp.story_state.v1",
+                "axes": {},
+                "threads": [],
+                "facts": [],
+                "closedFacts": [],
+                "forbiddenRepeats": [],
+                "activePressures": [],
+                "recentEventShapes": []
+              }
+            },
+            "statuses": [],
+            "importantNPCs": [],
+            "factions": [],
+            "eventHistory": [],
+            "memory": []
+          }
+        },
+        "metadata": { "createdAt": "2026-01-01T00:00:00.000Z" }
+      },
+      {
+        "eventId": "evt_000002",
+        "type": "story.fact_closed",
+        "runId": "run_replay_jade",
+        "worldId": "cultivation",
+        "turnId": "turn_1",
+        "age": 5,
+        "source": "replay_fixture",
+        "payload": { "fact": "jade_talisman_first_discovery" },
+        "metadata": { "createdAt": "2026-01-01T00:00:01.000Z" }
+      },
+      {
+        "eventId": "evt_000003",
+        "type": "story.thread_updated",
+        "runId": "run_replay_jade",
+        "worldId": "cultivation",
+        "turnId": "turn_1",
+        "age": 5,
+        "source": "replay_fixture",
+        "payload": { "threadId": "jade_talisman", "stage": "identified", "nextPressure": "family_limits_access", "updatedAge": 5 },
+        "metadata": { "createdAt": "2026-01-01T00:00:02.000Z" }
+      }
+    ]
+  },
+  "expected": {
+    "closedFacts": ["jade_talisman_first_discovery"],
+    "threadStages": { "jade_talisman": "identified" },
+    "playerViewMustNotContain": ["hiddenInfo", "jade_talisman_first_discovery"]
+  }
+}

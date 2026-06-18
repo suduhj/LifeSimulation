@@ -9,6 +9,7 @@ import { isUsableProviderValue } from "./provider-config.js";
 import { assertStoryContract } from "./story-contract-validator.js";
 import { talentLabel, visibleTalentName } from "./localization.js";
 import { buildCapabilityPackages, buildDevelopmentalExpression } from "./capability-package.js";
+import { buildPromptView } from "./domain/projections/prompt-view.js";
 
 const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
 const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash";
@@ -1088,18 +1089,11 @@ function chooseFirstActionAge(run) {
 }
 
 function buildRunPromptSnapshot(run) {
-  const capabilityPackages = buildCapabilityPackages(run);
-  const developmentalExpression = buildDevelopmentalExpression(run);
+  const promptView = buildPromptView(run);
   return {
-    runId: run.runId,
-    worldId: run.worldId,
-    currentAge: run.player.age,
-    lifeStage: run.player.lifeStage,
+    ...promptView,
     player: {
-      name: run.player.name,
-      gender: run.player.gender,
-      personality: run.player.personality,
-      identitySeedId: run.player.identitySeedId,
+      ...promptView.player,
       talents: (run.player.talents ?? []).map((talent) => ({
         name: visibleTalentName(talent) || talentLabel(talent.id),
         rarity: talent.rarity,
@@ -1107,23 +1101,7 @@ function buildRunPromptSnapshot(run) {
         tags: talent.tags,
         effects: talent.effects,
       })),
-      attributes: run.player.attributes,
-      growthLedger: run.player.growthLedger,
-      capabilityPackages,
-      developmentalExpression,
     },
-    worldState: run.worldState,
-    importantNPCs: run.importantNPCs.map((npc) => ({
-      id: npc.id,
-      role: npc.role,
-      playerVisible: npc.playerVisible,
-      relationship: npc.relationship,
-      knownIdentity: npc.knownIdentity,
-      hiddenInfo: npc.hiddenInfo,
-      stance: npc.stance,
-      flags: npc.flags,
-    })),
-    recentMemory: run.memory.slice(-8),
     recentEvents: run.eventHistory.slice(-5).map((event) => ({
       responseType: event.responseType,
       eventId: event.event?.eventId,
