@@ -194,8 +194,31 @@ function storyStatePatchToOutcome(storyState) {
     factsAdded: storyState?.facts ?? [],
     factsClosed: storyState?.closedFacts ?? [],
     forbiddenRepeats: storyState?.forbiddenRepeats ?? [],
+    axisUpdates: axesToOutcomeUpdates(storyState?.axes),
+    recentEventShapes: storyState?.recentEventShapes ?? [],
     threadUpdates: storyState?.threads ?? [],
   };
+}
+
+function axesToOutcomeUpdates(axes) {
+  if (!axes || typeof axes !== "object" || Array.isArray(axes)) return [];
+  const updates = [];
+  for (const [axisId, axis] of Object.entries(axes)) {
+    const deltas = Array.isArray(axis?.recentDeltas) ? axis.recentDeltas : [];
+    for (const delta of deltas) {
+      updates.push({
+        axisId,
+        amount: delta?.amount ?? 0,
+        reason: delta?.reason ?? "",
+        source: delta?.source ?? "story_state_patch",
+        eventShape: delta?.eventShape ?? "",
+        age: delta?.age,
+        cooldown: axis?.cooldown,
+        markFeatured: axis?.lastFeaturedAge !== null && axis?.lastFeaturedAge !== undefined,
+      });
+    }
+  }
+  return updates;
 }
 
 function applyRelationshipChange(run, change) {

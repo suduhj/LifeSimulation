@@ -27,7 +27,15 @@ export { applyAiResponseToRun, lifeStageForAge, runMockTurns } from "./run-loop.
 export { assertValidRunState, validateRunState } from "./run-validator.js";
 export { loadRunFromFile, saveRunToFile } from "./save-store.js";
 export { applySimulationOutcomeToResponse, simulateActionOutcome } from "./simulation-kernel.js";
-export { createEmptyStoryState, ensureStoryState, recordSimulationOutcome } from "./story-state.js";
+export {
+  STORY_AXIS_IDS,
+  applyAxisUpdates,
+  createDefaultAxes,
+  createEmptyStoryState,
+  ensureStoryState,
+  recordSimulationOutcome,
+  selectStoryAxes,
+} from "./story-state.js";
 export { assertStoryContract, validateStoryContract } from "./story-contract-validator.js";
 export { createWebSessionStore } from "./web-session-store.js";
 export {
