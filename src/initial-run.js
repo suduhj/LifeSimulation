@@ -3,6 +3,7 @@ import { generateInitialImportantNPCs } from "./npc-generator.js";
 import { getPersonalityOption } from "./personality-options.js";
 import { createEmptyStoryState } from "./story-state.js";
 import { createGrowthLedgerFromAttributes, syncAttributesFromGrowthLedger } from "./growth-ledger.js";
+import { ensureEventLog } from "./runtime/event-log.js";
 
 const ATTRIBUTE_KEYS = ["appearance", "intelligence", "constitution", "familyBackground", "luck"];
 const DEFAULT_ALLOCATION = {
@@ -104,6 +105,7 @@ export function createInitialRun({
   };
   syncAttributesFromGrowthLedger(run);
   run.importantNPCs = generateInitialImportantNPCs({ world, runId, seed });
+  ensureEventLog(run);
   return run;
 }
 

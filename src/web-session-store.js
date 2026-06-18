@@ -19,6 +19,8 @@ import {
   parseAllocationInput,
   parseTalentSelectionInput,
   saveRunToFile,
+  buildGmView,
+  buildPlayerView,
 } from "./index.js";
 import {
   applyDevPresetToRun,
@@ -354,6 +356,8 @@ function serializeSession(sessionId, entry, worlds) {
     inputRequired: session.inputRequired,
     pendingFreeformConfirmation: Boolean(session.pendingFreeformConfirmation),
     run: serializeRun(session.currentRun, worlds),
+    playerView: buildPlayerView(session.currentRun),
+    gmView: entry.devMode ? buildGmView(session.currentRun) : undefined,
     currentEvent: serializeAiResponse(session.currentEvent, session.currentRun, worlds, { forceFatePreview: openingFatePreview }),
     resolution: session.resolution ? serializeAiResponse(session.resolution, session.currentRun, worlds) : undefined,
     endingSummary: session.endingSummary ? serializeAiResponse(session.endingSummary, session.currentRun, worlds) : undefined,
@@ -361,6 +365,7 @@ function serializeSession(sessionId, entry, worlds) {
 }
 
 function serializeRun(run, worlds) {
+  const playerView = buildPlayerView(run);
   return {
     runId: run.runId,
     worldId: run.worldId,
@@ -386,6 +391,7 @@ function serializeRun(run, worlds) {
     eventHistoryCount: run.eventHistory.length,
     score: run.score ?? 0,
     ending: run.ending,
+    playerView,
     summaryLines: formatRunSummary(run),
   };
 }

@@ -1,5 +1,6 @@
 import { validateAiResponse } from "./ai-response-validator.js";
-import { rebuildGrowthLedgerFromAttributes } from "./growth-ledger.js";
+import { createDomainEvent } from "./domain/events/event-factory.js";
+import { transitionRun } from "./runtime/transition-run.js";
 
 export const DEV_PRESETS = [
   { id: "ordinary_person", name: "标准普通人", allocation: { appearance: 4, intelligence: 4, constitution: 4, familyBackground: 4, luck: 4 } },
@@ -78,40 +79,41 @@ export function getDevToolsCatalog() {
 export function applyDevPresetToRun(run, presetId) {
   const preset = DEV_PRESETS.find((item) => item.id === presetId);
   if (!preset) throw new Error(`Unknown dev preset: ${presetId}`);
-  const nextRun = structuredClone(run);
-
+  const events = [];
   for (const [key, value] of Object.entries(preset.allocation)) {
-    const attribute = nextRun.player.attributes[key];
-    if (!attribute) continue;
-    attribute.base = value;
-    attribute.potential = value + (attribute.talentBonus ?? 0) + (attribute.identityBonus ?? 0) + (attribute.growthBonus ?? 0);
-    attribute.manifested = key === "familyBackground" ? attribute.potential : Math.max(0, Math.floor(attribute.potential * 0.1));
-    attribute.exposure = key === "familyBackground" ? Math.min(100, attribute.potential) : Math.max(0, Math.floor(attribute.manifested * 0.5));
+    const currentBase = run.player.attributes[key]?.base ?? 0;
+    events.push(devEvent(run, "growth.attribute_layer_changed", {
+      target: key,
+      sourceLayer: "base",
+      amount: value - currentBase,
+      applyToManifested: false,
+      source: `dev_preset_${preset.id}`,
+    }));
   }
-
   if (preset.exposureOverride !== undefined) {
-    for (const attribute of Object.values(nextRun.player.attributes)) {
-      attribute.exposure = preset.exposureOverride;
+    for (const key of Object.keys(run.player.attributes ?? {})) {
+      events.push(devEvent(run, "growth.exposure_changed", {
+        target: key,
+        value: preset.exposureOverride,
+        source: `dev_preset_${preset.id}`,
+      }));
     }
   }
   if (preset.devTalentId) {
-    addDevTalent(nextRun, preset.devTalentId);
+    events.push(...devTalentEvents(run, preset.devTalentId));
   }
-  rebuildGrowthLedgerFromAttributes(nextRun);
-  nextRun.memory.push({ type: "dev_preset", text: `Applied dev preset ${preset.id}.` });
-  nextRun.worldState.flags ??= [];
-  if (!nextRun.worldState.flags.includes("dev_mode_used")) nextRun.worldState.flags.push("dev_mode_used");
-  return nextRun;
+  events.push(devEvent(run, "memory.added", { type: "dev_preset", text: `Applied dev preset ${preset.id}.` }));
+  events.push(devEvent(run, "world.flag_added", { flag: "dev_mode_used" }));
+  return transitionRun({ run, events }).nextRun;
 }
 
 export function applyDevTalentToRun(run, talentId) {
-  const nextRun = structuredClone(run);
-  addDevTalent(nextRun, talentId);
-  rebuildGrowthLedgerFromAttributes(nextRun);
-  nextRun.memory.push({ type: "dev_talent", text: `Applied dev-only talent ${talentId}.` });
-  nextRun.worldState.flags ??= [];
-  if (!nextRun.worldState.flags.includes("dev_mode_used")) nextRun.worldState.flags.push("dev_mode_used");
-  return nextRun;
+  const events = [
+    ...devTalentEvents(run, talentId),
+    devEvent(run, "memory.added", { type: "dev_talent", text: `Applied dev-only talent ${talentId}.` }),
+    devEvent(run, "world.flag_added", { flag: "dev_mode_used" }),
+  ];
+  return transitionRun({ run, events }).nextRun;
 }
 
 export function buildDevScenarioResponse({ run, scenarioId } = {}) {
@@ -310,30 +312,49 @@ function choice(id, text, riskLabel) {
   };
 }
 
-function addDevTalent(run, talentId) {
+function devTalentEvents(run, talentId) {
   const talent = DEV_TALENTS.find((item) => item.id === talentId);
   if (!talent) throw new Error(`Unknown dev talent: ${talentId}`);
+  const events = [];
   if (!run.player.talents.some((item) => item.id === talent.id)) {
-    run.player.talents.push({
+    events.push(devEvent(run, "player.talent_added", {
       id: talent.id,
       rarity: talent.rarity,
       manifestationType: talent.manifestationType,
       tags: talent.tags,
       testOnly: true,
       visibility: "dev_only",
-    });
+      effects: talent.effects,
+    }));
   }
   for (const [key, amount] of Object.entries(talent.effects.attributePotential ?? {})) {
-    const attribute = run.player.attributes[key];
-    if (!attribute) continue;
-    const talentPotential = (attribute.talentPotential ?? attribute.talentBonus ?? 0) + amount;
-    attribute.talentPotential = talentPotential;
-    attribute.talentBonus = talentPotential;
-    attribute.potential += amount;
-    const ratio = talent.effects.manifestedRatio ?? (talent.manifestationType === "immediate" ? 0.5 : 0.1);
-    attribute.manifested = key === "familyBackground" ? attribute.potential : Math.max(attribute.manifested, Math.floor(attribute.potential * ratio));
-    attribute.exposure = Math.min(100, Math.max(attribute.exposure, Math.floor(attribute.manifested * 0.5) + (talent.effects.exposureBonus ?? 0)));
+    events.push(devEvent(run, "growth.attribute_layer_changed", {
+      target: key,
+      sourceLayer: "talentPotential",
+      amount,
+      applyToManifested: talent.manifestationType === "immediate",
+      source: `dev_talent_${talent.id}`,
+    }));
+    if (talent.effects.exposureBonus) {
+      events.push(devEvent(run, "growth.exposure_changed", {
+        target: key,
+        amount: talent.effects.exposureBonus,
+        source: `dev_talent_${talent.id}`,
+      }));
+    }
   }
+  return events;
+}
+
+function devEvent(run, type, payload) {
+  return createDomainEvent({
+    type,
+    run,
+    source: "gm_tool",
+    turnId: `gm_${run.eventLog?.events?.length ?? run.eventHistory?.length ?? 0}`,
+    payload,
+    metadata: { reason: "GM/dev tool state change" },
+  });
 }
 
 function progressLabel(id) {

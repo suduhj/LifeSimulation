@@ -15,15 +15,17 @@ The skeleton is not the full game yet. It proves the core runtime path that the 
 7. Select one of the seven event source types using world-specific weights.
 8. Generate AI life events from either soft content seeds or open world/context rules, without treating pools as fixed scripts.
 9. Validate each AI response against the MVP protocol rules.
-10. Apply accepted `statePatch` changes to the run; AI growth can only enter as `growthEvidenceChanges`, which the engine converts into realized growth.
-11. Resolve player choices and free-form attempted actions into `action_resolution` responses with provider support.
-12. Convert resolved player actions into lightweight state-first story facts: intent, simulation outcome, closed facts, thread stage, next pressure, forbidden repeat scene skeletons, and five-axis pressure deltas.
-13. Track five engine-owned story axes in `worldState.storyState.axes`: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence.
-14. Generate an annual fact package for cross-year branches. The package names the new yearly life delta, selects a primary axis and secondary axis, declares required state changes, background threads, and forbidden event shapes before AI prose is generated.
-15. Generate the next playable life event from a narrative director contract. The annual fact package owns the year's main life delta and selected axes; tracked threads such as clues, family pressure, institutions, resources, and world danger can support it as background instead of replaying a settled discovery or repeated scene structure.
-16. Save and load portable run JSON with MVP run-state validation.
-17. Run a developer-facing command-line setup, event loop, status summary display, and MVP short-run ending summary.
-18. Start every new life with a non-interactive opening sequence: birth background card, fate preview, and automatic early-year progression to the first meaningful branch.
+10. Convert accepted `statePatch` changes into DomainEvents, pass them through `transitionRun()`, reduce them into the next run projection, and reject transitions that fail invariants.
+11. Apply AI growth only through `growthEvidenceChanges`, which becomes a growth DomainEvent before the Growth Ledger converts it into realized growth.
+12. Resolve player choices and free-form attempted actions into `action_resolution` responses with provider support.
+13. Convert resolved player actions into lightweight state-first story facts: intent, simulation outcome, closed facts, thread stage, next pressure, forbidden repeat scene skeletons, and five-axis pressure deltas.
+14. Track five engine-owned story axes in `worldState.storyState.axes`: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence.
+15. Generate an annual fact package for cross-year branches. The package names the new yearly life delta, selects a primary axis and secondary axis, declares required state changes, background threads, and forbidden event shapes before AI prose is generated.
+16. Generate the next playable life event from a narrative director contract. The annual fact package owns the year's main life delta and selected axes; tracked threads such as clues, family pressure, institutions, resources, and world danger can support it as background instead of replaying a settled discovery or repeated scene structure.
+17. Save and load portable run JSON with MVP run-state validation. Current saves include `eventLog`; load prefers `replayRun(eventLog)` over trusting the snapshot.
+18. Build PlayerView, PromptView, and GMView projections from the authoritative run so ordinary UI, AI prompts, and debug tools do not consume the same raw surface.
+19. Run a developer-facing command-line setup, event loop, status summary display, and MVP short-run ending summary.
+20. Start every new life with a non-interactive opening sequence: birth background card, fate preview, and automatic early-year progression to the first meaningful branch.
 
 The real player-facing playtest target is a web version. The current CLI is useful for engine smoke tests, scripted runs, save validation, and AI provider validation, but it should not be treated as the final playable surface for testers.
 
@@ -51,6 +53,18 @@ Run tests:
 
 ```bash
 npm test
+```
+
+Replay saved bug fixtures:
+
+```bash
+npm run replay:bugs
+```
+
+Check event-sourced architecture guardrails:
+
+```bash
+npm run test:architecture
 ```
 
 Validate runtime world data:
@@ -266,6 +280,16 @@ World IDs:
 
 - `src/world-loader.js`: loads MVP world runtime JSON.
 - `src/initial-run.js`: creates the first run state.
+- `src/runtime/event-log.js`: creates and normalizes append-only event logs. New runs receive a `run.created` event.
+- `src/runtime/transition-run.js`: the transition firewall. It applies DomainEvents through reducers, appends them to the event log, builds projections, and checks invariants.
+- `src/runtime/replay-run.js`: rebuilds a run projection deterministically from an event log.
+- `src/runtime/invariants.js`: rejects illegal state transitions such as age rollback, reopened closed facts, thread-stage rollback, Growth Ledger overflow, and PlayerView leaks.
+- `src/domain/events/event-factory.js`: creates typed DomainEvents.
+- `src/domain/events/patch-to-events.js`: converts accepted AI `statePatch` data into DomainEvents.
+- `src/domain/reducers/run-reducer.js`: the deterministic reducer that settles DomainEvents into the current run projection.
+- `src/domain/projections/player-view.js`: ordinary player projection with label-first, hidden-info-free data.
+- `src/domain/projections/prompt-view.js`: AI prompt projection with capability packages, developmental-expression limits, and structured state context.
+- `src/domain/projections/gm-view.js`: developer/debug projection with full run and hidden information.
 - `src/growth-ledger.js`: owns attribute potential, maturity caps, realized growth, effective current ability, locked potential, growth evidence, and compatibility sync back to `player.attributes`.
 - `src/capability-package.js`: turns the Growth Ledger into age/world-appropriate capabilities, check tags, forbidden actions, and developmental-expression limits for AI rendering.
 - `src/npc-generator.js`: generates initial important NPCs from world templates.
@@ -289,10 +313,10 @@ World IDs:
 - `src/web-server.js`: local web playtest server and backend API proxy. Defaults to port `5181`, with fallback ports if the OS denies or occupies that port.
 - `src/dev-tools.js`: local GM/tester-mode catalog, opening presets, test-only talents, scenario injection responses, and copyable debug reports. These are `dev_only/testOnly` tools and are not part of ordinary player content pools.
 - `src/ai-response-validator.js`: validates MVP AI response rules that JSON schema alone cannot express.
-- `src/run-loop.js`: applies accepted AI responses and advances a run, including converting `growthEvidenceChanges` into realized ledger growth.
+- `src/run-loop.js`: validates accepted AI responses, converts `statePatch` into DomainEvents, and advances a run through `transitionRun()`.
 - `src/run-validator.js`: validates MVP run/save shape before save/load acceptance, including required Growth Ledger entries.
 - `src/run-summary.js`: formats player-facing run summaries for current/realized/potential/locked attribute growth, progress, statuses, important NPC relationships, and factions.
-- `src/save-store.js`: saves and loads portable run JSON. Legacy `mvp.run.v1` saves that predate `player.growthLedger` are migrated on load before strict validation.
+- `src/save-store.js`: saves portable run JSON with `eventLog`, loads event-log saves by replay, and migrates legacy `mvp.run.v1` saves that predate `player.growthLedger`.
 - `src/cli.js`: prints a smoke-test demo.
 - `src/play-cli.js`: runs the interactive or scripted CLI playtest.
 - `src/index.js`: public exports for tests and future app layers.
@@ -300,6 +324,8 @@ World IDs:
 - `tools/check-playtest-readiness.mjs`: checks the core playtest gate, including scripts, world data, content minimums, core simulator systems, open event-generation rules, README coverage, and real-AI provider environment warning.
 - `tools/smoke-ai-provider.mjs`: runs a live real-AI JSON smoke test when provider credentials are configured.
 - `tools/smoke-web-playtest.mjs`: starts the local web backend and exercises the browser playtest flow end to end without exposing provider keys.
+- `tools/replay-bugs.mjs`: replays regression fixtures from `tests/replay-fixtures/` and verifies expected facts, thread stages, and PlayerView leak guards.
+- `tools/test-architecture.mjs`: static architecture guard that checks state transitions are routed through the event-sourced runtime.
 
 ## Current Guardrails
 
@@ -313,7 +339,9 @@ World IDs:
 - Normal playable events must have 3 rich choices.
 - Non-interactive response types may have 0 choices.
 - State changes are proposed in `statePatch`; player-facing display changes are in `visibleChanges`.
-- The run loop now applies progression, world-state, attribute, manifestation, exposure, relationship, important NPC, faction, status, memory, ending, and score patches into the authoritative run.
+- The run loop no longer applies `statePatch` directly. Accepted patches become DomainEvents, reducers settle them into the authoritative run projection, and invariants guard the transition before save/display.
+- The event log is the replay authority for current saves. The run snapshot remains for compatibility and debugging, but load uses `replayRun(eventLog)` when present.
+- Ordinary UI receives PlayerView alongside legacy compatibility fields. New ordinary display work should read PlayerView first; raw run internals belong to GM/debug surfaces.
 - The run loop treats the Growth Ledger as the authority for attributes. Compatibility `manifestationChanges` adjust realized growth, while `growthEvidenceChanges` is the preferred AI-facing route for growth evidence. Age alone does not cash out all potential, even at adulthood.
 - Capability packages and developmental-expression contracts are included in AI prompts so high potential cannot be rendered as infant combat power, adult strength, or fully awakened mythic talent unless the ledger has made that capability effective.
 - Continuity-critical story facts now live in `worldState.storyState`. AI output text is not the authority for whether a thread has been discovered, identified, closed, or advanced; the engine records those facts and passes a narrative contract into the next event.
