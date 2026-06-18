@@ -1,0 +1,51 @@
+{
+  "realmVersionScope": {
+    "mvp": [
+      "mortal",
+      "qi_refining",
+      "foundation_establishment",
+      "golden_core",
+      "nascent_soul",
+      "spirit_transformation"
+    ],
+    "formalRelease": [
+      "void_refinement",
+      "body_integration",
+      "mahayana",
+      "tribulation_crossing",
+      "ascension"
+    ]
+  },
+  "realms": [
+    {
+      "id": "mortal",
+      "name": "Mortal",
+      "totalAttributeRange": [20, 100]
+    },
+    {
+      "id": "qi_refining",
+      "name": "Qi Refining",
+      "totalAttributeRange": [100, 1000]
+    },
+    {
+      "id": "foundation_establishment",
+      "name": "Foundation Establishment",
+      "totalAttributeRange": [1000, 10000]
+    },
+    {
+      "id": "golden_core",
+      "name": "Golden Core",
+      "totalAttributeRange": [10000, 100000]
+    },
+    {
+      "id": "nascent_soul",
+      "name": "Nascent Soul",
+      "totalAttributeRange": [100000, 1000000]
+    },
+    {
+      "id": "spirit_transformation",
+      "name": "Spirit Transformation",
+      "totalAttributeRange": [1000000, 10000000]
+    }
+  ]
+}

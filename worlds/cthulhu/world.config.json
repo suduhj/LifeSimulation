@@ -1,0 +1,123 @@
+{
+  "id": "cthulhu",
+  "name": "Cthulhu Life World",
+  "mvp": true,
+  "primaryAxis": "age",
+  "lifeSimulationGuardrail": {
+    "coreUnit": "life_run",
+    "subsystemsServe": [
+      "lifePath",
+      "relationships",
+      "aging",
+      "choices",
+      "consequences",
+      "biography",
+      "score",
+      "ending",
+      "worldState"
+    ],
+    "warning": "Cthulhu systems must not force every run into an investigator story."
+  },
+  "defaultSociety": "fictional modern or near-modern urban society",
+  "mvpStageMode": "random_city",
+  "cityNamingMode": "benchmark_cities_plus_name_pool",
+  "benchmarkCityVisibility": "hidden_generation_anchor",
+  "openingInformationMode": "minimal_with_conditional_bonus_clues",
+  "difficultyMode": "slow_burn_dynamic",
+  "formalStageDirection": "all_city_archetypes_and_expanded_regions",
+  "defaultPublicityLevel": 2,
+  "publicKnowledgeModel": "semi-public abnormalities with official denial and sealed truth",
+  "secondaryProgression": [
+    "truth_exposure",
+    "sanity_pressure",
+    "corruption_or_assimilation",
+    "occult_contact",
+    "social_normalcy",
+    "personal_goal"
+  ],
+  "routeFamilies": [
+    "ordinary_life",
+    "truth_pursuit",
+    "secret_organization",
+    "resistance",
+    "power",
+    "assimilation",
+    "dream_route",
+    "world_salvation",
+    "world_destruction",
+    "escape_or_denial"
+  ],
+  "factionSystem": {
+    "creationRequirementMode": "default_hard_conditions_plus_world_specific",
+    "growthAxesWeights": {
+      "operationsConstruction": 0.15,
+      "socialPolitics": 0.25,
+      "conflictExpansion": 0.15,
+      "ideologyIdentity": 0.45
+    },
+    "worldSpecificCreationRequirements": [
+      "secrecy",
+      "coverIdentity",
+      "sharedObsessionOrGoal",
+      "occultKnowledgeSource",
+      "abnormalContactOrArtifact",
+      "socialCamouflage",
+      "protectionFromOfficialOrCultAttention"
+    ],
+    "commonFactionTypes": [
+      "schoolClub",
+      "onlineRumorCircle",
+      "forbiddenStudyGroup",
+      "officialAbnormalCell",
+      "corporateResearchUnit",
+      "folkReligiousGroup",
+      "cultCell",
+      "resistanceCircle",
+      "dreamLinkedCommunity"
+    ],
+    "memberPromotion": {
+      "enabled": true,
+      "layers": ["ordinary", "backbone", "core", "importantNPC"],
+      "controlledBy": ["factionScale", "lifeSimulationPacing", "relationshipWeight", "routeImpact", "hiddenTruthExposure", "corruptionRisk"]
+    }
+  },
+  "aiTone": [
+    "surface realism",
+    "slow-burn abnormality",
+    "forbidden knowledge",
+    "dream pollution",
+    "ordinary life under cosmic pressure"
+  ],
+  "eventGeneration": {
+    "poolMode": "open_soft_seed_pool",
+    "seedStrictnessDefault": "soft",
+    "aiAdaptationDefault": "must_adapt",
+    "allowAiFreeGenerationWhenNoSeedFits": true,
+    "sourceWeights": {
+      "natural_life": 30,
+      "ai_free": 20,
+      "seed_pool": 20,
+      "player_consequence": 10,
+      "npc_driven": 10,
+      "world_progress": 5,
+      "random_disturbance": 5
+    }
+  },
+  "forbiddenAssumptions": [
+    "the player character must be an investigator",
+    "cthulhu world is a monster-fighting leveling game",
+    "high luck means perfect safety",
+    "ordinary NPCs instantly understand eldritch phenomena"
+  ],
+  "runtimeData": {
+    "cityArchetypes": "worlds/cthulhu/city-archetypes.json",
+    "openingInformationRules": "worlds/cthulhu/opening-information-rules.json",
+    "dangerScalingRules": "worlds/cthulhu/danger-scaling-rules.json",
+    "publicKnowledgeRules": "worlds/cthulhu/public-knowledge-rules.json",
+    "pollutionRules": "worlds/cthulhu/pollution-rules.json",
+    "talents": "worlds/cthulhu/talents.json",
+    "npcTemplates": "worlds/cthulhu/npc-templates.json",
+    "eventSeeds": "worlds/cthulhu/event-seeds.json",
+    "endings": "worlds/cthulhu/endings.json"
+  }
+}

@@ -1,0 +1,163 @@
+{
+  "worldId": "cultivation",
+  "type": "talent_seed_pool",
+  "localization": "docs/mvp-content-pool-draft.md#cultivation-world",
+  "talents": [
+    {
+      "id": "weak_spirit_sense",
+      "rarity": "common",
+      "effects": { "attributePotential": { "intelligence": 2 } },
+      "manifestationType": "stage",
+      "tags": ["spirit_sense", "early_clue", "cultivation_entry"]
+    },
+    {
+      "id": "strong_blood",
+      "rarity": "common",
+      "effects": { "attributePotential": { "constitution": 2 } },
+      "manifestationType": "stage",
+      "tags": ["constitution", "health", "mortal_stage"]
+    },
+    {
+      "id": "herb_affinity",
+      "rarity": "fine",
+      "effects": { "attributePotential": { "intelligence": 3, "luck": 2 } },
+      "manifestationType": "stage",
+      "tags": ["herb", "alchemy", "forest", "opportunity"]
+    },
+    {
+      "id": "smooth_meridians",
+      "rarity": "fine",
+      "effects": { "attributePotential": { "constitution": 5 } },
+      "manifestationType": "stage",
+      "tags": ["meridian", "cultivation_speed", "breakthrough"]
+    },
+    {
+      "id": "minor_sword_sense",
+      "rarity": "fine",
+      "effects": { "attributePotential": { "constitution": 3, "intelligence": 2 } },
+      "manifestationType": "stage",
+      "tags": ["sword", "combat_route", "sect_interest"]
+    },
+    {
+      "id": "low_grade_spirit_root",
+      "rarity": "rare",
+      "effects": { "attributePotential": { "intelligence": 8, "constitution": 5 } },
+      "manifestationType": "stage",
+      "tags": ["spirit_root", "cultivation_entry"]
+    },
+    {
+      "id": "alchemy_nose",
+      "rarity": "rare",
+      "effects": { "attributePotential": { "intelligence": 10 } },
+      "manifestationType": "stage",
+      "tags": ["alchemy", "medicine", "resource_detection"]
+    },
+    {
+      "id": "beast_taming_instinct",
+      "rarity": "rare",
+      "effects": { "attributePotential": { "constitution": 6, "luck": 6 } },
+      "manifestationType": "stage",
+      "tags": ["beast_taming", "spirit_beast", "wilderness"]
+    },
+    {
+      "id": "hidden_luck_opportunity",
+      "rarity": "rare",
+      "effects": { "attributePotential": { "luck": 12 } },
+      "manifestationType": "hidden_destiny",
+      "tags": ["opportunity", "mentor", "relic", "hidden_route"]
+    },
+    {
+      "id": "single_spirit_root",
+      "rarity": "epic",
+      "effects": { "attributePotential": { "intelligence": 20, "constitution": 10 } },
+      "manifestationType": "stage",
+      "tags": ["spirit_root", "cultivation_speed", "sect_competition"]
+    },
+    {
+      "id": "born_sword_bone",
+      "rarity": "epic",
+      "effects": { "attributePotential": { "constitution": 25, "intelligence": 10 } },
+      "manifestationType": "stage",
+      "tags": ["sword", "combat_route", "faction_attention"]
+    },
+    {
+      "id": "spirit_eye",
+      "rarity": "epic",
+      "effects": { "attributePotential": { "intelligence": 20, "luck": 10 } },
+      "manifestationType": "stage",
+      "tags": ["perception", "formation", "hidden_truth", "deception_detection"]
+    },
+    {
+      "id": "noble_cultivation_blood",
+      "rarity": "epic",
+      "effects": { "attributePotential": { "familyBackground": 25, "intelligence": 10 } },
+      "manifestationType": "immediate",
+      "tags": ["family", "resource", "bloodline", "politics"]
+    },
+    {
+      "id": "heavenly_spirit_root",
+      "rarity": "legendary",
+      "effects": { "attributePotential": { "intelligence": 50, "constitution": 30 }, "exposureBonus": 30 },
+      "manifestationType": "immediate",
+      "tags": ["spirit_root", "genius", "high_exposure", "sect_competition"]
+    },
+    {
+      "id": "innate_sword_heart",
+      "rarity": "legendary",
+      "effects": { "attributePotential": { "intelligence": 35, "constitution": 35 } },
+      "manifestationType": "stage",
+      "tags": ["sword", "dao_heart", "faction_attention", "rivalry"]
+    },
+    {
+      "id": "ancient_immortal_blood",
+      "rarity": "legendary",
+      "effects": { "attributePotential": { "appearance": 20, "constitution": 40, "luck": 20 } },
+      "manifestationType": "conditional",
+      "tags": ["bloodline", "awakening", "ancient_secret", "danger"]
+    },
+    {
+      "id": "broken_then_reborn",
+      "rarity": "legendary",
+      "effects": { "growthAfterMajorFailure": true },
+      "manifestationType": "conditional",
+      "tags": ["failure", "rebirth", "long_term_growth", "tragedy"]
+    },
+    {
+      "id": "myriad_dao_body",
+      "rarity": "mythic",
+      "effects": { "attributePotential": { "intelligence": 80, "constitution": 80 }, "systemAdaptability": "very_high" },
+      "manifestationType": "stage",
+      "tags": ["mythic", "all_systems", "breakthrough", "world_changing"]
+    },
+    {
+      "id": "reincarnation_memory",
+      "rarity": "mythic",
+      "effects": { "attributePotential": { "intelligence": 60, "luck": 80 }, "awakensOnMajorCrisis": true },
+      "manifestationType": "conditional",
+      "tags": ["reincarnation", "memory", "crisis", "hidden_truth"]
+    },
+    {
+      "id": "heaven_favored_one",
+      "rarity": "mythic",
+      "effects": { "attributePotential": { "luck": 120 }, "majorKarmaAttraction": true },
+      "manifestationType": "hidden_destiny",
+      "tags": ["destiny", "opportunity", "karma", "world_event"]
+    },
+    {
+      "id": "chaos_spirit_embryo",
+      "rarity": "mythic",
+      "effects": { "attributePotential": { "appearance": 40, "intelligence": 70, "constitution": 100 }, "exposureBonus": 60 },
+      "manifestationType": "stage",
+      "tags": ["chaos", "birth_omen", "high_exposure", "seizure_risk"]
+    },
+    { "id": "clear_child_face", "rarity": "common", "effects": { "attributePotential": { "appearance": 2 } }, "manifestationType": "stage", "tags": ["appearance", "social", "family_favor"] },
+    { "id": "steady_hands", "rarity": "common", "effects": { "attributePotential": { "constitution": 1, "intelligence": 1 } }, "manifestationType": "stage", "tags": ["craft", "alchemy", "daily_training"] },
+    { "id": "minor_family_savings", "rarity": "fine", "effects": { "attributePotential": { "familyBackground": 5 } }, "manifestationType": "immediate", "tags": ["family", "resource", "ordinary_life"] },
+    { "id": "gentle_presence", "rarity": "fine", "effects": { "attributePotential": { "appearance": 3, "luck": 2 } }, "manifestationType": "stage", "tags": ["appearance", "relationship", "ordinary_life"] },
+    { "id": "formation_memory", "rarity": "rare", "effects": { "attributePotential": { "intelligence": 12 } }, "manifestationType": "stage", "tags": ["formation", "memory", "sect_value"] },
+    { "id": "spirit_stone_nose", "rarity": "rare", "effects": { "attributePotential": { "luck": 8, "intelligence": 4 } }, "manifestationType": "stage", "tags": ["resource_detection", "mine", "trade"] },
+    { "id": "jade_bone_beauty", "rarity": "epic", "effects": { "attributePotential": { "appearance": 25, "constitution": 10 }, "exposureBonus": 10 }, "manifestationType": "stage", "tags": ["appearance", "body", "attention"] },
+    { "id": "late_blooming_root", "rarity": "epic", "effects": { "attributePotential": { "intelligence": 10, "constitution": 25 }, "lateGrowthBonus": true }, "manifestationType": "conditional", "tags": ["late_bloom", "hidden_talent", "breakthrough"] },
+    { "id": "sect_fortune_star", "rarity": "legendary", "effects": { "attributePotential": { "luck": 50, "familyBackground": 20 }, "factionLuckBonus": true }, "manifestationType": "hidden_destiny", "tags": ["sect", "luck", "faction_attention"] }
+  ]
+}

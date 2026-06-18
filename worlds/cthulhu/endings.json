@@ -1,0 +1,25 @@
+{
+  "worldId": "cthulhu",
+  "endings": [
+    { "id": "ordinary_life_preserved", "name": "Ordinary Life Preserved", "tags": ["ordinary_life", "normalcy", "avoidance"] },
+    { "id": "entity_killer", "name": "Entity Killer", "tags": ["resistance", "truth", "impossible_victory"] },
+    { "id": "cthulhu_like_ascension", "name": "Cthulhu-like Ascension", "tags": ["assimilation", "power", "inhuman"] },
+    { "id": "world_destroyer", "name": "World Destroyer", "tags": ["world_destruction", "corruption", "catastrophe"] },
+    { "id": "truth_buried_family_life", "name": "Truth Buried Family Life", "tags": ["family", "normalcy", "hidden_truth"] },
+    { "id": "official_containment_asset", "name": "Official Containment Asset", "tags": ["official", "containment", "controlled_life"] },
+    { "id": "watcher_martyr", "name": "Watcher Martyr", "tags": ["resistance", "sacrifice", "truth"] },
+    { "id": "cult_high_priest", "name": "Cult High Priest", "tags": ["cult", "power", "corruption"] },
+    { "id": "cult_sacrifice", "name": "Cult Sacrifice", "tags": ["cult", "death", "victim"] },
+    { "id": "dream_city_resident", "name": "Dream City Resident", "tags": ["dream", "assimilation", "escape_from_reality"] },
+    { "id": "dream_city_escapee", "name": "Dream City Escapee", "tags": ["dream", "survival", "trauma"] },
+    { "id": "forbidden_scholar", "name": "Forbidden Scholar", "tags": ["knowledge", "truth", "sanity_pressure"] },
+    { "id": "black_glass_executive", "name": "Black Glass Executive", "tags": ["corporate", "exploitation", "wealth"] },
+    { "id": "old_family_heir", "name": "Old Family Heir", "tags": ["bloodline", "inheritance", "hidden_truth"] },
+    { "id": "public_revelation_disaster", "name": "Public Revelation Disaster", "tags": ["truth", "social_normalcy_collapse", "catastrophe"] },
+    { "id": "madness_without_answer", "name": "Madness Without Answer", "tags": ["sanity_pressure", "tragedy", "unknown"] },
+    { "id": "silent_witness_old_age", "name": "Silent Witness Old Age", "tags": ["ordinary_life", "memory", "old_age"] },
+    { "id": "mutual_assimilation_route", "name": "Mutual Assimilation Route", "tags": ["assimilation", "relationship", "inhuman"] },
+    { "id": "city_sealed_survivor", "name": "City Sealed Survivor", "tags": ["official", "survival", "coverup"] },
+    { "id": "new_hidden_order_founder", "name": "New Hidden Order Founder", "tags": ["faction_creation", "truth", "leadership"] }
+  ]
+}

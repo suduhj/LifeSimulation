@@ -1,0 +1,29 @@
+{
+  "worldId": "cthulhu",
+  "progression": {
+    "truthExposure": {
+      "range": [0, 100],
+      "note": "Higher truth exposure unlocks understanding and routes, but also increases danger."
+    },
+    "sanityPressure": {
+      "range": [0, 100],
+      "note": "Represents mental strain, not simple HP."
+    },
+    "corruptionOrAssimilation": {
+      "range": [0, 100],
+      "note": "Can grant power, change perception, reduce humanity, or unlock eldritch routes."
+    },
+    "occultContact": {
+      "range": [0, 100],
+      "note": "Depth of contact with cults, relics, entities, dreams, rituals, or forbidden texts."
+    },
+    "socialNormalcy": {
+      "range": [0, 100],
+      "note": "Lower values make ordinary life harder to maintain."
+    },
+    "personalGoal": {
+      "range": [0, 100],
+      "note": "Tracks the player character's chosen life goal, ambition, or obsession."
+    }
+  }
+}

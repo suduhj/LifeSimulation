@@ -1,0 +1,113 @@
+{
+  "worldId": "cultivation",
+  "type": "identity_seed_pool",
+  "localization": "docs/mvp-content-pool-draft.md#cultivation-world",
+  "visibilityRule": "name_description_possible_routes_approximate_risk",
+  "identitySeeds": [
+    {
+      "id": "cultivation_village_child",
+      "playerVisible": { "nameKey": "cultivation.identity.village_child.name", "descriptionKey": "cultivation.identity.village_child.description", "possibleRouteTags": ["mortal_life", "late_cultivation_entry", "counter_rise"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "familyBackground": "low" },
+      "sceneTags": ["village", "mortal", "low_resource"],
+      "hiddenGeneration": { "secretChance": "low", "specialNpcChance": "medium", "trueRiskRange": ["low", "high"] }
+    },
+    {
+      "id": "hunter_family_child",
+      "playerVisible": { "nameKey": "cultivation.identity.hunter_family_child.name", "descriptionKey": "cultivation.identity.hunter_family_child.description", "possibleRouteTags": ["wilderness", "body_training", "beast_event"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "constitution": "slightly_high" },
+      "sceneTags": ["hunter", "mountain", "survival"],
+      "hiddenGeneration": { "secretChance": "low", "specialNpcChance": "medium", "trueRiskRange": ["medium", "high"] }
+    },
+    {
+      "id": "medicine_picker_child",
+      "playerVisible": { "nameKey": "cultivation.identity.medicine_picker_child.name", "descriptionKey": "cultivation.identity.medicine_picker_child.description", "possibleRouteTags": ["alchemy", "herb", "forest"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "intelligence": "slightly_high", "luck": "variable" },
+      "sceneTags": ["herb", "medicine", "mountain"],
+      "hiddenGeneration": { "secretChance": "medium", "specialNpcChance": "medium", "trueRiskRange": ["low", "high"] }
+    },
+    {
+      "id": "poor_scholar_child",
+      "playerVisible": { "nameKey": "cultivation.identity.poor_scholar_child.name", "descriptionKey": "cultivation.identity.poor_scholar_child.description", "possibleRouteTags": ["study", "strategy", "late_opportunity"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "intelligence": "slightly_high", "familyBackground": "low" },
+      "sceneTags": ["scholar", "poverty", "mortal"],
+      "hiddenGeneration": { "secretChance": "medium", "specialNpcChance": "low", "trueRiskRange": ["low", "medium"] }
+    },
+    {
+      "id": "minor_clan_branch",
+      "playerVisible": { "nameKey": "cultivation.identity.minor_clan_branch.name", "descriptionKey": "cultivation.identity.minor_clan_branch.description", "possibleRouteTags": ["clan", "resource_competition", "sect_entry"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "familyBackground": "medium" },
+      "sceneTags": ["clan", "cultivation_family", "branch_line"],
+      "hiddenGeneration": { "secretChance": "medium", "specialNpcChance": "medium", "trueRiskRange": ["low", "high"], "factionTieChance": "medium" }
+    },
+    {
+      "id": "fallen_cultivation_clan",
+      "playerVisible": { "nameKey": "cultivation.identity.fallen_cultivation_clan.name", "descriptionKey": "cultivation.identity.fallen_cultivation_clan.description", "possibleRouteTags": ["family_secret", "revival", "revenge"], "approxRisk": "high" },
+      "anchorAttributeHints": { "familyBackground": "low_to_medium", "luck": "variable" },
+      "sceneTags": ["fallen_clan", "inheritance", "old_enemy"],
+      "hiddenGeneration": { "secretChance": "high", "specialNpcChance": "high", "trueRiskRange": ["medium", "extreme"], "concealedRouteHooks": ["lost_manual", "old_enemy", "bloodline_secret"] }
+    },
+    {
+      "id": "sect_servant_child",
+      "playerVisible": { "nameKey": "cultivation.identity.sect_servant_child.name", "descriptionKey": "cultivation.identity.sect_servant_child.description", "possibleRouteTags": ["sect_low_status", "service", "upward_mobility"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "familyBackground": "low_to_medium" },
+      "sceneTags": ["sect", "servant", "low_status"],
+      "hiddenGeneration": { "secretChance": "low", "specialNpcChance": "medium", "trueRiskRange": ["medium", "high"], "factionTieChance": "high" }
+    },
+    {
+      "id": "market_town_family",
+      "playerVisible": { "nameKey": "cultivation.identity.market_town_family.name", "descriptionKey": "cultivation.identity.market_town_family.description", "possibleRouteTags": ["trade", "alchemy", "information"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "familyBackground": "medium" },
+      "sceneTags": ["market", "merchant", "resources"],
+      "hiddenGeneration": { "secretChance": "medium", "specialNpcChance": "medium", "trueRiskRange": ["low", "high"], "factionTieChance": "medium" }
+    },
+    {
+      "id": "alchemist_apprentice_family",
+      "playerVisible": { "nameKey": "cultivation.identity.alchemist_apprentice_family.name", "descriptionKey": "cultivation.identity.alchemist_apprentice_family.description", "possibleRouteTags": ["alchemy", "medicine", "resource_route"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "intelligence": "slightly_high", "familyBackground": "medium" },
+      "sceneTags": ["alchemy", "medicine", "apprentice"],
+      "hiddenGeneration": { "secretChance": "medium", "specialNpcChance": "medium", "trueRiskRange": ["low", "high"] }
+    },
+    {
+      "id": "border_orphan",
+      "playerVisible": { "nameKey": "cultivation.identity.border_orphan.name", "descriptionKey": "cultivation.identity.border_orphan.description", "possibleRouteTags": ["orphan", "danger", "opportunity"], "approxRisk": "high" },
+      "anchorAttributeHints": { "familyBackground": "very_low", "luck": "high_variance" },
+      "sceneTags": ["borderland", "orphan", "danger"],
+      "hiddenGeneration": { "secretChance": "medium", "specialNpcChance": "high", "trueRiskRange": ["high", "extreme"] }
+    },
+    {
+      "id": "noble_dynasty_child",
+      "playerVisible": { "nameKey": "cultivation.identity.noble_dynasty_child.name", "descriptionKey": "cultivation.identity.noble_dynasty_child.description", "possibleRouteTags": ["dynasty", "power", "politics"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "familyBackground": "high" },
+      "sceneTags": ["noble", "dynasty", "politics"],
+      "hiddenGeneration": { "secretChance": "medium", "specialNpcChance": "high", "trueRiskRange": ["low", "high"], "factionTieChance": "high" }
+    },
+    {
+      "id": "abandoned_omen_baby",
+      "playerVisible": { "nameKey": "cultivation.identity.abandoned_omen_baby.name", "descriptionKey": "cultivation.identity.abandoned_omen_baby.description", "possibleRouteTags": ["omen", "hidden_destiny", "high_exposure"], "approxRisk": "high" },
+      "anchorAttributeHints": { "luck": "high_variance" },
+      "sceneTags": ["omen", "abandoned", "mystery"],
+      "hiddenGeneration": { "secretChance": "high", "specialNpcChance": "high", "trueRiskRange": ["medium", "extreme"], "concealedRouteHooks": ["birth_omen", "hidden_bloodline", "pursuer"] }
+    },
+    {
+      "id": "sword_clan_direct_heir",
+      "playerVisible": { "nameKey": "cultivation.identity.sword_clan_direct_heir.name", "descriptionKey": "cultivation.identity.sword_clan_direct_heir.description", "possibleRouteTags": ["family_clan", "sword", "inheritance"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "familyBackground": "high", "constitution": "variable" },
+      "sceneTags": ["sword_clan", "heir", "inheritance"],
+      "hiddenGeneration": { "secretChance": "medium", "specialNpcChance": "high", "trueRiskRange": ["medium", "high"], "factionTieChance": "high" }
+    },
+    {
+      "id": "spirit_mine_child_laborer",
+      "playerVisible": { "nameKey": "cultivation.identity.spirit_mine_child_laborer.name", "descriptionKey": "cultivation.identity.spirit_mine_child_laborer.description", "possibleRouteTags": ["labor", "resource", "counter_rise"], "approxRisk": "high" },
+      "anchorAttributeHints": { "familyBackground": "very_low", "constitution": "variable" },
+      "sceneTags": ["spirit_mine", "labor", "low_status"],
+      "hiddenGeneration": { "secretChance": "medium", "specialNpcChance": "medium", "trueRiskRange": ["medium", "extreme"], "concealedRouteHooks": ["mine_relic", "overseer_enemy", "resource_secret"] }
+    },
+    {
+      "id": "temple_foundling",
+      "playerVisible": { "nameKey": "cultivation.identity.temple_foundling.name", "descriptionKey": "cultivation.identity.temple_foundling.description", "possibleRouteTags": ["faith", "hidden_lineage", "quiet_training"], "approxRisk": "medium" },
+      "anchorAttributeHints": { "luck": "variable", "intelligence": "variable" },
+      "sceneTags": ["temple", "foundling", "mystery"],
+      "hiddenGeneration": { "secretChance": "high", "specialNpcChance": "medium", "trueRiskRange": ["low", "high"], "concealedRouteHooks": ["old_oath", "hidden_lineage", "guardian_npc"] }
+    }
+  ]
+}

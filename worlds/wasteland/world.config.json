@@ -1,0 +1,135 @@
+{
+  "id": "wasteland",
+  "name": "Post-Apocalyptic Wasteland",
+  "mvp": true,
+  "primaryAxis": "age",
+  "lifeSimulationGuardrail": {
+    "coreUnit": "life_run",
+    "subsystemsServe": [
+      "lifePath",
+      "relationships",
+      "aging",
+      "choices",
+      "consequences",
+      "biography",
+      "score",
+      "ending",
+      "worldState"
+    ],
+    "warning": "Wasteland systems must not become only combat or base management."
+  },
+  "secondaryProgression": [
+    "survival_days",
+    "camp_stage",
+    "resources",
+    "injuries",
+    "faction_trust",
+    "environment_danger"
+  ],
+  "progressBars": [
+    {
+      "id": "survival_days",
+      "labelKey": "wasteland.progress.survivalDays",
+      "meaningKey": "wasteland.progress.survivalDays.meaning"
+    },
+    {
+      "id": "camp_stage",
+      "labelKey": "wasteland.progress.campStage",
+      "meaningKey": "wasteland.progress.campStage.meaning"
+    },
+    {
+      "id": "resources",
+      "labelKey": "wasteland.progress.resources",
+      "meaningKey": "wasteland.progress.resources.meaning"
+    },
+    {
+      "id": "injuries",
+      "labelKey": "wasteland.progress.injuries",
+      "meaningKey": "wasteland.progress.injuries.meaning"
+    },
+    {
+      "id": "faction_trust",
+      "labelKey": "wasteland.progress.factionTrust",
+      "meaningKey": "wasteland.progress.factionTrust.meaning"
+    },
+    {
+      "id": "environment_danger",
+      "labelKey": "wasteland.progress.environmentDanger",
+      "meaningKey": "wasteland.progress.environmentDanger.meaning"
+    }
+  ],
+  "routeFamilies": [
+    "lone_survivor",
+    "camp_builder",
+    "scavenger",
+    "warlord",
+    "doctor_or_technician",
+    "mutant_adaptation",
+    "shelter_ruler",
+    "wasteland_savior"
+  ],
+  "factionSystem": {
+    "creationRequirementMode": "default_hard_conditions_plus_world_specific",
+    "growthAxesWeights": {
+      "operationsConstruction": 0.4,
+      "socialPolitics": 0.2,
+      "conflictExpansion": 0.3,
+      "ideologyIdentity": 0.1
+    },
+    "worldSpecificCreationRequirements": [
+      "food",
+      "water",
+      "weaponsOrDefense",
+      "medicine",
+      "safeBaseOrTerritory",
+      "memberSkills",
+      "transportOrTradeValue",
+      "proofOfSurvivalLeadership"
+    ],
+    "commonFactionTypes": [
+      "familySquad",
+      "scavengerCrew",
+      "temporaryCamp",
+      "shelter",
+      "tradeCaravan",
+      "militia",
+      "raiderGang",
+      "warlordTerritory",
+      "repairCollective",
+      "medicalStation",
+      "newCivilizationCouncil"
+    ],
+    "memberPromotion": {
+      "enabled": true,
+      "layers": ["ordinary", "backbone", "core", "importantNPC"],
+      "controlledBy": ["factionScale", "lifeSimulationPacing", "relationshipWeight", "routeImpact", "survivalDependency"]
+    }
+  },
+  "aiTone": [
+    "scarcity",
+    "moral pressure",
+    "survival",
+    "fragile trust"
+  ],
+  "eventGeneration": {
+    "poolMode": "open_soft_seed_pool",
+    "seedStrictnessDefault": "soft",
+    "aiAdaptationDefault": "must_adapt",
+    "allowAiFreeGenerationWhenNoSeedFits": true,
+    "sourceWeights": {
+      "seed_pool": 30,
+      "world_progress": 20,
+      "ai_free": 15,
+      "player_consequence": 15,
+      "npc_driven": 10,
+      "random_disturbance": 5,
+      "natural_life": 5
+    }
+  },
+  "forbiddenAssumptions": [
+    "wasteland is only monster fighting",
+    "camp growth is free",
+    "luck removes scarcity",
+    "survival replaces ordinary life simulation"
+  ]
+}

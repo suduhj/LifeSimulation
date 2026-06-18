@@ -1,0 +1,200 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://life-simulator.local/schemas/world-content-pools.schema.json",
+  "title": "Life Simulator World Content Pool",
+  "description": "Reference schema for MVP runtime seed pools. The local validator is authoritative for CI-style checks.",
+  "oneOf": [
+    { "$ref": "#/$defs/identitySeedPool" },
+    { "$ref": "#/$defs/talentSeedPool" },
+    { "$ref": "#/$defs/eventSeedPool" },
+    { "$ref": "#/$defs/npcTemplateSeedPool" }
+  ],
+  "$defs": {
+    "stableId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "localizationKey": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*)+$"
+    },
+    "worldId": {
+      "enum": ["cultivation", "cthulhu", "wasteland"]
+    },
+    "riskLevel": {
+      "enum": ["low", "medium", "high", "extreme"]
+    },
+    "lifeStage": {
+      "enum": ["birth", "childhood", "adolescence", "youth", "adulthood", "middleAge", "oldAge"]
+    },
+    "rarity": {
+      "enum": ["common", "fine", "rare", "epic", "legendary", "mythic"]
+    },
+    "manifestationType": {
+      "enum": ["immediate", "stage", "conditional", "hidden_destiny"]
+    },
+    "stableIdArray": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/stableId" },
+      "minItems": 1
+    },
+    "coreAttributeKey": {
+      "enum": ["appearance", "intelligence", "constitution", "familyBackground", "luck"]
+    },
+    "attributePotential": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/coreAttributeKey" },
+      "additionalProperties": { "type": "number" },
+      "minProperties": 1
+    },
+    "attributeRange": {
+      "type": "array",
+      "prefixItems": [{ "type": "number" }, { "type": "number" }],
+      "items": false,
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "identitySeedPool": {
+      "type": "object",
+      "required": ["worldId", "type", "visibilityRule", "identitySeeds"],
+      "properties": {
+        "worldId": { "$ref": "#/$defs/worldId" },
+        "type": { "const": "identity_seed_pool" },
+        "localization": { "type": "string" },
+        "visibilityRule": { "type": "string" },
+        "identitySeeds": {
+          "type": "array",
+          "minItems": 8,
+          "items": {
+            "type": "object",
+            "required": ["id", "playerVisible", "sceneTags", "hiddenGeneration"],
+            "properties": {
+              "id": { "$ref": "#/$defs/stableId" },
+              "playerVisible": {
+                "type": "object",
+                "required": ["nameKey", "descriptionKey", "possibleRouteTags", "approxRisk"],
+                "properties": {
+                  "nameKey": { "$ref": "#/$defs/localizationKey" },
+                  "descriptionKey": { "$ref": "#/$defs/localizationKey" },
+                  "possibleRouteTags": { "$ref": "#/$defs/stableIdArray" },
+                  "approxRisk": { "$ref": "#/$defs/riskLevel" }
+                },
+                "additionalProperties": true
+              },
+              "anchorAttributeHints": {
+                "type": "object",
+                "propertyNames": { "$ref": "#/$defs/coreAttributeKey" },
+                "additionalProperties": { "type": "string" }
+              },
+              "sceneTags": { "$ref": "#/$defs/stableIdArray" },
+              "hiddenGeneration": { "type": "object" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "talentSeedPool": {
+      "type": "object",
+      "required": ["worldId", "type", "talents"],
+      "properties": {
+        "worldId": { "$ref": "#/$defs/worldId" },
+        "type": { "const": "talent_seed_pool" },
+        "localization": { "type": "string" },
+        "talents": {
+          "type": "array",
+          "minItems": 20,
+          "items": {
+            "type": "object",
+            "required": ["id", "rarity", "effects", "manifestationType", "tags"],
+            "properties": {
+              "id": { "$ref": "#/$defs/stableId" },
+              "rarity": { "$ref": "#/$defs/rarity" },
+              "effects": {
+                "type": "object",
+                "minProperties": 1,
+                "properties": {
+                  "attributePotential": { "$ref": "#/$defs/attributePotential" }
+                },
+                "additionalProperties": true
+              },
+              "manifestationType": { "$ref": "#/$defs/manifestationType" },
+              "tags": { "$ref": "#/$defs/stableIdArray" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "eventSeedPool": {
+      "type": "object",
+      "required": ["worldId", "type", "eventSeeds"],
+      "properties": {
+        "worldId": { "$ref": "#/$defs/worldId" },
+        "type": { "const": "event_seed_pool" },
+        "localization": { "type": "string" },
+        "eventSeeds": {
+          "type": "array",
+          "minItems": 20,
+          "items": {
+            "type": "object",
+            "required": ["id", "lifeStages", "sceneTags", "riskLevel", "possibleEffects", "aiUseRuleKey"],
+            "properties": {
+              "id": { "$ref": "#/$defs/stableId" },
+              "lifeStages": {
+                "type": "array",
+                "items": { "$ref": "#/$defs/lifeStage" },
+                "minItems": 1
+              },
+              "sceneTags": { "$ref": "#/$defs/stableIdArray" },
+              "riskLevel": { "$ref": "#/$defs/riskLevel" },
+              "requires": { "type": "object" },
+              "excludes": { "type": "object" },
+              "normalExplanations": { "$ref": "#/$defs/stableIdArray" },
+              "hiddenPossibilities": { "$ref": "#/$defs/stableIdArray" },
+              "possibleEffects": { "$ref": "#/$defs/stableIdArray" },
+              "aiUseRuleKey": { "$ref": "#/$defs/localizationKey" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "npcTemplateSeedPool": {
+      "type": "object",
+      "required": ["worldId", "type", "templates"],
+      "properties": {
+        "worldId": { "$ref": "#/$defs/worldId" },
+        "type": { "const": "npc_template_seed_pool" },
+        "localization": { "type": "string" },
+        "templates": {
+          "type": "array",
+          "minItems": 12,
+          "items": {
+            "type": "object",
+            "required": ["id", "anchorAttributes", "roleTags", "possibleRoles", "canPromoteToImportantNPC"],
+            "properties": {
+              "id": { "$ref": "#/$defs/stableId" },
+              "anchorAttributes": {
+                "type": "object",
+                "propertyNames": { "$ref": "#/$defs/coreAttributeKey" },
+                "additionalProperties": { "$ref": "#/$defs/attributeRange" },
+                "minProperties": 1
+              },
+              "roleTags": { "$ref": "#/$defs/stableIdArray" },
+              "possibleRoles": { "$ref": "#/$defs/stableIdArray" },
+              "canPromoteToImportantNPC": { "type": "boolean" },
+              "misjudgmentRisk": { "$ref": "#/$defs/riskLevel" },
+              "notesKey": { "$ref": "#/$defs/localizationKey" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

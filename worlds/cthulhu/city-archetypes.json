@@ -1,0 +1,415 @@
+{
+  "id": "cthulhu_city_archetypes",
+  "worldId": "cthulhu",
+  "mvpDefaultStageMode": "random_city",
+  "cityNamingMode": "benchmark_cities_plus_name_pool",
+  "formalStageDirection": "all_archetypes_plus_expanded_regions",
+  "selectionRule": {
+    "summary": "MVP starts with randomized city-stage selection. Formal release keeps all archetypes and expands them into unlockable or travelable regions.",
+    "inputs": [
+      "identity",
+      "familyBackground",
+      "luck",
+      "talents",
+      "exposure",
+      "publicityLevel",
+      "personalGoal"
+    ],
+    "aiGuidance": "The AI may generate the final city name, district names, family context, and local rumors from the selected archetype. The archetype defines constraints, not a fixed map."
+  },
+  "cityNamingRule": {
+    "summary": "MVP uses both benchmark cities and a reusable name pool. Benchmark cities provide stable testable tone; name pools provide run-to-run variation.",
+    "defaultMode": "weighted_mix",
+    "benchmarkCityVisibility": "hidden_generation_anchor",
+    "playerFacingSelection": "not_visible",
+    "benchmarkCityWeight": 35,
+    "namePoolWeight": 65,
+    "playerInput": "The player cannot directly customize the city name during normal MVP character creation unless a later custom-world mode enables it.",
+    "playerFacingResult": "The player only sees the final generated birth city, surface social context, and starting background. The UI does not expose whether the city came from a benchmark city or a name pool.",
+    "aiGuidance": [
+      "If a benchmark city is selected, preserve its core premise, public level, and local truth themes.",
+      "If a name-pool city is selected, generate districts, local institutions, rumors, and family context from the selected archetype.",
+      "Do not show benchmark city selection as a player choice in MVP.",
+      "Never let the city name force the player character into an investigator route.",
+      "The same city can produce different life paths depending on identity, attributes, talents, family background, luck, exposure, and player choices."
+    ]
+  },
+  "benchmarkCities": [
+    {
+      "id": "haijing",
+      "name": "Haijing",
+      "archetypeId": "coastal_metropolis",
+      "label": "Sea-Mirror Coastal Metropolis",
+      "defaultPublicityLevel": 2,
+      "surfaceIdentity": "A prosperous coastal metropolis known for universities, finance, ports, media companies, museums, and dense online rumor culture.",
+      "hiddenTruthThemes": [
+        "sea whispers",
+        "port disappearances",
+        "museum relics",
+        "sealed waterfront district",
+        "dreams of a drowned city"
+      ],
+      "startingDistrictSeeds": [
+        "old waterfront",
+        "university quarter",
+        "hospital district",
+        "financial island",
+        "subway transfer hub"
+      ],
+      "bestForTesting": [
+        "ordinary life versus truth pressure",
+        "official denial flow",
+        "media rumor spread",
+        "cult and corporate overlap"
+      ]
+    },
+    {
+      "id": "mowen",
+      "name": "Mowen",
+      "archetypeId": "modern_university_city",
+      "label": "Inkmark University City",
+      "defaultPublicityLevel": 2,
+      "surfaceIdentity": "A modern university city built around campuses, libraries, teaching hospitals, laboratories, student forums, bookstores, and research institutes.",
+      "hiddenTruthThemes": [
+        "forbidden archives",
+        "professor disappearances",
+        "dream experiments",
+        "student secret societies",
+        "library rooms that do not exist"
+      ],
+      "startingDistrictSeeds": [
+        "central campus",
+        "teaching hospital",
+        "old library",
+        "student apartment zone",
+        "research park"
+      ],
+      "bestForTesting": [
+        "knowledge temptation",
+        "sanity pressure",
+        "young adult routes",
+        "secret society recruitment"
+      ]
+    },
+    {
+      "id": "qingshi",
+      "name": "Qingshi",
+      "archetypeId": "old_city_and_town_cluster",
+      "label": "Bluestone Old City",
+      "defaultPublicityLevel": 2,
+      "surfaceIdentity": "An old city surrounded by quiet towns, ancestral halls, folk temples, old schools, clinics, mines, rivers, and tight family networks.",
+      "hiddenTruthThemes": [
+        "family curses",
+        "sealed village",
+        "abnormal weddings and funerals",
+        "old bloodline contracts",
+        "buried ruins under town roads"
+      ],
+      "startingDistrictSeeds": [
+        "old city wall",
+        "ancestral hall street",
+        "town clinic",
+        "sealed mountain village",
+        "riverside market"
+      ],
+      "bestForTesting": [
+        "family secrets",
+        "folk explanations",
+        "bloodline routes",
+        "slow local dread"
+      ]
+    }
+  ],
+  "namePools": [
+    {
+      "archetypeId": "coastal_metropolis",
+      "names": [
+        "Lanhai",
+        "Yonggang",
+        "Xingwan",
+        "Ningchao",
+        "Baisha",
+        "Donglan"
+      ],
+      "districtNameSeeds": [
+        "Old Pier",
+        "Glass Bay",
+        "Harbor University",
+        "South Museum",
+        "Rainlight Station"
+      ]
+    },
+    {
+      "archetypeId": "old_city_and_town_cluster",
+      "names": [
+        "Qinghe",
+        "Guyan",
+        "Shuangxi",
+        "Bailu",
+        "Fengmu",
+        "Yueshi"
+      ],
+      "districtNameSeeds": [
+        "Ancestral Hall Street",
+        "Old Well Lane",
+        "River Shrine",
+        "West Mine",
+        "Silent Village"
+      ]
+    },
+    {
+      "archetypeId": "modern_university_city",
+      "names": [
+        "Mingyuan",
+        "Shuyuan",
+        "Yunke",
+        "Jingwen",
+        "Beichen",
+        "Hengzhi"
+      ],
+      "districtNameSeeds": [
+        "Central Campus",
+        "Old Library",
+        "Teaching Hospital",
+        "Research Park",
+        "Student Forum Street"
+      ]
+    },
+    {
+      "archetypeId": "corporate_inland_city",
+      "names": [
+        "Xincheng",
+        "Hengdu",
+        "Jinlu",
+        "Tairong",
+        "Yuanjing",
+        "Shengyuan"
+      ],
+      "districtNameSeeds": [
+        "Corporate Tower",
+        "Industrial Park",
+        "Private Clinic",
+        "Data Center",
+        "Worker District"
+      ]
+    },
+    {
+      "archetypeId": "border_industrial_city",
+      "names": [
+        "Heiyuan",
+        "Tiegu",
+        "Beilu",
+        "Hongsha",
+        "Yanyuan",
+        "Cangbei"
+      ],
+      "districtNameSeeds": [
+        "Freight Yard",
+        "Abandoned Zone",
+        "Black Market",
+        "Factory Belt",
+        "Underground Clinic"
+      ]
+    },
+    {
+      "archetypeId": "quiet_suburban_region",
+      "names": [
+        "Nanyuan",
+        "Qingpu",
+        "Xianglin",
+        "Yuhe",
+        "Luming",
+        "Anqiao"
+      ],
+      "districtNameSeeds": [
+        "Commuter Station",
+        "Gated Community",
+        "Community Clinic",
+        "Mall Plaza",
+        "Suburban Park"
+      ]
+    }
+  ],
+  "archetypes": [
+    {
+      "id": "coastal_metropolis",
+      "label": "Fictional Coastal Metropolis",
+      "mvpWeight": 24,
+      "surface": "A large coastal city with universities, hospitals, ports, finance, media, old districts, nightlife, and internet rumor culture.",
+      "hiddenLayer": "Sea whispers, port disappearances, corporate laboratories, museum relics, dream infections, and sealed waterfront districts.",
+      "bestForRoutes": [
+        "ordinaryLife",
+        "truthPursuit",
+        "power",
+        "worldSalvation",
+        "worldDestruction"
+      ],
+      "keyLocations": [
+        "port",
+        "university",
+        "hospital",
+        "financial district",
+        "old town",
+        "museum",
+        "subway system",
+        "news agency"
+      ],
+      "officialPresence": "high",
+      "cultPresence": "medium",
+      "normalLifeSupport": "high",
+      "truthDensity": "medium_high"
+    },
+    {
+      "id": "old_city_and_town_cluster",
+      "label": "Old City And Surrounding Towns",
+      "mvpWeight": 20,
+      "surface": "An old city surrounded by small towns, ancestral halls, old houses, local temples, mines, forests, rivers, and family networks.",
+      "hiddenLayer": "Family curses, folk taboos, buried ruins, sealed villages, abnormal weddings and funerals, old bloodline contracts, and local silence.",
+      "bestForRoutes": [
+        "ordinaryLife",
+        "escapeOrDenial",
+        "assimilation",
+        "resistance",
+        "power"
+      ],
+      "keyLocations": [
+        "old house",
+        "ancestral hall",
+        "town clinic",
+        "folk temple",
+        "sealed village",
+        "mine",
+        "riverbank",
+        "old school"
+      ],
+      "officialPresence": "medium_low",
+      "cultPresence": "high",
+      "normalLifeSupport": "medium",
+      "truthDensity": "high"
+    },
+    {
+      "id": "modern_university_city",
+      "label": "Modern University City",
+      "mvpWeight": 20,
+      "surface": "A planned education district with campuses, laboratories, libraries, hospitals, student apartments, bookstores, clubs, forums, and youth culture.",
+      "hiddenLayer": "Forbidden archives, professor disappearances, dream experiments, secret societies, abnormal research projects, and student cult cells.",
+      "bestForRoutes": [
+        "truthPursuit",
+        "ordinaryLife",
+        "resistance",
+        "power",
+        "escapeOrDenial"
+      ],
+      "keyLocations": [
+        "campus",
+        "library",
+        "laboratory",
+        "student dormitory",
+        "teaching hospital",
+        "bookstore",
+        "underground archive",
+        "student forum"
+      ],
+      "officialPresence": "medium",
+      "cultPresence": "medium",
+      "normalLifeSupport": "high",
+      "truthDensity": "medium_high"
+    },
+    {
+      "id": "corporate_inland_city",
+      "label": "Corporate Inland City",
+      "mvpWeight": 14,
+      "surface": "A fast-growing inland city shaped by corporations, industrial parks, private hospitals, residential compounds, surveillance systems, and class division.",
+      "hiddenLayer": "Abnormal biotech, occult capital, controlled disappearances, company clinics, sealed labs, and executives bargaining with non-human powers.",
+      "bestForRoutes": [
+        "power",
+        "ordinaryLife",
+        "assimilation",
+        "worldDestruction",
+        "resistance"
+      ],
+      "keyLocations": [
+        "industrial park",
+        "corporate campus",
+        "private hospital",
+        "luxury compound",
+        "data center",
+        "sealed laboratory",
+        "worker district",
+        "commercial tower"
+      ],
+      "officialPresence": "high",
+      "cultPresence": "medium",
+      "normalLifeSupport": "medium_high",
+      "truthDensity": "medium"
+    },
+    {
+      "id": "border_industrial_city",
+      "label": "Border Industrial City",
+      "mvpWeight": 12,
+      "surface": "A harsh border or frontier industrial city with factories, freight stations, smuggling routes, cheap housing, abandoned zones, and transient populations.",
+      "hiddenLayer": "Illegal rituals, black-market relics, contaminated workers, missing migrants, underground clinics, and forgotten war or disaster sites.",
+      "bestForRoutes": [
+        "escapeOrDenial",
+        "power",
+        "resistance",
+        "assimilation",
+        "worldDestruction"
+      ],
+      "keyLocations": [
+        "factory district",
+        "freight station",
+        "black market",
+        "abandoned zone",
+        "cheap apartment block",
+        "underground clinic",
+        "smuggling route",
+        "old battlefield"
+      ],
+      "officialPresence": "medium",
+      "cultPresence": "medium_high",
+      "normalLifeSupport": "medium_low",
+      "truthDensity": "medium_high"
+    },
+    {
+      "id": "quiet_suburban_region",
+      "label": "Quiet Suburban Region",
+      "mvpWeight": 10,
+      "surface": "A quiet suburban region of schools, malls, clinics, parks, commuter rail, gated communities, family life, and mild local gossip.",
+      "hiddenLayer": "Dream contagion, neighbor disappearances, basement shrines, family replacements, children's imaginary friends, and normalcy slowly rotting from within.",
+      "bestForRoutes": [
+        "ordinaryLife",
+        "escapeOrDenial",
+        "truthPursuit",
+        "assimilation",
+        "resistance"
+      ],
+      "keyLocations": [
+        "school",
+        "mall",
+        "clinic",
+        "park",
+        "commuter station",
+        "gated community",
+        "basement",
+        "community church"
+      ],
+      "officialPresence": "medium",
+      "cultPresence": "low_medium",
+      "normalLifeSupport": "very_high",
+      "truthDensity": "low_medium"
+    }
+  ],
+  "mvpRules": [
+    "MVP uses random city archetype selection instead of one fixed default city.",
+    "MVP uses benchmark cities plus a name pool: benchmark cities stabilize tone, while name-pool cities preserve replay variety.",
+    "Benchmark cities are hidden generation anchors in MVP. Players do not directly see or choose Haijing, Mowen, or Qingshi as presets.",
+    "The selected archetype should influence family background, local NPC identity anchors, event seeds, public explanation style, and available organizations.",
+    "A player character may move cities later if life events, family background, career, organizations, exile, pursuit, or supernatural pressure justify it.",
+    "City archetypes are constraints for AI generation, not fixed maps or forced plots."
+  ],
+  "formalRules": [
+    "Formal release should keep all archetypes and expand them into richer regions.",
+    "Formal release may support travel, migration, unlockable cities, cross-city organizations, and player-customized world regions."
+  ]
+}

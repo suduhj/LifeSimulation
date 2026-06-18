@@ -1,0 +1,104 @@
+{
+  "id": "cthulhu_danger_scaling_rules",
+  "worldId": "cthulhu",
+  "defaultDifficultyMode": "slow_burn_dynamic",
+  "basePattern": "standard_slow_burn",
+  "dynamicScaling": true,
+  "summary": "Cthulhu Life World defaults to slow-burn danger, but trap and danger frequency dynamically adjust through truth exposure, corruption or assimilation, occult contact, social normalcy, publicity level, player actions, and difficulty pressure.",
+  "baseDangerCurve": [
+    {
+      "lifeStage": "birth_and_early_childhood",
+      "defaultTrapFrequency": "very_low",
+      "defaultDangerLevel": "low",
+      "guidance": "Danger should mostly appear as atmosphere, family unease, odd coincidences, dreams, or hidden attention unless talents, exposure, or family background justify more."
+    },
+    {
+      "lifeStage": "childhood",
+      "defaultTrapFrequency": "low",
+      "defaultDangerLevel": "low_medium",
+      "guidance": "The world may introduce rumors, warnings, strange NPC behavior, or small tests, but should not force full horror routes."
+    },
+    {
+      "lifeStage": "youth",
+      "defaultTrapFrequency": "medium_low",
+      "defaultDangerLevel": "medium",
+      "guidance": "Exploration, friendships, school, online rumors, family secrets, and early occult contact can raise risk."
+    },
+    {
+      "lifeStage": "adult",
+      "defaultTrapFrequency": "medium",
+      "defaultDangerLevel": "medium_high",
+      "guidance": "Danger depends strongly on the player character's route, knowledge, relationships, faction ties, and accumulated exposure."
+    },
+    {
+      "lifeStage": "late_life_or_escalated_route",
+      "defaultTrapFrequency": "variable_high",
+      "defaultDangerLevel": "high",
+      "guidance": "If truth exposure, corruption, occult contact, or world escalation are high, traps and irreversible choices can become frequent."
+    }
+  ],
+  "dynamicDrivers": [
+    {
+      "id": "truth_exposure",
+      "effect": "Higher truth exposure increases accurate clues, dangerous attention, and routes where knowledge itself becomes a risk."
+    },
+    {
+      "id": "corruption_or_assimilation",
+      "effect": "Higher corruption increases power temptation, body or mind changes, entity attention, social abnormality, and irreversible bargains."
+    },
+    {
+      "id": "occult_contact",
+      "effect": "Higher occult contact increases ritual hooks, cult access, forbidden books, dream invitations, and trap density."
+    },
+    {
+      "id": "social_normalcy",
+      "effect": "Lower social normalcy increases isolation, official suspicion, cult approach, family breakdown, and difficulty returning to ordinary life."
+    },
+    {
+      "id": "publicity_level",
+      "effect": "Higher public abnormality levels increase open danger, official lockdowns, faction conflict, and world-scale consequences."
+    },
+    {
+      "id": "player_curiosity_or_recklessness",
+      "effect": "Repeated exploration, forbidden questions, risky rituals, and suspicious NPC contact increase event and trap frequency."
+    },
+    {
+      "id": "protection_power",
+      "effect": "Family background, factions, allies, status, and luck can reduce or redirect danger, but may also create higher-level enemies."
+    }
+  ],
+  "trapFrequencyBands": [
+    {
+      "band": "very_low",
+      "description": "Rare traps. Mostly atmosphere and foreshadowing."
+    },
+    {
+      "band": "low",
+      "description": "Occasional misleading clues or mild consequences."
+    },
+    {
+      "band": "medium_low",
+      "description": "Some choices carry hidden costs; exploration can attract attention."
+    },
+    {
+      "band": "medium",
+      "description": "Traps, bait, and dangerous opportunities appear regularly when the player engages hidden systems."
+    },
+    {
+      "band": "high",
+      "description": "Most hidden-world interactions carry serious risk or attention."
+    },
+    {
+      "band": "extreme",
+      "description": "The world is actively hostile; traps, pursuit, corruption, and irreversible outcomes are frequent."
+    }
+  ],
+  "aiRules": [
+    "Default to slow-burn danger, not immediate constant punishment.",
+    "Increase trap and danger frequency when the player character pursues truth, uses occult methods, accumulates corruption, loses social normalcy, or repeatedly acts recklessly.",
+    "Decrease or redirect danger when the player character avoids the hidden world, has strong protection, maintains social normalcy, or makes cautious choices.",
+    "High Luck can create escapes and helpful coincidences, but it can also pull the player character toward rare and dangerous opportunities.",
+    "Traps must be narratively justified by world logic, NPC motives, faction interests, entity attention, or player behavior.",
+    "The AI may hide exact mechanics, but should provide fuzzy warning labels when the player character can reasonably sense risk."
+  ]
+}

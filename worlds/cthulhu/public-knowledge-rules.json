@@ -1,0 +1,376 @@
+{
+  "id": "cthulhu_public_knowledge_rules",
+  "worldId": "cthulhu",
+  "defaultPublicityLevel": 2,
+  "corePrinciple": {
+    "summary": "Abnormalities are semi-public, but the truth is highly sealed.",
+    "ordinaryPeopleKnow": "Ordinary people know that strange events, urban legends, disappearances, cult crimes, shared dreams, sealed towns, unexplained bodies, and abnormal accidents exist. They do not know the real structure of Old Ones, corruption, dream contamination, forbidden knowledge, or unspeakable entities.",
+    "officialPosition": "Official institutions know more, but they do not publicly admit the abnormal truth. Public explanations usually frame abnormal events as disease, accident, crime, rumor, religious incident, mental illness, internet urban legend, natural disaster, terrorist incident, or experimental accident."
+  },
+  "publicityLevels": [
+    {
+      "level": 0,
+      "name": "fully_hidden",
+      "label": "Fully Hidden",
+      "description": "Ordinary people almost never know that abnormalities exist. Events are erased, contained, or disguised."
+    },
+    {
+      "level": 1,
+      "name": "occasional_rumors",
+      "label": "Occasional Rumors",
+      "description": "Occasional urban legends and strange news exist, but most people do not take them seriously."
+    },
+    {
+      "level": 2,
+      "name": "widespread_rumors_official_denial",
+      "label": "Widespread Rumors With Official Denial",
+      "description": "Strange rumors are common and civilian discussion is active, but official sources deny the abnormal truth. This is the default Cthulhu Life World level."
+    },
+    {
+      "level": 3,
+      "name": "public_knows_abnormalities_exist",
+      "label": "Public Knows Abnormalities Exist",
+      "description": "The public broadly knows that abnormalities exist, but still does not know the Old Ones, corruption, or the real structure of the world."
+    },
+    {
+      "level": 4,
+      "name": "official_abnormality_admission",
+      "label": "Official Abnormality Admission",
+      "description": "Official sources admit that abnormalities exist, but still hide the Old Ones, core pollution sources, and unspeakable entities."
+    },
+    {
+      "level": 5,
+      "name": "abnormality_public_order_changed",
+      "label": "Abnormality Public And Social Order Changed",
+      "description": "Abnormalities are public and have changed social order. The world approaches apocalypse, theocracy, containment society, or open conflict routes."
+    }
+  ],
+  "civilianKnowledgeClasses": [
+    {
+      "id": "ordinary_majority",
+      "label": "Ordinary Majority",
+      "knowledge": "They know the world sometimes has strange events, but do not believe or do not want to believe in the abnormal truth.",
+      "typicalResponses": [
+        "The world has plenty of strange things.",
+        "It is probably made up online.",
+        "It is probably mental illness.",
+        "Official sources already said it was an accident.",
+        "Do not spread rumors unless you want trouble."
+      ],
+      "behavior": "They keep studying, working, dating, buying homes, marrying, having children, and aging normally. They may fear strange news, but usually do not investigate."
+    },
+    {
+      "id": "sensitive_civilians",
+      "label": "Sensitive Civilians",
+      "knowledge": "They believe the world is unclean or dangerous in ways normal explanations cannot cover, but they do not have a complete abnormal theory.",
+      "examples": [
+        "elders",
+        "folk practitioners",
+        "religious believers",
+        "residents of abnormal areas",
+        "families linked to disappearance cases",
+        "lightly polluted people"
+      ],
+      "behavior": "They use experience, taboo language, folk practice, religion, and intuition to avoid danger."
+    },
+    {
+      "id": "conspiracy_and_creepypasta_circles",
+      "label": "Conspiracy And Creepypasta Circles",
+      "knowledge": "They collect many mixed fragments. A small amount may be true.",
+      "signalRatio": {
+        "rumor": 0.9,
+        "misinterpretation": 0.09,
+        "truth": 0.01
+      },
+      "topics": [
+        "disappearance maps",
+        "dream city",
+        "nonexistent subway station",
+        "sea whispers",
+        "corporate laboratory",
+        "university forbidden zone",
+        "deleted news",
+        "mystery cult",
+        "abnormal containment rumor"
+      ],
+      "officialCountermeasures": [
+        "insert false information",
+        "reframe truth as urban legend",
+        "turn truth into entertainment",
+        "publish debunks",
+        "limit platform reach",
+        "delete key content when necessary"
+      ]
+    },
+    {
+      "id": "contactees",
+      "label": "Contactees",
+      "knowledge": "They know some things truly exist and know officials are hiding something, but they do not understand the full truth.",
+      "examples": [
+        "victim families",
+        "disappearance case survivors",
+        "abnormal event witnesses",
+        "polluted but not fully collapsed people",
+        "people contacted by secret organizations",
+        "possible future player character state"
+      ],
+      "routePressure": [
+        "return to normal life at any cost",
+        "actively pursue the truth",
+        "join an organization",
+        "be exploited or silenced",
+        "trade for forgetting or protection"
+      ]
+    },
+    {
+      "id": "truth_insiders",
+      "label": "Truth Insiders",
+      "knowledge": "They know that the surface world is false, but still may not know the full truth.",
+      "examples": [
+        "official abnormal departments",
+        "secret organization leaders",
+        "cult core members",
+        "old families",
+        "polluted corporations",
+        "senior researchers",
+        "some religious or folk organizations",
+        "Old One dependents",
+        "rare investigators"
+      ],
+      "principle": "Nobody truly understands the entire truth. Official institutions manage disasters more than they understand them."
+    }
+  ],
+  "officialPolicy": {
+    "summary": "Do not publish, do not admit, do not spread, and do not let ordinary society collapse. Explain when possible, seal when needed, exploit when useful, isolate when unsolved.",
+    "goals": [
+      "maintain normal social operation",
+      "prevent mass panic",
+      "stop abnormal spread",
+      "recover abnormal items",
+      "control informed people",
+      "research exploitable abnormalities",
+      "destroy or contain high-risk abnormalities",
+      "seal the truth"
+    ]
+  },
+  "officialFactions": [
+    {
+      "id": "stability",
+      "label": "Stability-Maintenance Faction",
+      "belief": "It is merciful for ordinary people not to know the truth.",
+      "methods": [
+        "block information",
+        "delete records",
+        "alter public opinion",
+        "placate families",
+        "provide plausible explanations",
+        "make informed people disappear when necessary"
+      ]
+    },
+    {
+      "id": "containment",
+      "label": "Containment Faction",
+      "belief": "Control abnormalities and prevent spread.",
+      "methods": [
+        "create abnormal files",
+        "seal polluted zones",
+        "control abnormal items",
+        "monitor contactees",
+        "recruit special talent",
+        "handle cults and dependents"
+      ]
+    },
+    {
+      "id": "research",
+      "label": "Research Faction",
+      "belief": "Abnormality is a resource.",
+      "methods": [
+        "study forbidden knowledge",
+        "perform human experiments",
+        "exploit corruption",
+        "develop abnormal technology",
+        "cooperate with corporations",
+        "try to control Old One power"
+      ]
+    },
+    {
+      "id": "compromise",
+      "label": "Compromise Or Surrender Faction",
+      "belief": "The Old Ones cannot be defeated; humanity can only submit or bargain.",
+      "methods": [
+        "cooperate with cults in secret",
+        "trade a few lives for majority stability",
+        "hide sacrifices",
+        "maintain false peace",
+        "stop investigators from revealing the truth"
+      ]
+    },
+    {
+      "id": "resistance",
+      "label": "Resistance Faction",
+      "belief": "Humanity can still resist.",
+      "methods": [
+        "protect contactees in secret",
+        "recruit the player character",
+        "fight cults",
+        "disrupt arrival rituals",
+        "seal pollution sources",
+        "sacrifice themselves to preserve social normalcy"
+      ]
+    }
+  ],
+  "explanationLibrary": [
+    {
+      "id": "mental_illness",
+      "label": "Mental Illness Explanation",
+      "publicLabels": [
+        "hallucination",
+        "delusion",
+        "post-traumatic stress",
+        "mass hysteria",
+        "religious delusion",
+        "sleep paralysis",
+        "memory disorder"
+      ],
+      "fitsEvents": [
+        "dream contamination",
+        "seeing unspeakable things",
+        "hearing whispers",
+        "seeing nonexistent people",
+        "family personality changes"
+      ]
+    },
+    {
+      "id": "crime",
+      "label": "Crime Explanation",
+      "publicLabels": [
+        "serial killing",
+        "disappearance case",
+        "gang retaliation",
+        "cult crime",
+        "human trafficking",
+        "terrorist attack",
+        "illegal experiment",
+        "drug abuse"
+      ],
+      "fitsEvents": [
+        "ritual scene",
+        "mass disappearance",
+        "mutilated corpse",
+        "underground ceremony",
+        "sealed village"
+      ]
+    },
+    {
+      "id": "scientific_accident",
+      "label": "Scientific Accident Explanation",
+      "publicLabels": [
+        "chemical leak",
+        "biological contamination",
+        "laboratory accident",
+        "radiation",
+        "magnetic anomaly",
+        "unknown virus",
+        "drug side effect",
+        "industrial pollution"
+      ],
+      "fitsEvents": [
+        "body mutation",
+        "mass coma",
+        "zone lockdown",
+        "animal or plant mutation",
+        "mental abnormality outbreak"
+      ]
+    },
+    {
+      "id": "natural_disaster",
+      "label": "Natural Disaster Explanation",
+      "publicLabels": [
+        "earthquake",
+        "tsunami",
+        "typhoon",
+        "landslide",
+        "extreme weather",
+        "wild animal attack",
+        "deep-sea biological abnormality",
+        "geological activity"
+      ],
+      "fitsEvents": [
+        "seaside Old One event",
+        "urban collapse",
+        "underground ruin exposure",
+        "mass death"
+      ]
+    },
+    {
+      "id": "internet_rumor",
+      "label": "Internet Rumor Explanation",
+      "publicLabels": [
+        "AI face swap",
+        "prank",
+        "hype campaign",
+        "urban legend",
+        "horror short video",
+        "fake news",
+        "conspiracy theory",
+        "game marketing"
+      ],
+      "fitsEvents": [
+        "monster caught on video",
+        "livestream interruption",
+        "shared dream discussion",
+        "nonexistent subway station",
+        "internet meme contamination"
+      ]
+    },
+    {
+      "id": "folk_superstition",
+      "label": "Folk Superstition Explanation",
+      "publicLabels": [
+        "evil influence",
+        "ancestral grave problem",
+        "bad feng shui",
+        "family curse",
+        "sleep demon",
+        "vengeful spirit",
+        "divine punishment",
+        "taboo violation"
+      ],
+      "fitsEvents": [
+        "town abnormality",
+        "family bloodline",
+        "old house event",
+        "recurring dream",
+        "wedding or funeral abnormality"
+      ]
+    }
+  ],
+  "incidentHandlingFlow": [
+    "abnormal event occurs",
+    "local police, hospital, or media first handles it as an ordinary incident",
+    "unexplainable details appear",
+    "official abnormal department intervenes",
+    "site is locked down",
+    "news is deleted or modified",
+    "ordinary public explanation is provided",
+    "contactees are monitored",
+    "abnormal items are recovered",
+    "officials decide whether memory handling, containment, elimination, or recruitment is needed"
+  ],
+  "publicAnnouncementTemplates": [
+    "gas explosion",
+    "mentally ill attacker",
+    "illegal religious organization",
+    "unknown disease",
+    "natural disaster",
+    "internet rumor",
+    "police are investigating; do not spread unverified information"
+  ],
+  "aiRules": [
+    "Ordinary NPCs may know strange rumors, but must not automatically know the Old One truth.",
+    "Official NPC knowledge depends on department, faction, clearance, and corruption level.",
+    "Visible abnormal events should first be wrapped by the social explanation library unless the publicity level has already risen.",
+    "Publicity level may change by region, era, event scale, and player character action.",
+    "The player character may believe, deny, exploit, reveal, cover up, or escape the abnormal truth."
+  ]
+}

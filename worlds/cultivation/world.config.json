@@ -1,0 +1,145 @@
+{
+  "id": "cultivation",
+  "name": "Cultivation World",
+  "mvp": true,
+  "primaryAxis": "age",
+  "lifeSimulationGuardrail": {
+    "coreUnit": "life_run",
+    "subsystemsServe": [
+      "lifePath",
+      "relationships",
+      "aging",
+      "choices",
+      "consequences",
+      "biography",
+      "score",
+      "ending",
+      "worldState"
+    ],
+    "warning": "Cultivation systems must not replace the multi-world life simulator core."
+  },
+  "secondaryProgression": [
+    "realm",
+    "cultivation_foundation",
+    "sect_status",
+    "techniques",
+    "tribulations",
+    "resources",
+    "karma_and_reputation",
+    "lifespan_pressure"
+  ],
+  "progressBars": [
+    {
+      "id": "realm",
+      "labelKey": "cultivation.progress.realm",
+      "meaningKey": "cultivation.progress.realm.meaning"
+    },
+    {
+      "id": "cultivation_foundation",
+      "labelKey": "cultivation.progress.foundation",
+      "meaningKey": "cultivation.progress.foundation.meaning"
+    },
+    {
+      "id": "sect_or_clan_status",
+      "labelKey": "cultivation.progress.sectOrClanStatus",
+      "meaningKey": "cultivation.progress.sectOrClanStatus.meaning"
+    },
+    {
+      "id": "resources",
+      "labelKey": "cultivation.progress.resources",
+      "meaningKey": "cultivation.progress.resources.meaning"
+    },
+    {
+      "id": "karma_and_reputation",
+      "labelKey": "cultivation.progress.karmaAndReputation",
+      "meaningKey": "cultivation.progress.karmaAndReputation.meaning"
+    },
+    {
+      "id": "lifespan_pressure",
+      "labelKey": "cultivation.progress.lifespanPressure",
+      "meaningKey": "cultivation.progress.lifespanPressure.meaning"
+    }
+  ],
+  "routeFamilies": [
+    "sect",
+    "wandering_cultivator",
+    "family_clan",
+    "demonic_path",
+    "hidden_hermit"
+  ],
+  "allowRouteSwitching": true,
+  "mvpRealms": [
+    "mortal",
+    "qi_refining",
+    "foundation_establishment",
+    "golden_core",
+    "nascent_soul",
+    "spirit_transformation"
+  ],
+  "formalReleaseRealms": [
+    "void_refinement",
+    "body_integration",
+    "mahayana",
+    "tribulation_crossing",
+    "ascension"
+  ],
+  "aiTone": [
+    "xianxia",
+    "fate",
+    "sect politics",
+    "dangerous opportunity"
+  ],
+  "eventGeneration": {
+    "poolMode": "open_soft_seed_pool",
+    "seedStrictnessDefault": "soft",
+    "aiAdaptationDefault": "must_adapt",
+    "allowAiFreeGenerationWhenNoSeedFits": true,
+    "sourceWeights": {
+      "seed_pool": 35,
+      "ai_free": 20,
+      "player_consequence": 15,
+      "npc_driven": 10,
+      "world_progress": 10,
+      "natural_life": 5,
+      "random_disturbance": 5
+    }
+  },
+  "factionSystem": {
+    "creationRequirementMode": "default_hard_conditions_plus_world_specific",
+    "growthAxesWeights": {
+      "operationsConstruction": 0.2,
+      "socialPolitics": 0.25,
+      "conflictExpansion": 0.25,
+      "ideologyIdentity": 0.3
+    },
+    "worldSpecificCreationRequirements": [
+      "personalStrengthOrRealm",
+      "lineageOrInheritance",
+      "sectPermissionOrMasterBacking",
+      "spiritualResourceBase",
+      "territoryOrCaveDwelling",
+      "reputationOrLegitimateBanner",
+      "oathOrDaoConstraint"
+    ],
+    "commonFactionTypes": [
+      "sect",
+      "cultivationClan",
+      "wanderingCultivatorAlliance",
+      "merchantHouse",
+      "demonicCult",
+      "inheritanceLineage",
+      "dynastyOfferingSystem"
+    ],
+    "memberPromotion": {
+      "enabled": true,
+      "layers": ["ordinary", "backbone", "core", "importantNPC"],
+      "controlledBy": ["factionScale", "lifeSimulationPacing", "relationshipWeight", "routeImpact"]
+    }
+  },
+  "forbiddenAssumptions": [
+    "cultivation rules apply to all worlds",
+    "all cultivation runs must be sect runs",
+    "breakthroughs are small flat bonuses",
+    "cultivation replaces ordinary life simulation"
+  ]
+}

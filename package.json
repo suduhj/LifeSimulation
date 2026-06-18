@@ -1,0 +1,20 @@
+{
+  "name": "life-simulator",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "demo": "node src/cli.js",
+    "play": "node src/play-cli.js",
+    "web": "node src/web-server.js",
+    "test": "node --test \"tests/*.test.mjs\"",
+    "audit:content": "node tools/audit-playtest-content.mjs",
+    "check:playtest": "node tools/check-playtest-readiness.mjs",
+    "smoke:ai": "node tools/smoke-ai-provider.mjs",
+    "smoke:web": "node tools/smoke-web-playtest.mjs",
+    "qa:free-actions": "node tools/qa-free-actions.mjs --ai mock",
+    "validate:data": "node tools/validate-world-data.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

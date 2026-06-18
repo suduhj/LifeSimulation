@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 人生模拟器试玩版</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <button id="gmToggle" class="gm-toggle" type="button" aria-expanded="false">GM / 调试</button>
+    <main class="app-shell wizard-shell">
+      <section class="wizard-panel" aria-label="创建人生">
+        <div class="panel-header">
+          <p class="eyebrow">AI 人生模拟器</p>
+          <h1>人生模拟器试玩版</h1>
+          <p class="subtitle">先完成身份、属性和天赋，再进入命运预览。真正的人生开始后，经历会以时间线向下延展。</p>
+        </div>
+
+        <nav class="wizard-steps" aria-label="创建步骤">
+          <button class="wizard-step is-active" type="button" data-step-target="identity">1 身份</button>
+          <button class="wizard-step" type="button" data-step-target="attributes">2 属性</button>
+          <button class="wizard-step" type="button" data-step-target="talents">3 天赋</button>
+          <button class="wizard-step" type="button" data-step-target="fate" disabled>4 命运</button>
+          <button class="wizard-step" type="button" data-step-target="life" disabled>5 人生</button>
+        </nav>
+
+        <section id="identityStep" class="wizard-page" data-step="identity">
+          <div class="section-title">
+            <h2>身份设定</h2>
+            <span>选择你将出生的世界</span>
+          </div>
+          <div class="field-grid">
+            <label>
+              世界
+              <select id="worldSelect"></select>
+            </label>
+            <label>
+              AI 模式
+              <select id="aiMode">
+                <option value="deepseek">DeepSeek</option>
+                <option value="openai-compatible">OpenAI 兼容接口</option>
+                <option value="mock">离线调试</option>
+              </select>
+            </label>
+            <label>
+              姓名
+              <input id="playerName" value="林岚" maxlength="24" />
+            </label>
+            <label>
+              性别
+              <select id="gender">
+                <option value="female">女</option>
+                <option value="male">男</option>
+                <option value="nonbinary">非二元</option>
+                <option value="unspecified">不指定</option>
+              </select>
+            </label>
+            <label>
+              性格倾向
+              <select id="personality">
+                <option value="curious">好奇探索</option>
+                <option value="cautious">谨慎稳健</option>
+                <option value="ambitious">野心进取</option>
+                <option value="empathetic">重情共感</option>
+                <option value="rebellious">叛逆自由</option>
+                <option value="pragmatic">现实务实</option>
+                <option value="random">由 AI 生成</option>
+              </select>
+            </label>
+            <label>
+              种族/身份类型
+              <select id="identityType">
+                <option value="auto">由世界、家境和天赋生成</option>
+                <option value="ordinary">普通出身倾向</option>
+                <option value="special">特殊命格倾向</option>
+              </select>
+            </label>
+          </div>
+          <div class="setup-actions single-action">
+            <button id="identityNextButton" type="button">进入属性加点</button>
+          </div>
+        </section>
+
+        <section id="attributeStep" class="wizard-page" data-step="attributes" hidden>
+          <div class="section-title">
+            <h2>属性加点</h2>
+            <span id="pointTotal">20 / 20</span>
+          </div>
+          <div class="attributes">
+            <div class="attribute-row" data-attr="appearance"><span>颜值</span><input type="range" min="0" max="20" value="4" /><strong>4</strong></div>
+            <div class="attribute-row" data-attr="intelligence"><span>智力</span><input type="range" min="0" max="20" value="4" /><strong>4</strong></div>
+            <div class="attribute-row" data-attr="constitution"><span>体质</span><input type="range" min="0" max="20" value="4" /><strong>4</strong></div>
+            <div class="attribute-row" data-attr="familyBackground"><span>家境</span><input type="range" min="0" max="20" value="4" /><strong>4</strong></div>
+            <div class="attribute-row" data-attr="luck"><span>运气</span><input type="range" min="0" max="20" value="4" /><strong>4</strong></div>
+          </div>
+          <div class="setup-actions">
+            <button id="attributeBackButton" class="secondary-button" type="button">返回身份</button>
+            <button id="attributeNextButton" type="button">确认属性</button>
+          </div>
+        </section>
+
+        <section id="talentStep" class="wizard-page" data-step="talents" hidden>
+          <div class="section-title">
+            <h2>天赋抽取</h2>
+            <span id="talentCount">未抽取</span>
+          </div>
+          <div class="setup-actions">
+            <button id="talentBackButton" class="secondary-button" type="button">返回属性</button>
+            <button id="previewButton" type="button">抽取 5 个天赋</button>
+            <button id="startButton" type="button" disabled>确认天赋，生成命运</button>
+          </div>
+          <div id="talentList" class="talent-list"></div>
+        </section>
+
+        <section id="fateStep" class="wizard-page" data-step="fate" hidden>
+          <section id="fatePreviewPanel" class="fate-preview-panel" aria-label="命运预览" hidden>
+            <div class="fate-preview-header">
+              <div>
+                <p id="fatePreviewMeta" class="fate-preview-meta">身世生成</p>
+                <p class="fate-preview-note">命运页只用于确认开局档案；完整经历会从 0 岁进入人生时间线。</p>
+              </div>
+              <button id="beginLifeButton" type="button">开始人生</button>
+            </div>
+            <div class="section-title">
+              <h2>命运预览</h2>
+              <span>身份、命格、天赋与当前处境</span>
+            </div>
+            <div class="fate-grid">
+              <section class="fate-section">
+                <h3>天赋</h3>
+                <div id="fateTalents" class="fate-list"></div>
+              </section>
+              <section class="fate-section">
+                <h3>属性</h3>
+                <div id="fateAttributes" class="fate-list"></div>
+              </section>
+              <section class="fate-section fate-story">
+                <h3>身世</h3>
+                <p id="fateStory"></p>
+              </section>
+            </div>
+          </section>
+        </section>
+
+        <details class="developer-panel">
+          <summary>开发者模式</summary>
+          <section class="load-panel" aria-label="继续存档">
+            <div class="section-title">
+              <h2>继续存档</h2>
+              <span>本地 JSON</span>
+            </div>
+            <label>
+              存档路径
+              <input id="loadPath" placeholder="例如 saves/run_cthulhu_12345.json" />
+            </label>
+            <button id="loadButton" type="button">载入存档</button>
+          </section>
+        </details>
+      </section>
+
+      <section id="lifeStep" class="life-panel wizard-page" data-step="life" aria-label="人生时间线" hidden>
+        <header class="life-header">
+          <div>
+            <p class="eyebrow">当前人生</p>
+            <h2 id="runMeta">未开始</h2>
+          </div>
+          <div class="life-header-actions">
+            <span id="aiStatus">未连接</span>
+            <button id="saveButton" type="button" disabled>保存进度</button>
+          </div>
+        </header>
+
+        <div id="timeline" class="life-timeline"></div>
+        <div id="loadingIndicator" class="loading-indicator" hidden>命运正在描绘中<span class="loading-dots">...</span></div>
+
+        <section id="currentNode" class="current-node timeline-entry">
+          <div id="currentNodeAge" class="timeline-age">当前</div>
+          <section id="resolutionPanel" class="resolution-panel" aria-label="隐藏的变化提示占位" hidden>
+            <div class="section-title">
+              <h2>隐藏占位</h2>
+              <span id="resolutionMeta">行动后果</span>
+            </div>
+            <h3 id="resolutionTitle"></h3>
+            <p id="resolutionBody"></p>
+            <div id="resolutionChanges" class="changes"></div>
+          </section>
+
+          <div id="eventCard" class="event-card timeline-content">
+            <h2 id="eventTitle">等待开局</h2>
+            <p id="eventBody">先完成创建流程。</p>
+            <div id="visibleChanges" class="changes"></div>
+            <div id="choices" class="choices"></div>
+            <div class="freeform-box">
+              <textarea id="freeformInput" rows="3" placeholder="或者写下你想尝试的行动。"></textarea>
+              <button id="freeformButton" type="button" disabled>提交自由行动</button>
+            </div>
+          </div>
+        </section>
+
+        <aside class="state-panel">
+          <div class="section-title">
+            <h2>状态摘要</h2>
+            <span>玩家可见</span>
+          </div>
+          <div id="runSummary" class="summary-list"></div>
+        </aside>
+      </section>
+    </main>
+
+    <aside id="gmPanel" class="gm-panel" aria-label="GM 调试面板" hidden>
+      <div class="gm-panel-header">
+        <div>
+          <p class="eyebrow">测试员模式</p>
+          <h2>GM / 调试</h2>
+        </div>
+        <button id="gmClose" class="gm-close" type="button" aria-label="关闭 GM 调试面板">×</button>
+      </div>
+
+      <section class="gm-section">
+        <h3>测试开局预设</h3>
+        <div id="devPresetButtons" class="dev-button-grid"></div>
+      </section>
+
+      <section class="gm-section">
+        <h3>测试专属天赋</h3>
+        <div id="devTalentButtons" class="dev-button-grid"></div>
+      </section>
+
+      <section class="gm-section">
+        <h3>世界测试场景</h3>
+        <div id="devScenarioButtons" class="dev-button-grid"></div>
+      </section>
+
+      <section class="gm-section">
+        <div class="section-title">
+          <h3>隐藏调试信息</h3>
+          <button id="copyDevReportButton" class="secondary-button" type="button">复制测试报告</button>
+        </div>
+        <pre id="devDebugInfo" class="dev-debug-box">尚未开始人生。</pre>
+      </section>
+    </aside>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

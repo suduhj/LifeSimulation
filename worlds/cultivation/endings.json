@@ -1,0 +1,25 @@
+{
+  "worldId": "cultivation",
+  "endings": [
+    { "id": "ordinary_mortal_life", "name": "Ordinary Mortal Life", "tags": ["mortal", "peaceful", "ordinary_life"] },
+    { "id": "failed_breakthrough", "name": "Failed Breakthrough", "tags": ["tragedy", "cultivation", "injury"] },
+    { "id": "spirit_transformation_overlord", "name": "Spirit Transformation Overlord", "tags": ["mvp_peak", "power", "cultivation"] },
+    { "id": "sect_elder_settlement", "name": "Sect Elder Settlement", "tags": ["sect", "authority", "legacy"] },
+    { "id": "wandering_immortal_trace", "name": "Wandering Immortal Trace", "tags": ["wandering_cultivator", "freedom", "mystery"] },
+    { "id": "clan_pillar_life", "name": "Clan Pillar Life", "tags": ["family_clan", "protection", "resource"] },
+    { "id": "demonic_path_ascendant", "name": "Demonic Path Ascendant", "tags": ["demonic_path", "power", "corruption"] },
+    { "id": "demonic_path_devoured", "name": "Demonic Path Devoured", "tags": ["demonic_path", "tragedy", "backlash"] },
+    { "id": "hidden_hermit_completion", "name": "Hidden Hermit Completion", "tags": ["hidden_hermit", "peaceful", "knowledge"] },
+    { "id": "alchemy_master_legacy", "name": "Alchemy Master Legacy", "tags": ["alchemy", "healing", "legacy"] },
+    { "id": "sword_legend_fallen", "name": "Sword Legend Fallen", "tags": ["sword", "battle", "sacrifice"] },
+    { "id": "tribulation_ashes", "name": "Tribulation Ashes", "tags": ["tribulation", "death", "heavenly_dao"] },
+    { "id": "tribulation_survivor", "name": "Tribulation Survivor", "tags": ["tribulation", "survival", "rebirth"] },
+    { "id": "heaven_secret_backlash", "name": "Heaven Secret Backlash", "tags": ["fate", "knowledge", "backlash"] },
+    { "id": "immortal_dynasty_official", "name": "Immortal Dynasty Official", "tags": ["official_service", "law", "politics"] },
+    { "id": "merchant_house_patron", "name": "Merchant House Patron", "tags": ["wealth", "merchant_house", "social_power"] },
+    { "id": "spirit_beast_companion_life", "name": "Spirit Beast Companion Life", "tags": ["spirit_beast", "bond", "wandering_cultivator"] },
+    { "id": "foundation_ruined_revenge", "name": "Foundation Ruined Revenge", "tags": ["revenge", "injury", "dark_route"] },
+    { "id": "ascension_door_glimpse", "name": "Ascension Door Glimpse", "tags": ["ascension_hint", "mythic", "mystery"] },
+    { "id": "dao_lineage_founder", "name": "Dao Lineage Founder", "tags": ["faction_creation", "legacy", "disciples"] }
+  ]
+}

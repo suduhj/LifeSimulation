@@ -1,0 +1,203 @@
+{
+  "id": "cthulhu_opening_information_rules",
+  "worldId": "cthulhu",
+  "defaultOpeningInformationMode": "minimal",
+  "defaultPlayerVisibleInformation": [
+    "cityName",
+    "birthFamilyBackground",
+    "surfaceBirthContext"
+  ],
+  "hiddenByDefault": [
+    "abnormalTruth",
+    "cityArchetypeSource",
+    "benchmarkCitySource",
+    "publicityLevel",
+    "majorDistrictMap",
+    "suspiciousOrganizations",
+    "hiddenTruthThemes",
+    "dangerousLocations",
+    "activeCults",
+    "officialAbnormalDepartments"
+  ],
+  "bonusClueUnlocks": {
+    "summary": "The default opening shows very little. High Intelligence, high Luck, special talents, high exposure, special family background, or story-justified identity may reveal extra clues.",
+    "possibleTriggers": [
+      {
+        "id": "high_intelligence",
+        "condition": "intelligence is significantly above ordinary baseline",
+        "clueStyle": "pattern recognition, unusual details, contradictions in adult explanations, early memory clarity"
+      },
+      {
+        "id": "high_luck",
+        "condition": "luck is significantly above ordinary baseline",
+        "clueStyle": "accidental overhearing, survival coincidences, strange helpful encounters, unlikely discovery of rumors"
+      },
+      {
+        "id": "special_talent",
+        "condition": "talent grants occult sensitivity, prophetic dreams, hidden destiny, abnormal bloodline, forbidden knowledge affinity, or related effects",
+        "clueStyle": "dream fragments, symbolic perception, instinctive fear, inherited memory, invisible observer feeling"
+      },
+      {
+        "id": "high_exposure",
+        "condition": "exposure value is high enough for abnormality or institutions to notice the player character early",
+        "clueStyle": "being observed, medical concern, family secrecy, institutional attention, abnormal visitors"
+      },
+      {
+        "id": "special_family_background",
+        "condition": "family background connects to old families, official departments, cults, research institutions, hospitals, temples, ports, museums, or sealed areas",
+        "clueStyle": "family taboo, hidden room, guarded relative, unusual inheritance, forbidden workplace"
+      }
+    ],
+    "rule": "Extra opening clues must be partial, ambiguous, and age-appropriate. They must not reveal the full abnormal truth at birth unless a Mythic talent explicitly allows it."
+  },
+  "freeExploration": {
+    "enabled": true,
+    "summary": "The player may freely explore the city, ask NPCs, search online, investigate rumors, use relationships, use money, use talents, or invent other reasonable methods to learn more.",
+    "possibleMethods": [
+      "walk around",
+      "ask family",
+      "ask classmates",
+      "ask neighbors",
+      "ask professionals",
+      "search online",
+      "visit library",
+      "visit hospital",
+      "follow rumor",
+      "use family resources",
+      "use organization contacts",
+      "use talent ability",
+      "perform ritual",
+      "observe dreams",
+      "bribe or trade",
+      "sneak into restricted areas"
+    ],
+    "possibleRewards": [
+      "surface city information",
+      "rumor fragments",
+      "NPC relationship changes",
+      "new location leads",
+      "organization hints",
+      "truth exposure increase",
+      "occult contact increase",
+      "personal goal progress",
+      "hidden route seed"
+    ],
+    "possibleBadOutcomes": [
+      "being noticed by cults",
+      "being noticed by official abnormal departments",
+      "being noticed by non-human entities",
+      "misentering a dangerous location",
+      "sanity pressure increase",
+      "corruption or assimilation increase",
+      "family conflict",
+      "social normalcy decrease",
+      "relationship damage",
+      "injury, disappearance risk, or long-term consequence",
+      "false information trap",
+      "becoming a target for recruitment, surveillance, sacrifice, or research"
+    ]
+  },
+  "aiTrapRules": {
+    "enabled": true,
+    "highDifficultyWorldsCanUseFrequentTraps": true,
+    "rule": "AI may set traps, misleading clues, tempting routes, dangerous shortcuts, false safety, and bait events. High-difficulty worlds may use traps frequently, but traps must remain narratively justified and not feel like arbitrary punishment.",
+    "trapTypes": [
+      "false rumor",
+      "too-helpful stranger",
+      "safe-looking forbidden place",
+      "organization recruitment bait",
+      "dream invitation",
+      "forbidden book hook",
+      "online forum misinformation",
+      "family secret bait",
+      "power bargain",
+      "rescue bait"
+    ]
+  },
+  "freeActionJudgment": {
+    "summary": "Free actions are judged by attributes, talents, narrative plausibility, relationships, resources, world state, exposure, and random probability. Their weights differ by action type.",
+    "defaultWeights": {
+      "narrativePlausibility": 30,
+      "relevantAttributes": 25,
+      "talents": 20,
+      "relationshipsAndResources": 10,
+      "worldStateAndExposure": 10,
+      "randomProbability": 5
+    },
+    "actionTypeWeightOverrides": [
+      {
+        "actionType": "social_inquiry",
+        "weights": {
+          "narrativePlausibility": 25,
+          "relevantAttributes": 20,
+          "talents": 15,
+          "relationshipsAndResources": 30,
+          "worldStateAndExposure": 5,
+          "randomProbability": 5
+        }
+      },
+      {
+        "actionType": "research_or_deduction",
+        "weights": {
+          "narrativePlausibility": 25,
+          "relevantAttributes": 35,
+          "talents": 20,
+          "relationshipsAndResources": 5,
+          "worldStateAndExposure": 10,
+          "randomProbability": 5
+        }
+      },
+      {
+        "actionType": "dangerous_exploration",
+        "weights": {
+          "narrativePlausibility": 25,
+          "relevantAttributes": 20,
+          "talents": 15,
+          "relationshipsAndResources": 10,
+          "worldStateAndExposure": 20,
+          "randomProbability": 10
+        }
+      },
+      {
+        "actionType": "occult_contact",
+        "weights": {
+          "narrativePlausibility": 25,
+          "relevantAttributes": 15,
+          "talents": 30,
+          "relationshipsAndResources": 5,
+          "worldStateAndExposure": 20,
+          "randomProbability": 5
+        }
+      },
+      {
+        "actionType": "reckless_or_impossible_action",
+        "weights": {
+          "narrativePlausibility": 45,
+          "relevantAttributes": 10,
+          "talents": 10,
+          "relationshipsAndResources": 5,
+          "worldStateAndExposure": 20,
+          "randomProbability": 10
+        }
+      }
+    ],
+    "aiMustReturn": [
+      "interpretedAction",
+      "actionType",
+      "mainFactors",
+      "successLevel",
+      "reward",
+      "risk",
+      "stateChangeProposal",
+      "newHooks"
+    ]
+  },
+  "aiRules": [
+    "Opening city information should be minimal by default.",
+    "Extra opening clues from high Intelligence, high Luck, special talents, family background, or exposure must be partial and ambiguous.",
+    "The player can learn more through free exploration, questions, relationships, money, talents, online search, and other reasonable methods.",
+    "Learning more can create bad outcomes, including attention from cults, official departments, entities, or dangerous locations.",
+    "High difficulty may include frequent traps, but traps must be justified by world logic and player action.",
+    "Free action judgment uses multiple factors with different weights; random probability participates but should not dominate most actions."
+  ]
+}

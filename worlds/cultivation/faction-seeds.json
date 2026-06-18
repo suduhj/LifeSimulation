@@ -1,0 +1,111 @@
+{
+  "worldId": "cultivation",
+  "type": "faction_seed_pool",
+  "localization": "docs/mvp-content-pool-draft.md#cultivation-world",
+  "factions": [
+    {
+      "id": "azure_cloud_sect",
+      "nameKey": "cultivation.faction.azure_cloud_sect.name",
+      "typeTags": ["sect", "orthodox", "resource_holder"],
+      "routeTags": ["sect", "training", "politics"],
+      "riskLevel": "medium",
+      "joinRequirementTags": ["spiritual_root", "family_recommendation", "outer_disciple_exam"],
+      "creationRequirementTags": ["nascent_soul_backing", "mountain_gate", "dao_lineage"],
+      "resourceTags": ["techniques", "spirit_stones", "elder_network"],
+      "conflictTags": ["demonic_path", "rival_sect", "inheritance_dispute"],
+      "startingRelationship": { "attention": [0, 35], "trust": [-10, 20] },
+      "aiUseRuleKey": "cultivation.faction.azure_cloud_sect"
+    },
+    {
+      "id": "black_lotus_cult",
+      "nameKey": "cultivation.faction.black_lotus_cult.name",
+      "typeTags": ["demonic_cult", "forbidden_arts", "underground"],
+      "routeTags": ["demonic_path", "power", "revenge"],
+      "riskLevel": "high",
+      "joinRequirementTags": ["desperation", "forbidden_contact", "enemy_of_orthodox"],
+      "creationRequirementTags": ["secret_art", "fear_reputation", "hidden_base"],
+      "resourceTags": ["blood_arts", "black_market", "exiled_cultivators"],
+      "conflictTags": ["orthodox_sect", "official_dynasty", "karma_debt"],
+      "startingRelationship": { "attention": [5, 50], "trust": [-30, 5] },
+      "aiUseRuleKey": "cultivation.faction.black_lotus_cult"
+    },
+    {
+      "id": "river_sword_clan",
+      "nameKey": "cultivation.faction.river_sword_clan.name",
+      "typeTags": ["cultivation_clan", "sword_lineage", "local_power"],
+      "routeTags": ["family_clan", "sword", "marriage_alliance"],
+      "riskLevel": "medium",
+      "joinRequirementTags": ["bloodline", "marriage", "adopted_disciple"],
+      "creationRequirementTags": ["bloodline_legacy", "estate", "sword_manual"],
+      "resourceTags": ["clan_estate", "sword_manuals", "local_contacts"],
+      "conflictTags": ["rival_clan", "inheritance_dispute", "sect_pressure"],
+      "startingRelationship": { "attention": [0, 40], "trust": [-20, 30] },
+      "aiUseRuleKey": "cultivation.faction.river_sword_clan"
+    },
+    {
+      "id": "wandering_cultivator_market",
+      "nameKey": "cultivation.faction.wandering_cultivator_market.name",
+      "typeTags": ["market", "loose_alliance", "neutral"],
+      "routeTags": ["wandering_cultivator", "trade", "information"],
+      "riskLevel": "medium",
+      "joinRequirementTags": ["spirit_stone_fee", "guarantor", "trade_record"],
+      "creationRequirementTags": ["trade_network", "security_force", "market_charter"],
+      "resourceTags": ["auction", "rumors", "loose_contacts"],
+      "conflictTags": ["bandit_cultivators", "sect_tax", "black_market"],
+      "startingRelationship": { "attention": [0, 25], "trust": [-5, 15] },
+      "aiUseRuleKey": "cultivation.faction.wandering_cultivator_market"
+    },
+    {
+      "id": "imperial_offering_office",
+      "nameKey": "cultivation.faction.imperial_offering_office.name",
+      "typeTags": ["dynasty", "official", "law"],
+      "routeTags": ["official_service", "resources", "duty"],
+      "riskLevel": "medium",
+      "joinRequirementTags": ["recorded_identity", "realm_threshold", "official_test"],
+      "creationRequirementTags": ["imperial_mandate", "territory", "bureaucracy"],
+      "resourceTags": ["salary", "official_rank", "legal_authority"],
+      "conflictTags": ["sect_autonomy", "demonic_cult", "court_intrigue"],
+      "startingRelationship": { "attention": [0, 30], "trust": [-15, 20] },
+      "aiUseRuleKey": "cultivation.faction.imperial_offering_office"
+    },
+    {
+      "id": "hidden_medicine_valley",
+      "nameKey": "cultivation.faction.hidden_medicine_valley.name",
+      "typeTags": ["healer_lineage", "alchemy", "hidden"],
+      "routeTags": ["alchemy", "rescue", "quiet_life"],
+      "riskLevel": "medium",
+      "joinRequirementTags": ["medicine_affinity", "saved_by_healer", "rare_herb_debt"],
+      "creationRequirementTags": ["spirit_field", "alchemy_inheritance", "protective_array"],
+      "resourceTags": ["pills", "healers", "herb_garden"],
+      "conflictTags": ["poison_lineage", "resource_raiders", "sect_pressure"],
+      "startingRelationship": { "attention": [0, 25], "trust": [0, 35] },
+      "aiUseRuleKey": "cultivation.faction.hidden_medicine_valley"
+    },
+    {
+      "id": "star_observation_tower",
+      "nameKey": "cultivation.faction.star_observation_tower.name",
+      "typeTags": ["divination", "scholarly", "neutral"],
+      "routeTags": ["fate", "knowledge", "prophecy"],
+      "riskLevel": "high",
+      "joinRequirementTags": ["high_intelligence", "fate_mark", "recommendation"],
+      "creationRequirementTags": ["divination_art", "observatory", "rare_calculators"],
+      "resourceTags": ["prophecy", "records", "fate_tools"],
+      "conflictTags": ["heavenly_secret_backlash", "sect_suspicion", "fate_debt"],
+      "startingRelationship": { "attention": [5, 45], "trust": [-10, 15] },
+      "aiUseRuleKey": "cultivation.faction.star_observation_tower"
+    },
+    {
+      "id": "red_dust_merchant_house",
+      "nameKey": "cultivation.faction.red_dust_merchant_house.name",
+      "typeTags": ["merchant_house", "mortal_link", "resource_network"],
+      "routeTags": ["wealth", "family_background", "social_power"],
+      "riskLevel": "low",
+      "joinRequirementTags": ["family_background", "trade_skill", "contract"],
+      "creationRequirementTags": ["capital", "caravan_routes", "protective_backing"],
+      "resourceTags": ["money", "caravans", "contacts"],
+      "conflictTags": ["market_rival", "bandits", "sect_tax"],
+      "startingRelationship": { "attention": [0, 30], "trust": [0, 25] },
+      "aiUseRuleKey": "cultivation.faction.red_dust_merchant_house"
+    }
+  ]
+}

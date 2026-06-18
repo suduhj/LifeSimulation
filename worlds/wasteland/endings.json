@@ -1,0 +1,25 @@
+{
+  "worldId": "wasteland",
+  "endings": [
+    { "id": "quiet_survivor", "name": "Quiet Survivor", "tags": ["survival", "ordinary", "low_profile"] },
+    { "id": "camp_founder", "name": "Camp Founder", "tags": ["camp", "leadership", "faction_creation"] },
+    { "id": "wasteland_tyrant", "name": "Wasteland Tyrant", "tags": ["power", "violence", "fear"] },
+    { "id": "raider_crown", "name": "Raider Crown", "tags": ["raiders", "violence", "leadership"] },
+    { "id": "raider_victim", "name": "Raider Victim", "tags": ["death", "victim", "collapse"] },
+    { "id": "greenhouse_savior", "name": "Greenhouse Savior", "tags": ["food", "community", "hope"] },
+    { "id": "water_baron", "name": "Water Baron", "tags": ["resource_control", "wealth", "politics"] },
+    { "id": "water_war_casualty", "name": "Water War Casualty", "tags": ["resource_war", "death", "tragedy"] },
+    { "id": "old_world_reclaimer", "name": "Old World Reclaimer", "tags": ["technology", "exploration", "knowledge"] },
+    { "id": "old_world_machine_victim", "name": "Old World Machine Victim", "tags": ["technology", "death", "hazard"] },
+    { "id": "white_mask_healer", "name": "White Mask Healer", "tags": ["healing", "mercy", "community"] },
+    { "id": "mutation_exile", "name": "Mutation Exile", "tags": ["mutation", "exile", "survival"] },
+    { "id": "mutation_prophet", "name": "Mutation Prophet", "tags": ["mutation", "faith", "power"] },
+    { "id": "signal_tower_voice", "name": "Signal Tower Voice", "tags": ["communication", "information", "network"] },
+    { "id": "caravan_legend", "name": "Caravan Legend", "tags": ["travel", "trade", "freedom"] },
+    { "id": "sealed_vault_citizen", "name": "Sealed Vault Citizen", "tags": ["shelter", "isolation", "security"] },
+    { "id": "radiation_bloom_ghost", "name": "Radiation Bloom Ghost", "tags": ["radiation", "mystery", "death"] },
+    { "id": "camp_coup_survivor", "name": "Camp Coup Survivor", "tags": ["politics", "survival", "betrayal"] },
+    { "id": "new_city_builder", "name": "New City Builder", "tags": ["reconstruction", "leadership", "legacy"] },
+    { "id": "last_person_on_the_road", "name": "Last Person On The Road", "tags": ["loneliness", "survival", "old_age"] }
+  ]
+}
