@@ -77,7 +77,7 @@ const attributeLayerLabels = {
   potential: "天赋潜能",
   manifested: "当前表现",
   realized: "已兑现",
-  lockedPotential: "未兑现潜能",
+  lockedPotential: "年龄封存",
   exposure: "异常关注",
 };
 
@@ -408,7 +408,7 @@ const attributeHelpText = {
   manifested: "当前表现：这个年龄真正表现出来、能影响事件判定的能力。",
   realized: "已兑现：已经通过年龄、训练、环境和剧情证据兑现出来的成长。",
   potential: "天赋潜能：这个属性未来可能达到的高度，不代表现在已经完全拥有。",
-  lockedPotential: "未兑现潜能：仍然被年龄、训练、环境或剧情条件锁住的部分。",
+  lockedPotential: "年龄封存：仍然被年龄、身体承载、训练、环境或剧情条件锁住的潜力。",
   exposure: "异常关注：外界察觉你异常的可能性。越高越容易引来关注、保护、嫉妒、争夺、研究或危险。",
 };
 
@@ -1115,7 +1115,7 @@ function renderFateAttributeLines(run) {
     const potentialText = talentBonus > 0
       ? `潜能 ${potential}（基础 ${base} + 天赋 ${talentBonus}）`
       : `潜能 ${potential}（基础 ${base}）`;
-    return `${label}：${potentialText}，当前 ${effective}，已兑现 ${realized}，未兑现 ${lockedPotential}`;
+    return `${label}：${potentialText}，当前 ${effective}，已兑现 ${realized}，年龄封存 ${lockedPotential}`;
   });
 }
 
@@ -1507,14 +1507,18 @@ function formatResolutionMeta(resolution) {
 }
 
 function renderSummaryAttributes(attributePanel, attributes, worldId, growthLedger) {
+  if (attributePanel?.groups?.length) {
+    return renderAttributeGrowthPanel(attributePanel);
+  }
+
   if (attributePanel?.attributes?.length) {
     const items = attributePanel.attributes.map((attribute) => `
       <div class="attribute-summary-row">
         <strong>${escapeHtml(attribute.name)}</strong>
         <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.manifested)}">当前</button> ${escapeHtml(attribute.current ?? 0)}</span>
-        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.realized)}">已兑现</button> ${escapeHtml(attribute.realized ?? 0)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.realized)}">显化</button> ${escapeHtml(attribute.manifested ?? attribute.realized ?? 0)}</span>
         <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.potential)}">潜能</button> ${escapeHtml(attribute.potential ?? 0)}</span>
-        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.lockedPotential)}">未兑现</button> ${escapeHtml(attribute.locked ?? 0)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.lockedPotential)}">年龄封存</button> ${escapeHtml(attribute.ageSealed ?? attribute.locked ?? 0)}</span>
         <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.exposure)}">关注</button> ${escapeHtml(attribute.exposure ?? 0)}</span>
         <span>${escapeHtml(attribute.peerLabel ?? "")}</span>
         <span>${escapeHtml(attribute.potentialLabel ?? "")}</span>
@@ -1538,12 +1542,95 @@ function renderSummaryAttributes(attributePanel, attributes, worldId, growthLedg
         <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.manifested)}">当前</button> ${escapeHtml(current)}</span>
         <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.realized)}">已兑现</button> ${escapeHtml(realized)}</span>
         <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.potential)}">潜能</button> ${escapeHtml(potential)}</span>
-        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.lockedPotential)}">未兑现</button> ${escapeHtml(lockedPotential)}</span>
+        <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.lockedPotential)}">年龄封存</button> ${escapeHtml(lockedPotential)}</span>
         <span><button class="inline-help" type="button" title="${escapeHtml(attributeHelpText.exposure)}">关注</button> ${escapeHtml(exposure)}</span>
       </div>
     `;
   }).join("");
   return `<div class="summary-block"><h3>当前属性</h3><div class="attribute-summary-list">${items}</div></div>`;
+}
+
+function renderAttributeGrowthPanel(attributePanel) {
+  const header = attributePanel.header ?? {};
+  const groups = (attributePanel.groups ?? []).map((group) => renderAttributeGroup(group)).join("");
+  return `
+    <div class="summary-block attribute-growth-panel">
+      <div class="attribute-growth-header">
+        <h3>${escapeHtml(attributePanel.title ?? "成长显化面板")}</h3>
+        <p>${escapeHtml(header.characterLine ?? "")}</p>
+        <p>成长阶段：${escapeHtml(header.growthStage ?? attributePanel.growthStage ?? "")}${header.coreTalent ? ` · 核心天赋：${escapeHtml(header.coreTalent)}` : ""}</p>
+      </div>
+      ${groups}
+    </div>
+  `;
+}
+
+function renderAttributeGroup(group) {
+  if (Array.isArray(group.cards) && group.cards.length > 0) {
+    return `
+      <section class="attribute-group">
+        <h4>${escapeHtml(group.title ?? "")}</h4>
+        <div class="attribute-growth-grid">
+          ${group.cards.map((card) => renderAttributeGrowthCard(card)).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  if (Array.isArray(group.items) && group.items.length > 0) {
+    return `
+      <section class="attribute-group">
+        <h4>${escapeHtml(group.title ?? "")}</h4>
+        <div class="cultivation-progress-list">
+          ${group.items.map((item) => `
+            <div class="cultivation-progress-item">
+              <span>${escapeHtml(item.name)}</span>
+              <strong>${escapeHtml(item.value)}</strong>
+            </div>
+          `).join("")}
+        </div>
+      </section>
+    `;
+  }
+
+  return "";
+}
+
+function renderAttributeGrowthCard(card) {
+  const ratio = clampPercent(card.manifestedRatio);
+  return `
+    <article class="attribute-growth-card">
+      <div class="attribute-card-head">
+        <div>
+          <strong>${escapeHtml(card.name)}</strong>
+          <span>${escapeHtml(card.currentLabel ?? "当前表现")} ${escapeHtml(card.current ?? 0)}｜${escapeHtml(card.peerLabel ?? "")}</span>
+        </div>
+        <div class="potential-badge">
+          <span>${escapeHtml(card.potentialLabel ?? "潜质")}</span>
+          <strong>${escapeHtml(card.potential ?? 0)}</strong>
+        </div>
+      </div>
+      <div class="manifestation-progress" aria-label="${escapeHtml(card.manifestedLabel ?? "显化进度")}">
+        <div class="manifestation-progress-row">
+          <span>${escapeHtml(card.manifestedLabel ?? "显化进度")}</span>
+          <strong>${escapeHtml(card.manifested ?? 0)} / ${escapeHtml(card.manifestedMax ?? card.potential ?? 0)}</strong>
+        </div>
+        <div class="manifestation-progress-track">
+          <span class="manifestation-progress-fill" style="width: ${ratio}%"></span>
+        </div>
+      </div>
+      <div class="attribute-card-metrics">
+        <span class="age-sealed">${escapeHtml(card.ageSealTitle ?? "年龄封存")} ${escapeHtml(card.ageSealed ?? 0)}｜${escapeHtml(card.ageSealLabel ?? "")}</span>
+        <span>${escapeHtml(card.exposureTitle ?? "外界关注")} ${escapeHtml(card.exposureLabel ?? "")}</span>
+      </div>
+    </article>
+  `;
+}
+
+function clampPercent(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 0;
+  return Math.max(0, Math.min(100, Math.round(number)));
 }
 
 function renderSummaryTalents(talents) {

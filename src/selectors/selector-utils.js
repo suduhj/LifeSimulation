@@ -75,6 +75,19 @@ export function attributeLabel(key) {
   return SETUP_ATTRIBUTE_LABELS[key] ?? friendlyId(key);
 }
 
+export function attributeLabelForWorld(key, worldId) {
+  if (worldId === "cultivation") {
+    return {
+      appearance: "仙姿",
+      intelligence: "悟性",
+      constitution: "根骨",
+      familyBackground: "出身/底蕴",
+      luck: "气运",
+    }[key] ?? attributeLabel(key);
+  }
+  return attributeLabel(key);
+}
+
 export function progressLabel(key) {
   return PROGRESS_LABELS[key] ?? friendlyId(key);
 }

@@ -760,6 +760,164 @@ textarea {
   background: #fffdf7;
 }
 
+.attribute-growth-panel {
+  gap: 12px;
+}
+
+.attribute-growth-header {
+  display: grid;
+  gap: 4px;
+}
+
+.attribute-growth-header h3 {
+  margin: 0;
+}
+
+.attribute-growth-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.attribute-group {
+  display: grid;
+  gap: 8px;
+}
+
+.attribute-group h4 {
+  margin: 0;
+  color: var(--accent-strong);
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.attribute-growth-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(188px, 1fr));
+  gap: 10px;
+}
+
+.attribute-growth-card {
+  display: grid;
+  gap: 10px;
+  min-height: 154px;
+  padding: 10px;
+  border: 1px solid rgba(217, 209, 194, 0.96);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 247, 0.96), rgba(248, 242, 231, 0.96));
+}
+
+.attribute-card-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.attribute-card-head strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 16px;
+}
+
+.attribute-card-head span {
+  display: block;
+  color: #34403b;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.potential-badge {
+  min-width: 58px;
+  padding: 6px 8px;
+  border: 1px solid rgba(31, 111, 104, 0.18);
+  border-radius: 6px;
+  background: rgba(238, 247, 245, 0.72);
+  text-align: right;
+}
+
+.potential-badge span {
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.potential-badge strong {
+  margin: 1px 0 0;
+  font-size: 18px;
+}
+
+.manifestation-progress {
+  display: grid;
+  gap: 6px;
+}
+
+.manifestation-progress-row,
+.attribute-card-metrics,
+.cultivation-progress-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.manifestation-progress-row span,
+.attribute-card-metrics span,
+.cultivation-progress-item span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.manifestation-progress-row strong,
+.cultivation-progress-item strong {
+  color: var(--ink);
+  font-size: 12px;
+}
+
+.manifestation-progress-track {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e6dece;
+}
+
+.manifestation-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  display: block;
+  min-width: 3px;
+  max-width: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #9a6a2f);
+}
+
+.attribute-card-metrics {
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.attribute-card-metrics .age-sealed {
+  color: #7b4b25;
+  font-weight: 800;
+}
+
+.cultivation-progress-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+  gap: 8px;
+}
+
+.cultivation-progress-item {
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #fffdf7;
+}
+
 .attribute-summary-list {
   display: grid;
   gap: 8px;

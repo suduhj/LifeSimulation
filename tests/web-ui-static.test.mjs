@@ -50,7 +50,7 @@ describe("web UI contract", () => {
     assert.match(app, /天赋潜能/);
     assert.match(app, /当前表现/);
     assert.match(app, /已兑现/);
-    assert.match(app, /未兑现潜能/);
+    assert.match(app, /年龄封存/);
     assert.match(app, /异常关注/);
     assert.match(app, /renderSummaryTalents/);
     assert.match(app, /renderSummaryAttributes/);
@@ -147,7 +147,7 @@ describe("web UI contract", () => {
     assert.match(app, /潜能 \$\{potential\}/);
     assert.match(app, /当前 \$\{effective\}/);
     assert.match(app, /已兑现 \$\{realized\}/);
-    assert.match(app, /未兑现 \$\{lockedPotential\}/);
+    assert.match(app, /年龄封存 \$\{lockedPotential\}/);
     assert.match(opening, /opening\.earlyLifeTimeline/);
     assert.match(opening, /describeDestinyPreview/);
     assert.match(opening, /buildEarlyLifeTimeline/);
@@ -234,5 +234,26 @@ describe("web UI contract", () => {
     assert.match(app, /panelViews\?\.main/);
     assert.match(app, /panelViews\?\.story/);
     assert.doesNotMatch(app, /renderSummaryAttributes\(run\.player\.attributes,\s*run\.worldId,\s*run\.player\.growthLedger\)/);
+  });
+
+  it("renders the attribute selector as a growth manifestation dashboard", () => {
+    const app = fs.readFileSync("web/app.js", "utf8");
+    const styles = fs.readFileSync("web/styles.css", "utf8");
+
+    assert.match(app, /function renderAttributeGrowthPanel/);
+    assert.match(app, /function renderAttributeGrowthCard/);
+    assert.match(app, /attributePanel\?\.groups/);
+    assert.match(app, /attribute-growth-card/);
+    assert.match(app, /manifestation-progress/);
+    assert.match(app, /age-sealed/);
+    assert.match(app, /年龄封存/);
+    assert.doesNotMatch(app, /未兑现/);
+
+    assert.match(styles, /\.attribute-growth-panel/);
+    assert.match(styles, /\.attribute-group/);
+    assert.match(styles, /\.attribute-growth-card/);
+    assert.match(styles, /\.manifestation-progress/);
+    assert.match(styles, /\.manifestation-progress-fill/);
+    assert.match(styles, /\.age-sealed/);
   });
 });
