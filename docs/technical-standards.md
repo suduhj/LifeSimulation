@@ -15,7 +15,7 @@ The full app stack is not decided yet. The current MVP tooling baseline is:
 - Final playtest acceptance should run `npm run check:playtest -- --require-ai`, `npm run check:playtest -- --live-ai-smoke`, and `npm run smoke:ai -- --required` after configuring a real provider.
 - Reference schemas live under `schemas/`.
 - Local provider secrets can be loaded from a project-root `.env` file through `src/env-loader.js`; explicit shell environment variables override `.env` values.
-- The current program skeleton under `src/` uses no external dependencies and proves world loading, interactive setup, personality-direction selection, initial run creation, player-kept draw-5-keep-3 talents, AI/engine-generated opening sequence, initial important NPC generation, mock AI event generation, optional DeepSeek or generic OpenAI-compatible event generation, choice resolution, free-form clarification/confirmation, free-form attempted-action resolution, provider-backed ending summaries, response validation, state patch application, validated save/load, player-facing run summaries, browser playtest APIs, and interactive/scripted CLI smoke testing.
+- The current program skeleton under `src/` uses no external dependencies and proves world loading, interactive setup, personality-direction selection, initial run creation, player-kept draw-5-keep-3 talents, AI/engine-generated opening sequence, initial important NPC generation, mock AI event generation, optional DeepSeek or generic OpenAI-compatible event generation, choice resolution, free-form clarification/confirmation, free-form attempted-action resolution, provider-backed ending summaries, response validation, state-patch-to-DomainEvent conversion, event-sourced run transitions, replay-first save/load, player-facing run summaries, browser playtest APIs, and interactive/scripted CLI smoke testing.
 
 Before UI/backend implementation starts, choose:
 
@@ -56,6 +56,10 @@ The hidden `GM / 调试` surface is a local tester tool. It may call dev-only ba
 - Build around the core loop: free player action, AI reasonable judgment, validated world-state changes, and continued life progression.
 - Do not turn the game into a fixed-plot game, event-card game, or preset-route picker.
 - Keep deterministic game rules separate from AI-generated prose.
+- Use the Event-Sourced Life Runtime as the authoritative state-change boundary. AI, UI, mock, GM tools, and system flows may propose changes, but accepted changes must become DomainEvents and pass through `transitionRun()`.
+- Treat `run.eventLog` as the long-term save authority when present. The current `run` JSON is a projection/snapshot for compatibility and debugging; it must be rebuildable with `replayRun(eventLog)`.
+- Only reducers settle DomainEvents into game state, and every transition must pass invariant checks before it can be saved or displayed.
+- Use projection views for consumers: PlayerView for ordinary UI, PromptView for AI context, and GMView for developer/debug surfaces. Ordinary PlayerView must not expose hidden information, raw backend IDs, or internal growth-ledger fields.
 - Use the Growth Ledger as the authoritative attribute-growth layer. Talent points enter potential immediately, but effective current ability comes only from realized growth, age maturity caps, temporary modifiers, and validated growth evidence.
 - Generate capability packages and developmental-expression limits from age, effective values, milestones, and world ID. AI may render these limits in prose, but it must not turn locked capabilities into facts.
 - Use state-first life simulation for continuity-critical story facts: player actions first become structured intents and simulation outcomes, the engine records authoritative `worldState.storyState` facts/closed facts/thread stages/forbidden repeats, the narrative director issues an event contract for the next branch, and AI/mock providers render prose inside that contract.
@@ -65,7 +69,7 @@ The hidden `GM / 调试` surface is a local tester tool. It may call dev-only ba
 - Real AI provider failures may fall back to local safe mock generation to keep a playtest session alive, but fallback responses must be clearly marked with `provider_fallback` in `internal.validationFlags` and must still pass the same state-patch validation path before changing the run.
 - Store world lore, talent definitions, attribute rules, and event schemas as structured data.
 - Use stable IDs for worlds, talents, events, NPCs, and endings.
-- Make save files portable and debuggable. Save/load boundaries must validate the MVP run shape and fail clearly on malformed or structurally invalid saves. Legacy `mvp.run.v1` saves that predate the Growth Ledger should be migrated into `player.growthLedger` before strict validation.
+- Make save files portable and debuggable. Save/load boundaries must validate the MVP run shape and fail clearly on malformed or structurally invalid saves. Legacy `mvp.run.v1` saves that predate the Growth Ledger should be migrated into `player.growthLedger` before strict validation. Current event-log saves should load by replay first and use the snapshot only as compatibility/debug data.
 - Separate human/AI-developer design docs from runtime data. Use `.md` for world explanation and `.json` for game-readable configuration.
 - Keep runtime JSON mostly ASCII and stable-ID driven when possible. Human-facing Chinese labels and prose should live in Markdown or localization tables, not inside core config fields that must validate reliably across Windows tooling.
 - Player-facing CLI text, mock output, provider system prompts, docs examples, and tests must stay readable UTF-8 Chinese when they contain Chinese. Do not leave mojibake or replacement characters in files.
@@ -290,6 +294,14 @@ Core entities:
 - AttributeSet
 - AttributeLayer
 - GrowthLedger
+- DomainEvent
+- EventLog
+- RunTransition
+- InvariantCheck
+- PlayerView
+- PromptView
+- GMView
+- ReplayFixture
 - GrowthEvidence
 - CapabilityPackage
 - DevelopmentalExpression
@@ -391,6 +403,8 @@ Core entities:
 - Integration tests for a complete short life run.
 - Regression tests for state-first continuity: closed story facts must not be reopened, forbidden scene skeletons must not repeat, and mock/provider fallback must consume the same event contract as normal generation.
 - Regression tests for annual state transitions: cross-year branches must receive a new annual life delta, repeated yearly shapes across family/education/social/institution/resource/health/relationship/route/world-pressure domains must not become the year's main event again, annual facts must be written back to story state, and the validator must reject forbidden event-shape reuse.
+- Regression tests for the Event-Sourced Life Runtime: state patches must convert to DomainEvents before mutating state, `transitionRun()` must not mutate its input run, replay must rebuild the same run from `eventLog`, illegal transitions must fail invariants, and PlayerView must remain label-first and hidden-info-free.
+- Severe continuity or state bugs should receive replay fixtures under `tests/replay-fixtures/` and be covered by `npm run replay:bugs`.
 - Manual narrative QA for tone, coherence, and replay value.
 
 ## Security And Privacy
