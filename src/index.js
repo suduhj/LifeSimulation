@@ -1,4 +1,11 @@
 export { createAiProvider, createDeepSeekProvider, createOpenAiCompatibleProvider } from "./ai-provider.js";
+export {
+  applyAnnualFactPackageToResponse,
+  buildAnnualFactPackage,
+  buildAnnualSimulationOutcome,
+  detectStaleAnnualEventShape,
+  looksLikeSecretReturnToForbiddenPlace,
+} from "./annual-state-transition.js";
 export { buildActionIntent } from "./action-intent.js";
 export { detectPlayerTextLeaks, validateAiResponse } from "./ai-response-validator.js";
 export { generateChoiceResolution } from "./choice-resolution.js";

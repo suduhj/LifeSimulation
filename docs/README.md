@@ -24,7 +24,7 @@ This folder contains the working standards for the AI life simulator project.
 
 Key current UX requirement: the web playtest uses a step-by-step creation flow, then a scrolling life timeline. Details live in [Product Requirements](./product-requirements.md), [Design Standards](./design-standards.md), [MVP Program Skeleton](./mvp-program-skeleton.md), and [AI Output Protocol](./ai-output-protocol.md).
 
-Key current architecture requirement: continuity-critical story facts live in structured `worldState.storyState`, not in AI prose. Player actions are converted into intent and simulation outcomes first; the narrative director then passes a next-event contract to AI/mock rendering, and the validator rejects repeated closed facts or forbidden scene skeletons. Details live in [Technical Standards](./technical-standards.md) and [MVP Program Skeleton](./mvp-program-skeleton.md).
+Key current architecture requirement: continuity-critical story facts live in structured `worldState.storyState`, not in AI prose. Player actions are converted into intent and simulation outcomes first; cross-year branches are directed by an engine-owned annual fact package before AI/mock rendering. The annual package supplies the year's primary life delta and keeps ongoing threads as background pressure, while the validator rejects reopened closed facts, forbidden scene skeletons, and forbidden yearly event shapes. Details live in [Technical Standards](./technical-standards.md) and [MVP Program Skeleton](./mvp-program-skeleton.md).
 
 ## Runtime World Data
 

@@ -51,7 +51,7 @@ describe("state-first story continuity", () => {
     );
   });
 
-  it("builds a director contract that advances the jade thread instead of rediscovering it", () => {
+  it("builds a director contract that carries the jade thread as background without rediscovering it", () => {
     const worlds = loadMvpWorlds();
     let run = createCultivationRun(worlds);
     run.player.age = 7;
@@ -68,14 +68,14 @@ describe("state-first story continuity", () => {
 
     const contract = buildNextEventContract({ run, worlds });
 
-    assert.equal(contract.threadId, "jade_talisman");
-    assert.equal(contract.sceneType, "family_conflict");
-    assert.ok(contract.mustInclude.includes("玉片已被收起"));
-    assert.ok(contract.mustInclude.includes("父母限制你靠近后山"));
+    assert.equal(contract.sceneType, "annual_state_transition");
+    assert.ok(contract.annualFactPackage);
+    assert.ok(contract.backgroundThreads.includes("jade_talisman"));
+    assert.ok(contract.annualFactPackage.freshnessRules.mustHaveNewYearlyDelta);
     assert.ok(contract.mustNotInclude.includes("再次首次发现玉片"));
     assert.ok(contract.mustNotInclude.includes("再次询问玉片是什么"));
     assert.ok(contract.forbiddenSceneSkeletons.includes("forest_jade_object_footsteps_choice_skeleton"));
-    assert.deepEqual(contract.choiceIntents, ["obey_family_restriction", "secretly_observe_mountain_pull", "negotiate_with_father"]);
+    assert.ok(contract.choiceIntents.length > 0);
   });
 
   it("rejects a next event that reopens a closed jade-talisman discovery", () => {
@@ -114,7 +114,7 @@ describe("state-first story continuity", () => {
 
     const nextEvent = generateMockLifeEvent({ run, worlds, seed: 42, eventContract });
 
-    assert.match(nextEvent.playerText.body, /玉片已被收起|父母限制|后山/);
+    assert.match(nextEvent.playerText.body, /这一年真正改变生活|新的年度岔口|旧线索/);
     assert.doesNotMatch(nextEvent.playerText.body, /草丛里露出一枚暗红色的小珠/);
     assert.doesNotMatch(nextEvent.playerText.body, /林外传来脚步声/);
     assert.ok(nextEvent.choices.every((choice) => !/小珠|脚步声/.test(choice.text)));

@@ -977,7 +977,7 @@ function buildLifeEventPrompt({ run, world, seed, generationContext, minNextAge,
     },
     eventContract,
     contractRule: eventContract
-      ? "eventContract is the authoritative narrative contract from the engine. You must render this contract into Chinese prose and three choices. Do not violate mustNotInclude, closedFacts, forbiddenSceneSkeletons, or choiceIntents. Do not reopen a closed fact as a first discovery."
+      ? "eventContract is the authoritative narrative contract from the engine. If annualFactPackage is present, it is the yearly life delta authority and must be rendered before any thread flavor. You must render this contract into Chinese prose and three choices. Do not violate mustNotInclude, closedFacts, forbiddenSceneSkeletons, forbiddenEventShapes, requiredStateChanges, or choiceIntents. Do not reopen a closed fact as a first discovery. Do not make a supporting thread become the year's main event if annualFactPackage says another life delta is primary."
       : "No explicit event contract was selected for this turn; follow world rules and current save state.",
     run: buildRunPromptSnapshot(run),
     world: buildWorldPromptSnapshot(world),

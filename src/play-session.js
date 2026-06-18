@@ -10,6 +10,7 @@ import { buildNextEventContract } from "./narrative-director.js";
 import { firstActionAge, generateOpeningSequence } from "./opening-sequence.js";
 import { applySimulationOutcomeToResponse, simulateActionOutcome } from "./simulation-kernel.js";
 import { assertStoryContract } from "./story-contract-validator.js";
+import { applyAnnualFactPackageToResponse } from "./annual-state-transition.js";
 
 export function normalizePlayerInput(input) {
   const text = String(input ?? "").trim();
@@ -881,13 +882,13 @@ function attachSimulationOutcome(response, simulationOutcome, run) {
 }
 
 function buildContractedMockLifeEvent({ run, worlds, seed }) {
-  const eventContract = buildNextEventContract({ run, worlds });
+  const eventContract = buildNextEventContract({ run, worlds, seed });
   const event = generateMockLifeEvent({ run, worlds, seed, eventContract });
-  return assertStoryContract(event, eventContract);
+  return applyAnnualFactPackageToResponse(assertStoryContract(event, eventContract), eventContract?.annualFactPackage);
 }
 
 async function buildContractedProviderLifeEvent({ aiProvider, run, worlds, seed, minNextAge }) {
-  const eventContract = buildNextEventContract({ run, worlds });
+  const eventContract = buildNextEventContract({ run, worlds, seed });
   const event = await safeGenerateLifeEvent({ aiProvider, run, worlds, seed, minNextAge, eventContract });
-  return assertStoryContract(event, eventContract);
+  return applyAnnualFactPackageToResponse(assertStoryContract(event, eventContract), eventContract?.annualFactPackage);
 }
