@@ -28,6 +28,17 @@ export function patchToDomainEvents({ run, response, source = "ai_response" } = 
   }
 
   const patch = response.statePatch ?? {};
+  for (const outcome of patch.yearlyOutcomes ?? []) {
+    events.push(createAnnualOutcomeRecordedEvent({
+      run,
+      turnId,
+      age: outcome?.age ?? ageEnd,
+      source: outcome?.source ?? source,
+      outcome,
+      metadata,
+    }));
+  }
+
   for (const change of patch.progressionChanges ?? []) {
     events.push(createDomainEvent({
       type: "world.progress_changed",
@@ -273,6 +284,16 @@ function storyStatePatchToEvents({ run, storyState, turnId, age, source, metadat
   for (const agenda of storyState?.annualAgendas ?? []) {
     events.push(createDomainEvent({ type: "story.annual_agenda_recorded", run, turnId, age, source, payload: agenda, metadata }));
   }
+  for (const outcome of storyState?.yearlyOutcomes ?? []) {
+    events.push(createAnnualOutcomeRecordedEvent({
+      run,
+      turnId,
+      age: outcome?.age ?? age,
+      source,
+      outcome,
+      metadata,
+    }));
+  }
   for (const [axisId, axis] of Object.entries(storyState?.axes ?? {})) {
     for (const delta of axis?.recentDeltas ?? []) {
       events.push(createDomainEvent({
@@ -292,4 +313,17 @@ function storyStatePatchToEvents({ run, storyState, turnId, age, source, metadat
     }
   }
   return events;
+}
+
+function createAnnualOutcomeRecordedEvent({ run, turnId, age, source, outcome, metadata }) {
+  return {
+    type: "annual.outcome_recorded",
+    runId: run?.runId,
+    worldId: run?.worldId,
+    turnId,
+    age,
+    source,
+    payload: structuredClone(outcome),
+    metadata: structuredClone(metadata ?? {}),
+  };
 }

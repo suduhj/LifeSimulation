@@ -32,6 +32,7 @@ export function createEmptyStoryState() {
     curriculum: createDefaultCurriculumState(),
     topicLedger: createDefaultTopicLedger(),
     annualAgendas: [],
+    yearlyOutcomes: [],
   };
 }
 
@@ -53,6 +54,7 @@ export function ensureStoryState(run) {
   current.curriculum = normalizeCurriculumState(current.curriculum);
   current.topicLedger = normalizeTopicLedger(current.topicLedger);
   current.annualAgendas = normalizeAnnualAgendas(current.annualAgendas);
+  current.yearlyOutcomes = normalizeYearlyOutcomes(current.yearlyOutcomes);
   return current;
 }
 
@@ -67,6 +69,7 @@ export function recordSimulationOutcome(run, outcome = {}) {
   applyCurriculumUpdates(storyState, outcome.curriculumUpdates ?? []);
   applyTopicUpdates(storyState, outcome.topicUpdates ?? []);
   addAnnualAgendas(storyState, outcome.annualAgendas ?? []);
+  addYearlyOutcomes(storyState, outcome.yearlyOutcomes ?? []);
 
   for (const update of outcome.threadUpdates ?? []) {
     if (!update?.threadId) continue;
@@ -101,6 +104,7 @@ export function buildStoryStatePatch(outcome = {}, age = 0) {
   applyCurriculumUpdates(storyState, outcome.curriculumUpdates ?? []);
   applyTopicUpdates(storyState, outcome.topicUpdates ?? []);
   addAnnualAgendas(storyState, outcome.annualAgendas ?? []);
+  addYearlyOutcomes(storyState, outcome.yearlyOutcomes ?? []);
   for (const update of outcome.threadUpdates ?? []) {
     if (!update?.threadId) continue;
     const thread = {
@@ -150,6 +154,18 @@ export function addAnnualAgendas(storyState, agendas = []) {
     else current.push(normalized);
   }
   storyState.annualAgendas = current.slice(-12);
+}
+
+export function addYearlyOutcomes(storyState, outcomes = []) {
+  const current = normalizeYearlyOutcomes(storyState.yearlyOutcomes);
+  for (const outcome of outcomes ?? []) {
+    const normalized = normalizeYearlyOutcome(outcome);
+    if (!normalized) continue;
+    const existing = current.find((item) => item.outcomeId === normalized.outcomeId);
+    if (existing) Object.assign(existing, normalized);
+    else current.push(normalized);
+  }
+  storyState.yearlyOutcomes = current.slice(-24);
 }
 
 export function createDefaultAxes() {
@@ -297,5 +313,33 @@ function normalizeAnnualAgenda(value = {}) {
     secondaryAxis: typeof value.secondaryAxis === "string" ? value.secondaryAxis : "",
     topicFamily: typeof value.topicFamily === "string" ? value.topicFamily : "",
     arena: typeof value.arena === "string" ? value.arena : "",
+  };
+}
+
+function normalizeYearlyOutcomes(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(normalizeYearlyOutcome).filter(Boolean).slice(-24);
+}
+
+function normalizeYearlyOutcome(value = {}) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const age = Number.isFinite(value.age) ? Math.floor(value.age) : 0;
+  const slot = typeof value.curriculum?.slot === "string"
+    ? value.curriculum.slot
+    : typeof value.curriculumSlot === "string"
+      ? value.curriculumSlot
+      : "";
+  const outcomeId = typeof value.outcomeId === "string" && value.outcomeId
+    ? value.outcomeId
+    : `year_${age}_${slot || "annual"}`;
+  return {
+    schemaVersion: typeof value.schemaVersion === "string" ? value.schemaVersion : "mvp.yearly_outcome.v1",
+    outcomeId,
+    age,
+    curriculum: structuredClone(value.curriculum ?? { slot, requiredHumanDelta: "" }),
+    humanOutcome: structuredClone(value.humanOutcome ?? {}),
+    growthImpact: structuredClone(value.growthImpact ?? { realizedGrowth: [], exposureGrowth: [], potentialGrowth: [] }),
+    topicImpact: structuredClone(value.topicImpact ?? {}),
+    panelImpact: structuredClone(value.panelImpact ?? {}),
   };
 }
