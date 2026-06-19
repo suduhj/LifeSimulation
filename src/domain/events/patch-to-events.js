@@ -1,4 +1,5 @@
 import { createDomainEvent } from "./event-factory.js";
+import { buildLifeNodeFromResponse } from "../../life-node.js";
 
 export function patchToDomainEvents({ run, response, source = "ai_response" } = {}) {
   const events = [];
@@ -196,6 +197,21 @@ export function patchToDomainEvents({ run, response, source = "ai_response" } = 
     }));
   }
 
+  const lifeNode = buildLifeNodeFromResponse({
+    run,
+    response,
+    sourceEventIds: sourceEventIdsForLifeNode(patch),
+  });
+  events.push(createDomainEvent({
+    type: "life.node_recorded",
+    run,
+    turnId,
+    age: lifeNode.age,
+    source,
+    payload: lifeNode,
+    metadata,
+  }));
+
   events.push(createDomainEvent({
     type: "run.event_recorded",
     run,
@@ -219,6 +235,12 @@ export function patchToDomainEvents({ run, response, source = "ai_response" } = 
   }));
 
   return events;
+}
+
+function sourceEventIdsForLifeNode(patch = {}) {
+  return [
+    ...(patch.yearlyOutcomes ?? []).map((outcome) => `annual.outcome_recorded:${outcome?.outcomeId ?? outcome?.age ?? "annual"}`),
+  ];
 }
 
 export function lifeStageForAge(age) {
@@ -336,6 +358,17 @@ function storyStatePatchToEvents({ run, storyState, turnId, age, source, metadat
       age: outcome?.age ?? age,
       source,
       outcome,
+      metadata,
+    }));
+  }
+  for (const lifeNode of storyState?.lifeNodes ?? []) {
+    events.push(createDomainEvent({
+      type: "life.node_recorded",
+      run,
+      turnId,
+      age: lifeNode?.age ?? age,
+      source,
+      payload: lifeNode,
       metadata,
     }));
   }

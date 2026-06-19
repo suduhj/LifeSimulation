@@ -24,8 +24,9 @@ Each life-simulation event follows this flow:
 8. Engine validates JSON structure and state changes.
 9. Engine converts accepted `statePatch` entries into DomainEvents.
 10. `transitionRun()` reduces DomainEvents, checks invariants, appends `eventLog`, and builds PlayerView/PromptView/GMView projections.
-11. Engine rejects invalid changes, or asks the AI/player for clarification when needed.
-12. Player sees pure text life-simulator output, visible changes, 3 AI-generated choices, and an optional 4th free-form entry when interaction mode allows it.
+11. Engine records a canonical `life.node_recorded` event for ordinary timeline display.
+12. Engine rejects invalid changes, or asks the AI/player for clarification when needed.
+13. Player sees Selector Graph panel data and canonical LifeNode timeline entries, plus 3 AI-generated choices and an optional 4th free-form entry when interaction mode allows it.
 
 Content seeds are inspiration and constraints, not fixed scripts. The AI must adapt them to the current save, player character, NPC relationships, world progress, and prior memory.
 
@@ -34,6 +35,8 @@ For cross-year `life_event` generation, the engine creates an Annual Year Tick v
 Real providers should not receive that raw annual fact package as player-renderable text. The engine compiles it into an Observable Scene Object: visible scene title, main human-life change, secondary world flavor, limited background echoes, forbidden player text, and three choice directions. `curriculumSlot`, `threeLayerFocus`, `topicProfile`, `assetRoles`, `experienceIntent`, and raw thread IDs remain engine/GM/debug concepts.
 
 After a valid annual response is accepted, the engine records a Yearly Outcome Ledger entry. This is not AI-authored state authority. The engine maps the curriculum slot to deterministic growth/exposure impact when needed, appends `annual.outcome_recorded` plus growth/exposure DomainEvents, updates the Growth Ledger, and exposes the result through `panelViews.attributes`.
+
+The ordinary timeline is not raw AI output. The engine projects accepted responses into `mvp.life_node.v1` records, appends `life.node_recorded`, stores nodes in `worldState.storyState.lifeNodes`, and lets `panelViews.story.timeline` expose age/body entries from those nodes. `playerText.title` remains compatibility/debug metadata; ordinary timeline UI must not display it as an event title.
 
 The MVP event sources are:
 

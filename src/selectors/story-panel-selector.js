@@ -9,10 +9,16 @@ import {
 
 export function getStoryPanelView(run) {
   const storyState = run?.worldState?.storyState ?? {};
-  const timeline = (run?.eventHistory ?? [])
-    .slice(-8)
-    .map((event) => publicEventEntry(event))
-    .filter((entry) => entry.title || entry.body);
+  const lifeNodeTimeline = (storyState.lifeNodes ?? [])
+    .slice(-24)
+    .map((node) => publicLifeNodeEntry(node))
+    .filter((entry) => entry.body);
+  const timeline = lifeNodeTimeline.length
+    ? lifeNodeTimeline.slice(-8)
+    : (run?.eventHistory ?? [])
+      .slice(-8)
+      .map((event) => publicEventEntry(event))
+      .filter((entry) => entry.title || entry.body);
   const recentEvents = timeline.slice(-4);
   const threads = (storyState.threads ?? [])
     .slice(-5)
@@ -39,6 +45,26 @@ export function getStoryPanelView(run) {
     axes,
     visibleFacts: buildVisibleFacts(storyState),
   };
+}
+
+function publicLifeNodeEntry(node = {}) {
+  return {
+    kind: node.nodeType ?? "event",
+    nodeType: node.nodeType ?? "annual_event",
+    nodeId: node.nodeId,
+    age: Number.isFinite(node.age) ? node.age : undefined,
+    body: (node.paragraphs ?? []).join("\n\n").trim(),
+    changes: publicVisibleChanges(node.visibleChanges),
+  };
+}
+
+function publicVisibleChanges(changes = []) {
+  return (Array.isArray(changes) ? changes : [])
+    .map((change) => {
+      if (typeof change === "string") return { text: cleanText(change) };
+      return { text: cleanText(change?.text) };
+    })
+    .filter((change) => change.text);
 }
 
 function buildVisibleFacts(storyState) {

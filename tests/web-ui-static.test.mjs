@@ -259,4 +259,14 @@ describe("web UI contract", () => {
     assert.match(styles, /\.manifestation-progress-fill/);
     assert.match(styles, /\.age-sealed/);
   });
+
+  it("renders ordinary timeline entries from canonical LifeNodes without event titles", () => {
+    const app = fs.readFileSync("web/app.js", "utf8");
+
+    assert.match(app, /function renderTimelineEntry/);
+    assert.doesNotMatch(app, /<h3>\$\{escapeHtml\(entry\.title\)\}<\/h3>/);
+    assert.doesNotMatch(app, /timelineEntryFromEvent\(event, kind\)/);
+    assert.match(app, /entry\.nodeType/);
+    assert.match(app, /entry\.body/);
+  });
 });

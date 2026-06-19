@@ -90,10 +90,13 @@ System Truth
   -> Scene Object
   -> AI / Mock Slot Rendering
   -> Scene Compliance Validator
+  -> Canonical LifeNode
   -> EventLog / GrowthLedger / PanelViews
 ```
 
 The system truth can contain IDs, curriculum slots, topic ledgers, asset roles, yearly outcomes, and growth evidence. Ordinary player-facing text only receives the compiled Scene Object: visible title intent, current human-life change, limited world flavor, background echoes with role limits, and three choice directions. Background echoes may lightly appear, but they cannot own the title, first paragraph, or choices unless the engine promotes them to the main scene.
+
+After validation, ordinary timeline display uses canonical `LifeNode` records rather than raw AI `playerText`. A timeline node shows the age and body text; event titles are not rendered in the ordinary timeline. `annual_event`, `action_resolution`, `opening_year`, and `ending` nodes must keep separate `nodeId` values so a yearly event and a later choice result cannot duplicate the same body as two different cards.
 
 ## Visual Direction Draft
 
