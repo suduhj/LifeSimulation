@@ -20,13 +20,14 @@ The skeleton is not the full game yet. It proves the core runtime path that the 
 12. Resolve player choices and free-form attempted actions into `action_resolution` responses with provider support.
 13. Convert resolved player actions into lightweight state-first story facts: intent, simulation outcome, closed facts, thread stage, next pressure, forbidden repeat scene skeletons, and five-axis pressure deltas.
 14. Track five engine-owned story axes in `worldState.storyState.axes`: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence.
-15. Generate an annual fact package for cross-year branches. The package names the new yearly life delta, selects a primary axis and secondary axis, declares required state changes, background threads, and forbidden event shapes before AI prose is generated.
-16. Generate the next playable life event from a narrative director contract. The annual fact package owns the year's main life delta and selected axes; tracked threads such as clues, family pressure, institutions, resources, and world danger can support it as background instead of replaying a settled discovery or repeated scene structure.
-17. Save and load portable run JSON with MVP run-state validation. Current saves include `eventLog`; load prefers `replayRun(eventLog)` over trusting the snapshot.
-18. Build PlayerView, PromptView, and GMView projections from the authoritative run so ordinary UI, AI prompts, and debug tools do not consume the same raw surface.
-19. Build Selector Graph panel views from the authoritative run: `panelViews.main`, `panelViews.attributes`, and `panelViews.story` are the browser panel contract, while raw run internals stay compatibility/debug data.
-20. Run a developer-facing command-line setup, event loop, status summary display, and MVP short-run ending summary.
-21. Start every new life with a non-interactive opening sequence: birth background card, fate preview, and automatic early-year progression to the first meaningful branch.
+15. Generate an Annual Year Tick v2 package for cross-year branches. The package first chooses a human-life curriculum slot, then declares the yearly life delta, primary/secondary axes, required human delta, three-layer focus, topic profile, forbidden topic profiles, background threads, and required state changes before AI prose is generated.
+16. Persist annual curriculum and topic data through `statePatch -> DomainEvents -> reducer -> run projection`: `storyState.curriculum`, `storyState.topicLedger`, and `storyState.annualAgendas` must survive save/load replay.
+17. Generate the next playable life event from a narrative director contract. The annual fact package owns the year's main life delta, curriculum slot, and selected axes; tracked threads such as clues, family pressure, institutions, resources, and world danger can support it as background instead of replaying a settled discovery or repeated scene structure.
+18. Save and load portable run JSON with MVP run-state validation. Current saves include `eventLog`; load prefers `replayRun(eventLog)` over trusting the snapshot.
+19. Build PlayerView, PromptView, and GMView projections from the authoritative run so ordinary UI, AI prompts, and debug tools do not consume the same raw surface.
+20. Build Selector Graph panel views from the authoritative run: `panelViews.main`, `panelViews.attributes`, and `panelViews.story` are the browser panel contract, while raw run internals stay compatibility/debug data.
+21. Run a developer-facing command-line setup, event loop, status summary display, and MVP short-run ending summary.
+22. Start every new life with a non-interactive opening sequence: birth background card, fate preview, and automatic early-year progression to the first meaningful branch.
 
 The real player-facing playtest target is a web version. The current CLI is useful for engine smoke tests, scripted runs, save validation, and AI provider validation, but it should not be treated as the final playable surface for testers.
 
@@ -299,11 +300,13 @@ World IDs:
 - `src/npc-generator.js`: generates initial important NPCs from world templates.
 - `src/event-source-selector.js`: chooses the weighted event source and soft seed context for the next AI turn.
 - `src/annual-state-transition.js`: builds an engine-owned annual fact package for cross-year branches, selects the year's primary life delta plus primary/secondary story axes, detects stale yearly shapes, and produces the story-state patch for annual facts and featured-axis updates.
+- `src/life-curriculum.js`: chooses the annual human-life curriculum slot and required human delta so each year has a concrete life-simulation subject before world flavor is applied.
+- `src/topic-ledger.js`: records recent annual topic profiles and blocks overused arenas, objects, topic families, and pressure types from returning as the year's main event.
 - `src/action-intent.js`: turns a selected choice or free-form action into a lightweight structured intent for continuity-critical story handling.
 - `src/simulation-kernel.js`: records authoritative story facts and thread progression before AI prose becomes the next event context.
-- `src/story-state.js`: stores and merges `worldState.storyState` with five story axes, facts, closed facts, active pressures, thread stages, forbidden repeats, and recent event shapes.
-- `src/narrative-director.js`: converts story state and annual fact packages into an event contract for the next branch, including selected primary/secondary axes.
-- `src/story-contract-validator.js`: rejects generated events that reopen closed facts, repeat forbidden scene skeletons, or reuse forbidden annual event shapes.
+- `src/story-state.js`: stores and merges `worldState.storyState` with five story axes, facts, closed facts, active pressures, thread stages, forbidden repeats, recent event shapes, annual curriculum history, topic ledger history, and annual agendas.
+- `src/narrative-director.js`: converts story state and annual fact packages into an event contract for the next branch, including selected primary/secondary axes, curriculum slot, three-layer focus, and forbidden topic profiles.
+- `src/story-contract-validator.js`: rejects generated events that reopen closed facts, repeat forbidden scene skeletons, reuse forbidden annual event shapes, ignore the annual curriculum slot, or promote a forbidden topic profile.
 - `src/mock-ai.js`: generates a protocol-shaped mock event.
 - `src/ai-provider.js`: provides `mock`, `deepseek`, and generic `openai-compatible` providers for life events, action resolution, and ending summaries.
 - `src/choice-resolution.js`: turns a selected choice into a mock action resolution.
@@ -352,6 +355,7 @@ World IDs:
 - Five-axis pressure now lives in `worldState.storyState.axes`. The director chooses a primary and secondary axis from engine-owned pressure signals, so repeated scenes are avoided by a general state mechanism rather than a one-off cooldown for a single plotline.
 - The current state-first MVP protects the cultivation jade-talisman/lingyinfu thread from repeated first-discovery loops. When the thread is identified, later events may keep the stored object and mountain pull as background pressure, but they must not rediscover the same object and footsteps.
 - Cross-year branches now go through an annual state transition package. The next event contract must introduce a new yearly life delta such as institutional arrival, education shift, social reputation shift, family route decision, resource reallocation, health shift, relationship shift, route commitment, or world-pressure change. Stale yearly shapes are forbidden from becoming the main event again, and the selected axes are written back into `storyState` for the next director pass.
+- Annual Year Tick v2 adds a curriculum-first agenda. The director chooses the human-life curriculum slot first, schedules world flavor as secondary, treats old consequences as background echoes, records topic profiles in `storyState.topicLedger`, and validates that recently overused arenas/objects/topic families/pressure types cannot dominate the next year.
 - Talent setup uses deterministic rarity-weighted draws: Common 45%, Fine 28%, Rare 16%, Epic 7%, Legendary 3%, Mythic 1%, then the player keeps 3 of the 5 drawn talents.
 - Only validated AI responses can be applied to a run.
 - Important NPCs are generated by the system, not specified manually by the player.

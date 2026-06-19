@@ -22,6 +22,14 @@ export { assessFreeformClarification, generateFreeformClarificationRequest } fro
 export { generateFreeformResolution } from "./freeform-resolution.js";
 export { buildCapabilityPackages, buildDevelopmentalExpression } from "./capability-package.js";
 export {
+  CHILDHOOD_CURRICULUM_SLOTS,
+  createDefaultCurriculumState,
+  curriculumSignalsForSlot,
+  recordCurriculumSlot,
+  requiredHumanDeltaForSlot,
+  selectCurriculumSlot,
+} from "./life-curriculum.js";
+export {
   ATTRIBUTE_KEYS,
   GROWTH_LEDGER_SCHEMA_VERSION,
   applyGrowthEvidence,
@@ -55,6 +63,9 @@ export { applySimulationOutcomeToResponse, simulateActionOutcome } from "./simul
 export {
   STORY_AXIS_IDS,
   applyAxisUpdates,
+  applyCurriculumUpdates,
+  applyTopicUpdates,
+  addAnnualAgendas,
   createDefaultAxes,
   createEmptyStoryState,
   ensureStoryState,
@@ -62,6 +73,15 @@ export {
   selectStoryAxes,
 } from "./story-state.js";
 export { assertStoryContract, validateStoryContract } from "./story-contract-validator.js";
+export {
+  buildTopicProfile,
+  createDefaultTopicLedger,
+  forbiddenTopicProfiles,
+  normalizeTopicLedger,
+  recordTopicProfile,
+  topicProfileMatchesText,
+  topicSignalsForProfile,
+} from "./topic-ledger.js";
 export { createWebSessionStore } from "./web-session-store.js";
 export {
   SETUP_ATTRIBUTE_KEYS,

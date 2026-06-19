@@ -29,6 +29,8 @@ Each life-simulation event follows this flow:
 
 Content seeds are inspiration and constraints, not fixed scripts. The AI must adapt them to the current save, player character, NPC relationships, world progress, and prior memory.
 
+For cross-year `life_event` generation, the engine may include an Annual Year Tick v2 `eventContract`. This contract is authoritative for the year. `curriculumSlot` and `requiredHumanDelta` define the year's main human-life change; `threeLayerFocus.lifeBase` is primary; `threeLayerFocus.worldFlavor` is secondary; `threeLayerFocus.consequenceEcho` is background-only. `topicProfile` records what this year is about, and `forbiddenTopicProfiles` lists recent arenas, objects, topic families, or pressure types that must not become the main event again.
+
 The MVP event sources are:
 
 - `seed_pool`: use selected soft seeds as style, trigger, and constraint references.
@@ -359,6 +361,7 @@ Use Growth Ledger current effective values and capability packages for age-appro
 Use potential values only for destiny and long-term tendency.
 If growth is justified, submit statePatch.growthEvidenceChanges; do not directly author effective, realized, maturityCap, or lockedPotential.
 Do not author DomainEvents, eventLog entries, or direct run mutations. The engine converts accepted statePatch entries into DomainEvents and reducers settle state.
+If eventContract.annualFactPackage is present, render curriculumSlot and requiredHumanDelta as the year's main human-life change. Keep worldFlavor secondary and consequenceEcho background-only. Do not promote forbiddenTopicProfiles or old clue objects into the main event.
 Do not narrate locked capabilities as already usable.
 Use exposure values to decide who notices abnormalities.
 Keep the selected world distinct. Do not import mechanics from other worlds unless the context explicitly allows it.

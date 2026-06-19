@@ -68,6 +68,8 @@ Ordinary browser panels should read the Selector Graph output exposed as `panelV
 - Use state-first life simulation for continuity-critical story facts: player actions first become structured intents and simulation outcomes, the engine records authoritative `worldState.storyState` facts/closed facts/thread stages/forbidden repeats, the narrative director issues an event contract for the next branch, and AI/mock providers render prose inside that contract.
 - Track five lightweight story axes inside `worldState.storyState.axes`: `lifePressure`, `talentManifestation`, `npcRelationship`, `worldOpportunity`, and `choiceConsequence`. These axes are engine-owned pressure signals, not player-facing prose. Player actions and annual events may add deltas to them; the narrative director uses them to pick a primary and secondary axis for the next event contract.
 - Use annual state transition packages as the default cross-year director: the engine must first produce an `annualFactPackage` with the year's primary life delta, primary/secondary axes, required state changes, background threads, and forbidden event shapes. AI/mock providers may render the package, but they must not make an ongoing thread become the year's main event unless the package selected it as the primary delta.
+- Use Annual Year Tick v2 for cross-year variety: every annual package must include a `curriculumSlot`, `requiredHumanDelta`, `threeLayerFocus`, `topicProfile`, `forbiddenTopicProfiles`, and `annualAgenda`. The life curriculum slot is the year's primary subject; world flavor is secondary; old choices and long-running clues are background echoes unless the engine explicitly promotes them.
+- Persist annual curriculum and topic data through the Event-Sourced Life Runtime. `worldState.storyState.curriculum`, `topicLedger`, and `annualAgendas` must be written as story-state patches, converted into DomainEvents, reduced back into the run projection, and preserved by `replayRun(eventLog)`. Do not add new annual director state only to the snapshot.
 - Treat AI output as untrusted content that must be validated before it changes game state.
 - Real AI provider failures may fall back to local safe mock generation to keep a playtest session alive, but fallback responses must be clearly marked with `provider_fallback` in `internal.validationFlags` and must still pass the same state-patch validation path before changing the run.
 - Store world lore, talent definitions, attribute rules, and event schemas as structured data.
@@ -398,6 +400,12 @@ Core entities:
 - SimulationOutcome
 - EventContract
 - AnnualFactPackage
+- AnnualAgenda
+- LifeCurriculum
+- CurriculumSlot
+- TopicLedger
+- TopicProfile
+- ThreeLayerFocus
 - StoryContractValidation
 
 ## Testing Expectations
@@ -410,6 +418,7 @@ Core entities:
 - Integration tests for a complete short life run.
 - Regression tests for state-first continuity: closed story facts must not be reopened, forbidden scene skeletons must not repeat, and mock/provider fallback must consume the same event contract as normal generation.
 - Regression tests for annual state transitions: cross-year branches must receive a new annual life delta, repeated yearly shapes across family/education/social/institution/resource/health/relationship/route/world-pressure domains must not become the year's main event again, annual facts must be written back to story state, and the validator must reject forbidden event-shape reuse.
+- Regression tests for Annual Year Tick v2: ages 5-10 should cover at least four curriculum slots, curriculum/topic/agenda records must survive statePatch-to-DomainEvent replay, forbidden topic profiles must block recent arenas/objects/topic families/pressure types from returning as the main event, and story-contract validation must reject responses that ignore the curriculum slot.
 - Regression tests for the Event-Sourced Life Runtime: state patches must convert to DomainEvents before mutating state, `transitionRun()` must not mutate its input run, replay must rebuild the same run from `eventLog`, illegal transitions must fail invariants, and PlayerView must remain label-first and hidden-info-free.
 - Regression tests for Selector Graph panel views: main, attribute, and story panels must derive from the same run, web session serialization must expose `panelViews`, and ordinary frontend rendering must use `panelViews` instead of recomputing panels from raw run internals.
 - Severe continuity or state bugs should receive replay fixtures under `tests/replay-fixtures/` and be covered by `npm run replay:bugs`.

@@ -1,4 +1,6 @@
 import { detectStaleAnnualEventShape } from "./annual-state-transition.js";
+import { curriculumSignalsForSlot } from "./life-curriculum.js";
+import { topicProfileMatchesText } from "./topic-ledger.js";
 
 export function validateStoryContract(response, contract) {
   if (!contract) return { valid: true, errors: [] };
@@ -26,11 +28,40 @@ export function validateStoryContract(response, contract) {
     }
   }
 
+  if (contract.curriculumSlot && !looksLikeCurriculumSlot(text, contract.curriculumSlot, contract.requiredHumanDelta)) {
+    errors.push(`response does not satisfy curriculum slot ${contract.curriculumSlot}`);
+  }
+
+  for (const profile of contract.forbiddenTopicProfiles ?? []) {
+    if (topicProfileMatchesText(text, profile)) {
+      errors.push(`response promotes forbidden topic ${profile.topicFamily}`);
+    }
+  }
+
   for (const phrase of contract.mustNotInclude ?? []) {
     if (phrase && text.includes(phrase)) errors.push(`response includes forbidden phrase: ${phrase}`);
   }
 
   return { valid: errors.length === 0, errors };
+}
+
+function looksLikeCurriculumSlot(text, slot, requiredHumanDelta = "") {
+  if (requiredHumanDelta && text.includes(requiredHumanDelta)) return true;
+  const signals = curriculumSignalsForSlot(slot);
+  const signalHits = signals.filter((signal) => signal && text.includes(signal)).length;
+  if (signalHits >= 2) return true;
+  return {
+    peer_relationship: /(同龄|伙伴|孩子|朋友).{0,40}(态度|疏远|亲近|议论|看法|改变)/s.test(text),
+    family_boundary: /(父亲|母亲|家人|家里).{0,40}(规矩|边界|限制|安排|允许|不许)/s.test(text),
+    household_responsibility: /(家务|责任|取水|劈柴|照看|帮忙|差事)/s.test(text),
+    learning_path: /(先生|村塾|学习|功课|练字|书|课堂|师长)/s.test(text),
+    mentor_attention: /(长辈|先生|师长|执事|大人).{0,40}(注意|看法|评价|指导|改变)/s.test(text),
+    body_growth: /(身体|力气|体力|个子|行动范围|承载).{0,40}(变化|改变|重新安排|能做|不能做)/s.test(text),
+    health_or_care: /(照护|休养|身体|睡眠|发热|照看).{0,40}(安排|变化|担心|认真)/s.test(text),
+    village_social_life: /(村里|邻居|名声|议论|社区|相处).{0,40}(变化|改变|位置|态度)/s.test(text),
+    talent_subtle_manifestation: /(天赋|异常|梦|感知|微热|不寻常).{0,40}(轻微|日常|小|细微)/s.test(text),
+    external_attention: /(外人|宗门|官方|营地|陌生|来人|目光).{0,40}(改变|注意|安排|日常)/s.test(text),
+  }[slot] ?? false;
 }
 
 export function assertStoryContract(response, contract) {

@@ -67,6 +67,15 @@ export function reduceRunEvent(run, event) {
         recentEventShapes: event.payload.shape ? [event.payload.shape] : [],
       });
       break;
+    case "story.curriculum_recorded":
+      applyStoryOutcome(nextRun, { curriculumUpdates: [event.payload] });
+      break;
+    case "story.topic_recorded":
+      applyStoryOutcome(nextRun, { topicUpdates: [event.payload] });
+      break;
+    case "story.annual_agenda_recorded":
+      applyStoryOutcome(nextRun, { annualAgendas: [event.payload] });
+      break;
     case "npc.relationship_changed":
       applyRelationshipChange(nextRun, event.payload);
       break;
@@ -209,6 +218,9 @@ function storyStatePatchToOutcome(storyState) {
     forbiddenRepeats: storyState?.forbiddenRepeats ?? [],
     recentEventShapes: storyState?.recentEventShapes ?? [],
     threadUpdates: storyState?.threads ?? [],
+    curriculumUpdates: storyState?.curriculum?.recentSlots ?? [],
+    topicUpdates: storyState?.topicLedger?.recentTopics ?? [],
+    annualAgendas: storyState?.annualAgendas ?? [],
   };
 }
 
