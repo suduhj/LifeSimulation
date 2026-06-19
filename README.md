@@ -12,6 +12,7 @@ This project is a multi-world AI life simulator. The current playable MVP suppor
 - Capability packages and developmental-expression limits so children do not receive adult power just because they have mythic potential
 - 3 AI-generated choices plus a separate optional free-form action
 - Event-Sourced Life Runtime: accepted changes become append-only DomainEvents, and the current `run` is a replayable projection instead of the save authority
+- Canonical Life Runtime v1: accepted responses are projected into engine-owned `LifeNode` records; ordinary timeline UI reads those nodes and shows age plus body text instead of AI event titles
 - Selector Graph panel views: the browser receives `panelViews.main`, `panelViews.attributes`, and `panelViews.story` derived from the authoritative run; the attribute view is a grouped growth-manifestation dashboard instead of raw ledger rows
 - State-first story continuity: structured facts/thread stages are authoritative, while AI only renders prose inside the next-event contract
 - Five-axis lightweight world simulation: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence are tracked as structured `storyState.axes`
@@ -48,6 +49,8 @@ Cross-year story generation now uses a curriculum-led annual agenda. The engine 
 Each cross-year branch also settles a Yearly Outcome Ledger entry before it reaches the UI. If AI prose omits growth evidence, the engine still maps the selected curriculum slot into deterministic realized-growth and exposure candidates, writes them as DomainEvents, updates the Growth Ledger, and lets `panelViews.attributes` display the changed current/attention values. Named story assets such as jade tokens, back mountains, scripture pavilions, mines, sects, and beasts are tracked with spotlight counts and cooldown roles so a recently featured object can remain a background echo without taking over the year.
 
 Browser panel data now follows a lightweight CQRS split: reducers produce the current run projection, then Selector Graph functions build `panelViews` for the main panel, attribute panel, and story panel. Ordinary UI should render those selector views first; raw run, event-log, growth-ledger, and hidden fields remain compatibility or GM/debug data.
+
+Timeline data now goes through the Canonical Life Runtime. The engine records `life.node_recorded` DomainEvents, stores canonical `LifeNode` records under `worldState.storyState.lifeNodes`, and projects `panelViews.story.timeline` from those nodes. Ordinary timeline entries display only age and node body; AI `playerText.title` remains compatibility/debug data and is not the ordinary timeline authority.
 
 The web frontend never receives AI provider keys. DeepSeek/OpenAI-compatible requests go through the local Node backend.
 

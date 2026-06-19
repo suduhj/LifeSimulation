@@ -21,6 +21,8 @@ export { TALENT_RARITY_PROBABILITIES, createInitialRun, drawStartingTalents } fr
 export { assessFreeformClarification, generateFreeformClarificationRequest } from "./freeform-clarification.js";
 export { generateFreeformResolution } from "./freeform-resolution.js";
 export { buildCapabilityPackages, buildDevelopmentalExpression } from "./capability-package.js";
+export { buildLifeNodeFromResponse, LIFE_NODE_SCHEMA_VERSION } from "./life-node.js";
+export { assertLifeNode, validateLifeNode } from "./life-node-validator.js";
 export {
   ATTRIBUTE_REALITY_KEYS,
   attributeDisplayPolicy,
@@ -90,6 +92,7 @@ export { buildPanelViews, getAttributePanelView, getMainPanelView, getStoryPanel
 export { applySimulationOutcomeToResponse, simulateActionOutcome } from "./simulation-kernel.js";
 export {
   STORY_AXIS_IDS,
+  addLifeNodes,
   applyAxisUpdates,
   applyCurriculumUpdates,
   applyTopicUpdates,

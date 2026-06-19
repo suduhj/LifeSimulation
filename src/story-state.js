@@ -39,6 +39,7 @@ export function createEmptyStoryState() {
     topicLedger: createDefaultTopicLedger(),
     annualAgendas: [],
     yearlyOutcomes: [],
+    lifeNodes: [],
   };
 }
 
@@ -64,6 +65,7 @@ export function ensureStoryState(run) {
   current.topicLedger = normalizeTopicLedger(current.topicLedger);
   current.annualAgendas = normalizeAnnualAgendas(current.annualAgendas);
   current.yearlyOutcomes = normalizeYearlyOutcomes(current.yearlyOutcomes);
+  current.lifeNodes = normalizeLifeNodes(current.lifeNodes);
   return current;
 }
 
@@ -82,6 +84,7 @@ export function recordSimulationOutcome(run, outcome = {}) {
   applyTopicUpdates(storyState, outcome.topicUpdates ?? []);
   addAnnualAgendas(storyState, outcome.annualAgendas ?? []);
   addYearlyOutcomes(storyState, outcome.yearlyOutcomes ?? []);
+  addLifeNodes(storyState, outcome.lifeNodes ?? []);
 
   for (const update of outcome.threadUpdates ?? []) {
     if (!update?.threadId) continue;
@@ -120,6 +123,7 @@ export function buildStoryStatePatch(outcome = {}, age = 0) {
   applyTopicUpdates(storyState, outcome.topicUpdates ?? []);
   addAnnualAgendas(storyState, outcome.annualAgendas ?? []);
   addYearlyOutcomes(storyState, outcome.yearlyOutcomes ?? []);
+  addLifeNodes(storyState, outcome.lifeNodes ?? []);
   for (const update of outcome.threadUpdates ?? []) {
     if (!update?.threadId) continue;
     const thread = {
@@ -200,6 +204,18 @@ export function addYearlyOutcomes(storyState, outcomes = []) {
     else current.push(normalized);
   }
   storyState.yearlyOutcomes = current.slice(-24);
+}
+
+export function addLifeNodes(storyState, lifeNodes = []) {
+  const current = normalizeLifeNodes(storyState.lifeNodes);
+  for (const node of lifeNodes ?? []) {
+    const normalized = normalizeLifeNode(node);
+    if (!normalized) continue;
+    const existing = current.find((item) => item.nodeId === normalized.nodeId);
+    if (existing) Object.assign(existing, normalized);
+    else current.push(normalized);
+  }
+  storyState.lifeNodes = current.slice(-80);
 }
 
 export function createDefaultAxes() {
@@ -353,6 +369,34 @@ function normalizeAnnualAgenda(value = {}) {
 function normalizeYearlyOutcomes(value) {
   if (!Array.isArray(value)) return [];
   return value.map(normalizeYearlyOutcome).filter(Boolean).slice(-24);
+}
+
+function normalizeLifeNodes(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(normalizeLifeNode).filter(Boolean).slice(-80);
+}
+
+function normalizeLifeNode(value = {}) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const nodeId = typeof value.nodeId === "string" && value.nodeId.trim() ? value.nodeId : "";
+  if (!nodeId) return undefined;
+  const age = Number.isFinite(value.age) ? Math.floor(value.age) : 0;
+  return {
+    schemaVersion: typeof value.schemaVersion === "string" ? value.schemaVersion : "mvp.life_node.v1",
+    nodeId,
+    age,
+    nodeType: typeof value.nodeType === "string" ? value.nodeType : "annual_event",
+    sourceEventIds: Array.isArray(value.sourceEventIds) ? [...value.sourceEventIds] : [],
+    visibleContract: structuredClone(value.visibleContract ?? {}),
+    attributeReality: structuredClone(value.attributeReality ?? {}),
+    originReality: structuredClone(value.originReality ?? {}),
+    storyAssetBudgets: structuredClone(value.storyAssetBudgets ?? {}),
+    paragraphs: Array.isArray(value.paragraphs)
+      ? value.paragraphs.map((paragraph) => String(paragraph ?? "").trim()).filter(Boolean)
+      : [],
+    choices: Array.isArray(value.choices) ? structuredClone(value.choices) : [],
+    visibleChanges: Array.isArray(value.visibleChanges) ? structuredClone(value.visibleChanges) : [],
+  };
 }
 
 function normalizeYearlyOutcome(value = {}) {

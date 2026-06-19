@@ -88,6 +88,9 @@ export function reduceRunEvent(run, event) {
     case "annual.outcome_recorded":
       applyStoryOutcome(nextRun, { yearlyOutcomes: [event.payload] });
       break;
+    case "life.node_recorded":
+      applyStoryOutcome(nextRun, { lifeNodes: [event.payload] });
+      break;
     case "npc.relationship_changed":
       applyRelationshipChange(nextRun, event.payload);
       break;
@@ -237,6 +240,7 @@ function storyStatePatchToOutcome(storyState) {
     topicUpdates: storyState?.topicLedger?.recentTopics ?? [],
     annualAgendas: storyState?.annualAgendas ?? [],
     yearlyOutcomes: storyState?.yearlyOutcomes ?? [],
+    lifeNodes: storyState?.lifeNodes ?? [],
   };
 }
 

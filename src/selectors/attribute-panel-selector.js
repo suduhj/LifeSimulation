@@ -67,7 +67,7 @@ function buildAttributeCard({ key, attributes, growthLedger }) {
   const manifested = numberValue(ledger.realized ?? attr.realized ?? attr.manifested ?? current);
   const potential = numberValue(ledger.potential ?? attr.potential);
   const rawSealed = Math.max(0, numberValue(ledger.lockedPotential ?? attr.lockedPotential ?? potential - manifested));
-  const ageSealed = policy.showSealedValue ? rawSealed : undefined;
+  const ageSealed = policy.showSealedValue ? rawSealed : 0;
   const exposure = numberValue(ledger.exposure ?? attr.exposure);
   const manifestedMax = Math.max(0, potential);
 

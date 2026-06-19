@@ -9,6 +9,7 @@ import { selectExperienceIntent } from "./player-experience-director.js";
 import { assetRoleMustNotInclude, assetRolesFromTopicProfile } from "./story-asset-lifecycle.js";
 import { buildTopicProfile, forbiddenTopicProfiles } from "./topic-ledger.js";
 import { applyYearlyOutcomeToResponse, buildYearlyOutcome } from "./yearly-outcome.js";
+import { compileSceneObject } from "./scene-object-compiler.js";
 
 export const ANNUAL_FACT_PACKAGE_SCHEMA_VERSION = "mvp.annual_fact_package.v1";
 
@@ -222,6 +223,7 @@ export function applyAnnualFactPackageToResponse(response, annualFactPackage, { 
   const delta = annualFactPackage.primaryDelta;
   const outcome = buildAnnualSimulationOutcome(annualFactPackage);
   const yearlyOutcome = buildYearlyOutcome({ run, annualFactPackage, response: next });
+  next.observableScene = next.observableScene ?? compileSceneObject({ run, annualFactPackage });
 
   next.event ??= {};
   next.event.eventShape = delta.eventShape;

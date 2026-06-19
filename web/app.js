@@ -981,12 +981,13 @@ function buildTimelineFromLoadedSession(session) {
   for (const item of storyTimeline) {
     const entry = {
       kind: item.kind ?? "event",
+      nodeType: item.nodeType,
+      nodeId: item.nodeId,
       age: item.age,
-      title: item.title ?? "",
       body: item.body ?? "",
-      changes: [],
+      changes: item.changes ?? [],
     };
-    if (isRenderableTimelineEntry(entry) && !entries.some((existing) => existing.age === entry.age && existing.title === entry.title)) {
+    if (isRenderableTimelineEntry(entry) && !entries.some((existing) => sameTimelineIdentity(existing, entry))) {
       entries.push(entry);
     }
   }
@@ -1014,6 +1015,7 @@ function mergeResolutionIntoLatestTimelineEntry(resolution) {
   state.lifeTimeline[targetIndex] = {
     ...entry,
     body: [entry.body, body].filter(hasText).join("\n\n"),
+    nodeType: "action_resolution",
     changes: mergeVisibleChanges(entry.changes, changes),
   };
 }
@@ -1022,7 +1024,7 @@ function findTimelineEntryIndexForResolution(resolution) {
   const age = resolution?.timeSpan?.ageEnd ?? resolution?.timeSpan?.ageStart;
   for (let index = state.lifeTimeline.length - 1; index >= 0; index -= 1) {
     const entry = state.lifeTimeline[index];
-    if (entry.kind === "event" && entry.age === age) return index;
+    if ((entry.kind === "event" || entry.nodeType === "annual_event") && entry.age === age) return index;
   }
   return -1;
 }
@@ -1044,25 +1046,30 @@ function appendCurrentEventToTimeline() {
 
 function appendTimelineEvent(event, kind = "event") {
   if (!event) return;
-  const entry = timelineEntryFromEvent(event, kind);
+  const entry = canonicalTimelineEntryFromEvent(event, kind);
   if (!isRenderableTimelineEntry(entry) || hasTimelineEntry(entry)) return;
   state.lifeTimeline.push(entry);
 }
 
 function hasTimelineEntry(entry) {
-  return state.lifeTimeline.some((item) => (
-    item.kind === entry.kind
-    && item.age === entry.age
-    && item.turnId === entry.turnId
-  ));
+  return state.lifeTimeline.some((item) => sameTimelineIdentity(item, entry));
 }
 
-function timelineEntryFromEvent(event, kind) {
+function sameTimelineIdentity(left, right) {
+  if (left?.nodeId && right?.nodeId) return left.nodeId === right.nodeId;
+  return (
+    left?.kind === right?.kind
+    && left?.age === right?.age
+    && left?.turnId === right?.turnId
+  );
+}
+
+function canonicalTimelineEntryFromEvent(event, kind) {
   return {
     kind,
-    turnId: event.turnId ?? event.event?.eventId ?? `${kind}_${event.timeSpan?.ageEnd ?? "current"}_${event.playerText?.title ?? ""}`,
+    nodeType: kind === "ending" ? "ending" : "annual_event",
+    turnId: event.turnId ?? event.event?.eventId ?? `${kind}_${event.timeSpan?.ageEnd ?? "current"}`,
     age: event.timeSpan?.ageEnd ?? event.timeSpan?.ageStart,
-    title: event.playerText?.title ?? responseTypeLabel(event.responseType),
     body: event.playerText?.body ?? "",
     changes: event.visibleChanges ?? [],
   };
@@ -1330,7 +1337,6 @@ function renderTimelineEntry(entry) {
     <article class="timeline-entry timeline-${escapeHtml(entry.kind)}">
       <div class="timeline-age">${escapeHtml(entry.age === undefined ? "当前" : `${entry.age} 岁`)}</div>
       <div class="timeline-content">
-        <h3>${escapeHtml(entry.title)}</h3>
         ${bodyHtml}
         ${changesHtml}
       </div>
@@ -1446,7 +1452,7 @@ function renderVisibleChanges(changes = []) {
 }
 
 function isRenderableTimelineEntry(entry) {
-  return Boolean(entry && (hasText(entry.title) || hasText(entry.body) || hasVisibleChanges(entry.changes)));
+  return Boolean(entry && (hasText(entry.body) || hasVisibleChanges(entry.changes)));
 }
 
 function hasVisibleChanges(changes) {

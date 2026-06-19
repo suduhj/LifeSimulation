@@ -28,8 +28,9 @@ The skeleton is not the full game yet. It proves the core runtime path that the 
 20. Save and load portable run JSON with MVP run-state validation. Current saves include `eventLog`; load prefers `replayRun(eventLog)` over trusting the snapshot.
 21. Build PlayerView, PromptView, and GMView projections from the authoritative run so ordinary UI, AI prompts, and debug tools do not consume the same raw surface.
 22. Build Selector Graph panel views from the authoritative run: `panelViews.main`, `panelViews.attributes`, and `panelViews.story` are the browser panel contract, while raw run internals stay compatibility/debug data.
-23. Run a developer-facing command-line setup, event loop, status summary display, and MVP short-run ending summary.
-24. Start every new life with a non-interactive opening sequence: birth background card, fate preview, origin-led early-life timeline, and automatic progression to the first meaningful branch.
+23. Record canonical LifeNodes for ordinary timeline display. Accepted responses append `life.node_recorded`, reducers merge nodes into `worldState.storyState.lifeNodes`, and `panelViews.story.timeline` renders age/body entries instead of AI event titles.
+24. Run a developer-facing command-line setup, event loop, status summary display, and MVP short-run ending summary.
+25. Start every new life with a non-interactive opening sequence: birth background card, fate preview, origin-led early-life timeline, and automatic progression to the first meaningful branch.
 
 The real player-facing playtest target is a web version. The current CLI is useful for engine smoke tests, scripted runs, save validation, and AI provider validation, but it should not be treated as the final playable surface for testers.
 
@@ -305,6 +306,8 @@ World IDs:
 - `src/domain/projections/prompt-view.js`: AI prompt projection with capability packages, developmental-expression limits, and structured state context.
 - `src/domain/projections/gm-view.js`: developer/debug projection with full run and hidden information.
 - `src/selectors/`: Selector Graph read layer that builds `panelViews.main`, `panelViews.attributes`, and `panelViews.story` for browser panels.
+- `src/life-node.js`: builds canonical `mvp.life_node.v1` records from accepted responses so ordinary timeline display is system-owned.
+- `src/life-node-validator.js`: validates LifeNodes for no titles, no backend terms, required annual life deltas, and safe ordinary-player text.
 - `src/growth-ledger.js`: owns attribute potential, maturity caps, realized growth, effective current ability, locked potential, growth evidence, and compatibility sync back to `player.attributes`.
 - `src/capability-package.js`: turns the Growth Ledger into age/world-appropriate capabilities, check tags, forbidden actions, and developmental-expression limits for AI rendering.
 - `src/npc-generator.js`: generates initial important NPCs from world templates.
