@@ -25,6 +25,7 @@ export function buildYearlyOutcome({ run, annualFactPackage, response } = {}) {
     schemaVersion: YEARLY_OUTCOME_SCHEMA_VERSION,
     outcomeId,
     age: contract.age,
+    experienceIntent: annualFactPackage?.experienceIntent ?? annualFactPackage?.experiencePlan?.intent ?? "",
     curriculum: {
       slot: contract.curriculumSlot,
       requiredHumanDelta: contract.requiredHumanDelta,
@@ -131,11 +132,12 @@ export function growthImpactForCurriculumSlot({ run, curriculumSlot, age = 0 } =
 }
 
 function impact({ realizedGrowth = [], exposureGrowth = [], potentialGrowth = [], noGrowthReason = "" } = {}) {
+  const hasImpact = realizedGrowth.length > 0 || exposureGrowth.length > 0 || potentialGrowth.length > 0;
   return {
     realizedGrowth,
     exposureGrowth,
     potentialGrowth,
-    noGrowthReason,
+    noGrowthReason: hasImpact ? noGrowthReason : noGrowthReason || "annual outcome recorded narrative or relationship change without numeric growth",
   };
 }
 

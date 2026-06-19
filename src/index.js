@@ -45,6 +45,21 @@ export {
 export { generateMockLifeEvent } from "./mock-ai.js";
 export { buildNextEventContract } from "./narrative-director.js";
 export { generateInitialImportantNPCs } from "./npc-generator.js";
+export { generateOpeningSequence } from "./opening-sequence.js";
+export {
+  OPENING_ORIGIN_LEDGER_SCHEMA_VERSION,
+  buildOpeningOriginLedger,
+  normalizeOpeningOriginLedger,
+  originFactorsForLedger,
+} from "./opening-origin-ledger.js";
+export {
+  EXPERIENCE_DIRECTOR_SCHEMA_VERSION,
+  createDefaultExperienceState,
+  normalizeExperienceState,
+  recordExperienceIntent,
+  selectExperienceIntent,
+  summarizeExperienceRhythm,
+} from "./player-experience-director.js";
 export { SETUP_PERSONALITY_OPTIONS, getPersonalityOption, normalizePersonality } from "./personality-options.js";
 export { createPlaySession, createPlaySessionAsync, handlePlayerInput, handlePlayerInputAsync, normalizePlayerInput } from "./play-session.js";
 export { buildProviderDiagnosticLines } from "./provider-diagnostics.js";
@@ -72,6 +87,15 @@ export {
   recordSimulationOutcome,
   selectStoryAxes,
 } from "./story-state.js";
+export {
+  ASSET_LEDGER_SCHEMA_VERSION,
+  assetRoleMustNotInclude,
+  assetRolesFromTopicProfile,
+  createDefaultAssetLedger,
+  evaluateAssetRoles,
+  normalizeAssetLedger,
+  recordAssetSpotlight,
+} from "./story-asset-lifecycle.js";
 export { assertStoryContract, validateStoryContract } from "./story-contract-validator.js";
 export {
   buildTopicProfile,
@@ -82,6 +106,13 @@ export {
   topicProfileMatchesText,
   topicSignalsForProfile,
 } from "./topic-ledger.js";
+export {
+  YEARLY_OUTCOME_SCHEMA_VERSION,
+  applyYearlyOutcomeToResponse,
+  buildAnnualOutcomeContract,
+  buildYearlyOutcome,
+  growthImpactForCurriculumSlot,
+} from "./yearly-outcome.js";
 export { createWebSessionStore } from "./web-session-store.js";
 export {
   SETUP_ATTRIBUTE_KEYS,

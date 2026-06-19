@@ -1,4 +1,7 @@
 import { createDefaultCurriculumState, normalizeCurriculumState, recordCurriculumSlot } from "./life-curriculum.js";
+import { normalizeOpeningOriginLedger } from "./opening-origin-ledger.js";
+import { createDefaultExperienceState, normalizeExperienceState, recordExperienceIntent } from "./player-experience-director.js";
+import { createDefaultAssetLedger, normalizeAssetLedger, recordAssetSpotlight } from "./story-asset-lifecycle.js";
 import { createDefaultTopicLedger, normalizeTopicLedger, recordTopicProfile } from "./topic-ledger.js";
 
 export const STORY_STATE_SCHEMA_VERSION = "mvp.story_state.v1";
@@ -29,6 +32,9 @@ export function createEmptyStoryState() {
     forbiddenRepeats: [],
     activePressures: [],
     recentEventShapes: [],
+    originLedger: normalizeOpeningOriginLedger(),
+    assetLedger: createDefaultAssetLedger(),
+    experience: createDefaultExperienceState(),
     curriculum: createDefaultCurriculumState(),
     topicLedger: createDefaultTopicLedger(),
     annualAgendas: [],
@@ -51,6 +57,9 @@ export function ensureStoryState(run) {
   current.activePressures = Array.isArray(current.activePressures) ? current.activePressures : [];
   current.axes = normalizeAxes(current.axes);
   current.recentEventShapes = Array.isArray(current.recentEventShapes) ? current.recentEventShapes : [];
+  current.originLedger = normalizeOpeningOriginLedger(current.originLedger);
+  current.assetLedger = normalizeAssetLedger(current.assetLedger);
+  current.experience = normalizeExperienceState(current.experience);
   current.curriculum = normalizeCurriculumState(current.curriculum);
   current.topicLedger = normalizeTopicLedger(current.topicLedger);
   current.annualAgendas = normalizeAnnualAgendas(current.annualAgendas);
@@ -66,6 +75,9 @@ export function recordSimulationOutcome(run, outcome = {}) {
   addUnique(storyState.forbiddenRepeats, outcome.forbiddenRepeats ?? []);
   applyAxisUpdates(storyState, outcome.axisUpdates ?? [], nextRun.player?.age ?? 0);
   addRecentEventShapes(storyState, outcome.recentEventShapes ?? []);
+  applyOpeningOriginLedger(storyState, outcome.originLedger);
+  applyAssetSpotlights(storyState, outcome.assetSpotlights ?? []);
+  applyExperienceUpdates(storyState, outcome.experienceUpdates ?? []);
   applyCurriculumUpdates(storyState, outcome.curriculumUpdates ?? []);
   applyTopicUpdates(storyState, outcome.topicUpdates ?? []);
   addAnnualAgendas(storyState, outcome.annualAgendas ?? []);
@@ -101,6 +113,9 @@ export function buildStoryStatePatch(outcome = {}, age = 0) {
   addUnique(storyState.forbiddenRepeats, outcome.forbiddenRepeats ?? []);
   applyAxisUpdates(storyState, outcome.axisUpdates ?? [], age);
   addRecentEventShapes(storyState, outcome.recentEventShapes ?? []);
+  applyOpeningOriginLedger(storyState, outcome.originLedger);
+  applyAssetSpotlights(storyState, outcome.assetSpotlights ?? []);
+  applyExperienceUpdates(storyState, outcome.experienceUpdates ?? []);
   applyCurriculumUpdates(storyState, outcome.curriculumUpdates ?? []);
   applyTopicUpdates(storyState, outcome.topicUpdates ?? []);
   addAnnualAgendas(storyState, outcome.annualAgendas ?? []);
@@ -154,6 +169,25 @@ export function addAnnualAgendas(storyState, agendas = []) {
     else current.push(normalized);
   }
   storyState.annualAgendas = current.slice(-12);
+}
+
+export function applyOpeningOriginLedger(storyState, ledger) {
+  if (!ledger) return;
+  storyState.originLedger = normalizeOpeningOriginLedger(ledger);
+}
+
+export function applyAssetSpotlights(storyState, spotlights = []) {
+  storyState.assetLedger = normalizeAssetLedger(storyState.assetLedger);
+  for (const spotlight of spotlights ?? []) {
+    storyState.assetLedger = recordAssetSpotlight(storyState.assetLedger, spotlight);
+  }
+}
+
+export function applyExperienceUpdates(storyState, updates = []) {
+  storyState.experience = normalizeExperienceState(storyState.experience);
+  for (const update of updates ?? []) {
+    storyState.experience = recordExperienceIntent(storyState.experience, update);
+  }
 }
 
 export function addYearlyOutcomes(storyState, outcomes = []) {

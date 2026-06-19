@@ -92,6 +92,7 @@ export function normalizeCurriculumState(value) {
 
 export function selectCurriculumSlot({
   curriculum,
+  originLedger,
   age = 0,
   seed = 1,
   preferredDomain = "",
@@ -104,6 +105,7 @@ export function selectCurriculumSlot({
   const recentFive = recentSlots.filter((item) => Number.isFinite(item.age) && age - item.age <= 5);
   const recentFiveDistinct = new Set(recentFive.map((item) => item.slot));
   const preferredSlots = DOMAIN_SLOT_PREFERENCES[preferredDomain] ?? [];
+  const originBias = curriculumBiasFromOriginLedger(originLedger);
   const uncoveredSlots = slots.filter((slot) => !state.coveredSlots.includes(slot));
   const pressureCap = Math.min(2, Math.max(0, Math.floor(Number(consequencePressure) || 0) > 0 ? 1 : 0));
 
@@ -111,13 +113,14 @@ export function selectCurriculumSlot({
     .map((slot, index) => {
       const uncoveredBonus = uncoveredSlots.includes(slot) ? 8 : 0;
       const preferredBonus = preferredSlots.includes(slot) ? 3 + pressureCap : 0;
+      const originBonus = originBias[slot] ?? 0;
       const adjacentPenalty = slot === lastSlot ? 100 : 0;
       const diversityBonus = recentFiveDistinct.size < 3 && !recentFiveDistinct.has(slot) ? 6 : 0;
       const recencyPenalty = recentSlots.slice(-3).some((item) => item.slot === slot) ? 4 : 0;
       const noise = deterministicNoise(seed, age, index);
       return {
         slot,
-        score: uncoveredBonus + preferredBonus + diversityBonus + noise - recencyPenalty - adjacentPenalty,
+        score: uncoveredBonus + preferredBonus + originBonus + diversityBonus + noise - recencyPenalty - adjacentPenalty,
       };
     })
     .sort((a, b) => b.score - a.score || slots.indexOf(a.slot) - slots.indexOf(b.slot));
@@ -131,6 +134,23 @@ export function selectCurriculumSlot({
     requiredHumanDelta: requiredHumanDeltaForSlot(curriculumSlot),
     coverageStatus: state.coveredSlots.includes(curriculumSlot) ? "revisited" : "new_slot",
   };
+}
+
+export function curriculumBiasFromOriginLedger(originLedger) {
+  const bias = Object.fromEntries(CHILDHOOD_CURRICULUM_SLOTS.map((slot) => [slot, 0]));
+  const nodes = Array.isArray(originLedger?.nodes) ? originLedger.nodes : [];
+  for (const node of nodes) {
+    for (const factor of node?.originFactors ?? []) {
+      const strength = Math.max(1, Math.min(5, Math.round(Number(factor.strength) || 1)));
+      for (const slot of factor.affects?.curriculumSlots ?? []) {
+        if (slot in bias) bias[slot] += strength;
+      }
+    }
+  }
+  for (const slot of Object.keys(bias)) {
+    bias[slot] = Math.min(4, bias[slot]);
+  }
+  return bias;
 }
 
 export function recordCurriculumSlot(curriculum, plan = {}) {

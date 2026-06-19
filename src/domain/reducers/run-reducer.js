@@ -33,6 +33,9 @@ export function reduceRunEvent(run, event) {
     case "growth.exposure_changed":
       applyExposureChange(nextRun, event.payload);
       break;
+    case "opening.origin_recorded":
+      applyStoryOutcome(nextRun, { originLedger: event.payload });
+      break;
     case "player.talent_added":
       applyPlayerTalentAdded(nextRun, event.payload);
       break;
@@ -66,6 +69,12 @@ export function reduceRunEvent(run, event) {
         forbiddenRepeats: event.payload.forbiddenRepeat ? [event.payload.forbiddenRepeat] : [],
         recentEventShapes: event.payload.shape ? [event.payload.shape] : [],
       });
+      break;
+    case "story.asset_spotlight_recorded":
+      applyStoryOutcome(nextRun, { assetSpotlights: [event.payload] });
+      break;
+    case "story.experience_recorded":
+      applyStoryOutcome(nextRun, { experienceUpdates: [event.payload] });
       break;
     case "story.curriculum_recorded":
       applyStoryOutcome(nextRun, { curriculumUpdates: [event.payload] });
@@ -220,6 +229,9 @@ function storyStatePatchToOutcome(storyState) {
     factsClosed: storyState?.closedFacts ?? [],
     forbiddenRepeats: storyState?.forbiddenRepeats ?? [],
     recentEventShapes: storyState?.recentEventShapes ?? [],
+    originLedger: storyState?.originLedger,
+    assetSpotlights: storyState?.assetLedger?.recentSpotlights ?? [],
+    experienceUpdates: storyState?.experience?.recentIntents ?? [],
     threadUpdates: storyState?.threads ?? [],
     curriculumUpdates: storyState?.curriculum?.recentSlots ?? [],
     topicUpdates: storyState?.topicLedger?.recentTopics ?? [],
