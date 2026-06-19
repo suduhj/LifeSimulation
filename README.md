@@ -17,6 +17,8 @@ This project is a multi-world AI life simulator. The current playable MVP suppor
 - Five-axis lightweight world simulation: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence are tracked as structured `storyState.axes`
 - Annual Year Tick director: every cross-year branch gets an engine-owned yearly life delta; repeated yearly shapes are blocked across family, education, social, institution, resource, health, relationship, route, and world-pressure domains
 - Annual Year Tick v2 curriculum layer: each year first selects a human-life curriculum slot, then schedules world flavor and old consequences as secondary/background layers; `curriculum`, `topicLedger`, and `annualAgendas` persist through DomainEvents and replay
+- Yearly Outcome Ledger: every annual agenda records the system-owned yearly result, adds `annual.outcome_recorded`, and turns curriculum impact into Growth Ledger evidence/exposure events that drive the attribute panel
+- Origin-led experience runtime: opening origin factors vary early-life nodes, Story Asset Lifecycle keeps named assets from repeatedly owning the main year, and Player Experience Director balances pressure, growth payoff, wonder, and relationship beats
 - Persistent important NPCs, local saves, endings, and scoring
 
 ## Quick Start
@@ -42,6 +44,8 @@ Attribute bonuses from talents enter long-term potential first. The engine-owned
 Accepted AI, mock, GM, and system changes now pass through the event-sourced runtime: `statePatch` is converted into DomainEvents, `transitionRun()` applies reducers and invariants, saves include `run.eventLog`, and load prefers deterministic replay over trusting a stale snapshot.
 
 Cross-year story generation now uses a curriculum-led annual agenda. The engine chooses the year's human-life slot first, such as family boundary, learning path, peer relationship, mentor attention, body growth, care, village life, subtle talent manifestation, external attention, or household responsibility. World elements can add flavor, and old plot threads can echo in the background, but the annual contract prevents recently overused arenas, objects, topic families, and pressure types from becoming the main event again.
+
+Each cross-year branch also settles a Yearly Outcome Ledger entry before it reaches the UI. If AI prose omits growth evidence, the engine still maps the selected curriculum slot into deterministic realized-growth and exposure candidates, writes them as DomainEvents, updates the Growth Ledger, and lets `panelViews.attributes` display the changed current/attention values. Named story assets such as jade tokens, back mountains, scripture pavilions, mines, sects, and beasts are tracked with spotlight counts and cooldown roles so a recently featured object can remain a background echo without taking over the year.
 
 Browser panel data now follows a lightweight CQRS split: reducers produce the current run projection, then Selector Graph functions build `panelViews` for the main panel, attribute panel, and story panel. Ordinary UI should render those selector views first; raw run, event-log, growth-ledger, and hidden fields remain compatibility or GM/debug data.
 
@@ -175,11 +179,14 @@ npm run test:architecture
 npm run audit:content -- --strict
 npm run check:playtest
 npm run smoke:web
+node tools/experience-qa.mjs --runs 10 --age-end 12 --ai mock
 ```
 
 `check:playtest` verifies scripts, world data, content minimums, core simulator systems, open event-generation rules, README coverage, and whether real AI environment variables are set.
 
 `smoke:web` starts the local web backend on an auto-selected temporary port, then exercises the browser playtest API end to end: load page, list worlds, preview setup, start a run, resolve a choice, resolve free-form input, save, load, and reach an ending. It also scans returned HTML/API payloads for AI key leakage patterns.
+
+`tools/experience-qa.mjs` runs multiple mock lives and checks the player-visible acceptance layer: opening bodies vary, ages 5-10 cover multiple curriculum slots, named assets/topics do not repeat as primary drivers, annual outcome/growth events appear in `eventLog`, Growth Ledger changes reach `panelViews.attributes`, and ordinary player summaries do not show hidden pressure/score fields.
 
 For final playtest acceptance after configuring DeepSeek or another compatible provider, require real AI configuration:
 
