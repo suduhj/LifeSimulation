@@ -6,6 +6,7 @@ import {
 } from "./story-state.js";
 import { curriculumSignalsForSlot, selectCurriculumSlot } from "./life-curriculum.js";
 import { buildTopicProfile, forbiddenTopicProfiles } from "./topic-ledger.js";
+import { applyYearlyOutcomeToResponse, buildYearlyOutcome } from "./yearly-outcome.js";
 
 export const ANNUAL_FACT_PACKAGE_SCHEMA_VERSION = "mvp.annual_fact_package.v1";
 
@@ -193,11 +194,12 @@ export function buildAnnualSimulationOutcome(annualFactPackage) {
   };
 }
 
-export function applyAnnualFactPackageToResponse(response, annualFactPackage) {
+export function applyAnnualFactPackageToResponse(response, annualFactPackage, { run } = {}) {
   if (!response || !annualFactPackage?.primaryDelta) return response;
   const next = structuredClone(response);
   const delta = annualFactPackage.primaryDelta;
   const outcome = buildAnnualSimulationOutcome(annualFactPackage);
+  const yearlyOutcome = buildYearlyOutcome({ run, annualFactPackage, response: next });
 
   next.event ??= {};
   next.event.eventShape = delta.eventShape;
@@ -231,7 +233,7 @@ export function applyAnnualFactPackageToResponse(response, annualFactPackage) {
       "engine_owned_year_delta",
     ]),
   ];
-  return next;
+  return applyYearlyOutcomeToResponse(next, yearlyOutcome);
 }
 
 function choosePrimaryDelta({ run, age, facts, threads, forbiddenEventShapes, seed, curriculumSlot }) {

@@ -3,7 +3,6 @@ import {
   developmentStageLabel,
   lifeStageLabel,
   progressLabel,
-  topPressureFromStoryState,
   visibleTalents,
   worldLabel,
 } from "./selector-utils.js";
@@ -16,7 +15,6 @@ export function getMainPanelView(run) {
     label: progressLabel(key),
     value,
   }));
-  const currentPressure = topPressureFromStoryState(run?.worldState?.storyState);
 
   return {
     schemaVersion: "mvp.main_panel_view.v1",
@@ -34,13 +32,11 @@ export function getMainPanelView(run) {
       label: developmentStageLabel(developmentStage),
     },
     coreTalents: talents.slice(0, 3),
-    currentPressure,
     progress,
     summaryLines: [
       `${run?.player?.name ?? ""} · ${age}岁 · ${worldLabel(run?.worldId)}`,
       `成长阶段：${developmentStageLabel(developmentStage)}`,
       talents[0] ? `核心天赋：${talents[0]}` : "",
-      `当前压力：${currentPressure}`,
     ].filter(Boolean),
   };
 }

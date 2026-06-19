@@ -1410,26 +1410,17 @@ function renderEvent(event, session) {
 function renderRun(run) {
   const panelViews = currentPanelViews();
   const mainPanel = panelViews?.main;
+  const storyPanel = panelViews?.story;
   const lines = mainPanel?.summaryLines?.length
-    ? [
-      ...mainPanel.summaryLines,
-      `经历事件：${run.eventHistoryCount ?? 0}`,
-      `当前评分：${run.score ?? 0}`,
-    ]
+    ? [...mainPanel.summaryLines]
     : [
-      `角色：${run.player.name}｜${genderLabel(run.player.gender)}｜${run.player.age} 岁`,
-      `世界：${worldLabel(run.worldId)}`,
-      `性格倾向：${personalityLabel(run.player.personality?.id ?? run.player.personality)}`,
-      `经历事件：${run.eventHistoryCount ?? 0}`,
-      `当前评分：${run.score ?? 0}`,
+      `${run.player.name} · ${run.player.age}岁 · ${worldLabel(run.worldId)}`,
     ];
 
   if (run.ending?.completed) {
     lines.push(`人生结局：${run.ending.name ?? "已结算"}｜总评 ${run.ending.score ?? run.score ?? 0}`);
   }
-  if (panelViews?.story?.currentPressure) {
-    lines.push(`剧情压力：${panelViews.story.currentPressure}`);
-  }
+  void storyPanel;
 
   const talentPositionLine = renderTalentPositionLine(run.player.talents ?? [], run.worldId);
   els.runSummary.innerHTML = [
@@ -1437,7 +1428,6 @@ function renderRun(run) {
     talentPositionLine ? `<div class="summary-line">${escapeHtml(talentPositionLine)}</div>` : "",
     renderSummaryTalents(run.player.talents ?? []),
     renderSummaryAttributes(panelViews?.attributes, run.player.attributes, run.worldId, run.player.growthLedger),
-    ...renderProgressLines(run.worldState?.progress ?? {}).map((line) => `<div class="summary-line">${escapeHtml(line)}</div>`),
     `<div class="summary-line">${escapeHtml(renderNpcLine(run.importantNPCs ?? []))}</div>`,
     `<div class="summary-line">${escapeHtml(renderFactionLine(run.factions ?? []))}</div>`,
   ].join("");
