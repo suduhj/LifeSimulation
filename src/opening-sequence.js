@@ -1,4 +1,5 @@
 import { identityLabel, isNpcHiddenFromOpening, talentLabel, visibleNpcLabel, visibleTalentName } from "./localization.js";
+import { buildOpeningOriginLedger } from "./opening-origin-ledger.js";
 
 const ATTRIBUTE_KEYS = ["appearance", "intelligence", "constitution", "familyBackground", "luck"];
 
@@ -9,7 +10,12 @@ export function generateOpeningSequence({ run, worlds, seed = 1 } = {}) {
   const actionAge = firstActionAge(run);
   const identity = run.setup?.identitySeed;
   const hiddenHooks = buildOpeningHiddenHooks(run, world);
-  const earlyLifeTimeline = buildEarlyLifeTimeline(run, world, actionAge);
+  const originLedger = buildOpeningOriginLedger({ run, worlds, seed, actionAge });
+  const earlyLifeTimeline = originLedger.nodes.map((node) => ({
+    age: node.age,
+    title: node.title,
+    body: node.body,
+  }));
 
   return {
     schemaVersion: "mvp.ai_event_response.v1",
@@ -96,6 +102,7 @@ export function generateOpeningSequence({ run, worlds, seed = 1 } = {}) {
         { target: "opening.unresolvedThreads", value: hiddenHooks.map((hook) => hook.playerVisibleThread), source: "opening_sequence" },
         { target: "opening.earlyLifeTimeline", value: earlyLifeTimeline, source: "opening_sequence" },
       ],
+      openingOriginLedgers: [originLedger],
       memoryUpdates: [
         {
           type: "opening_sequence",

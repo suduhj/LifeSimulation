@@ -108,6 +108,18 @@ export function patchToDomainEvents({ run, response, source = "ai_response" } = 
     }));
   }
 
+  for (const ledger of patch.openingOriginLedgers ?? []) {
+    events.push(createDomainEvent({
+      type: "opening.origin_recorded",
+      run,
+      turnId,
+      age: ledger?.firstActionAge ?? ageEnd,
+      source: ledger?.source ?? source,
+      payload: structuredClone(ledger),
+      metadata,
+    }));
+  }
+
   for (const change of patch.relationshipChanges ?? []) {
     events.push(createDomainEvent({
       type: "npc.relationship_changed",
@@ -274,6 +286,39 @@ function storyStatePatchToEvents({ run, storyState, turnId, age, source, metadat
   }
   for (const shape of storyState?.recentEventShapes ?? []) {
     events.push(createDomainEvent({ type: "story.event_shape_recorded", run, turnId, age, source, payload: { shape }, metadata }));
+  }
+  if (storyState?.originLedger?.nodes?.length) {
+    events.push(createDomainEvent({
+      type: "opening.origin_recorded",
+      run,
+      turnId,
+      age: storyState.originLedger.firstActionAge ?? age,
+      source,
+      payload: storyState.originLedger,
+      metadata,
+    }));
+  }
+  for (const spotlight of storyState?.assetLedger?.recentSpotlights ?? []) {
+    events.push(createDomainEvent({
+      type: "story.asset_spotlight_recorded",
+      run,
+      turnId,
+      age: spotlight.age ?? age,
+      source,
+      payload: spotlight,
+      metadata,
+    }));
+  }
+  for (const intent of storyState?.experience?.recentIntents ?? []) {
+    events.push(createDomainEvent({
+      type: "story.experience_recorded",
+      run,
+      turnId,
+      age: intent.age ?? age,
+      source,
+      payload: intent,
+      metadata,
+    }));
   }
   for (const slot of storyState?.curriculum?.recentSlots ?? []) {
     events.push(createDomainEvent({ type: "story.curriculum_recorded", run, turnId, age, source, payload: slot, metadata }));

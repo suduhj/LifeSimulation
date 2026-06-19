@@ -38,11 +38,23 @@ export function validateStoryContract(response, contract) {
     }
   }
 
+  for (const [assetId, role] of Object.entries(contract.assetRoles ?? {})) {
+    if (role?.role === "background_only" && promotesBackgroundOnlyAsset(text, role)) {
+      errors.push(`response promotes background-only asset ${assetId}`);
+    }
+  }
+
   for (const phrase of contract.mustNotInclude ?? []) {
     if (phrase && text.includes(phrase)) errors.push(`response includes forbidden phrase: ${phrase}`);
   }
 
   return { valid: errors.length === 0, errors };
+}
+
+function promotesBackgroundOnlyAsset(text, role = {}) {
+  const signals = role.textSignals ?? [];
+  if (!signals.some((signal) => signal && text.includes(signal))) return false;
+  return /(核心|主线|主事|主舞台|推动|围绕|继续追查|再次追查|所有选择|今年.*线索|今年.*秘密)/s.test(text);
 }
 
 function looksLikeCurriculumSlot(text, slot, requiredHumanDelta = "") {

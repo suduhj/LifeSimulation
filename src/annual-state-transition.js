@@ -5,6 +5,8 @@ import {
   selectStoryAxes,
 } from "./story-state.js";
 import { curriculumSignalsForSlot, selectCurriculumSlot } from "./life-curriculum.js";
+import { selectExperienceIntent } from "./player-experience-director.js";
+import { assetRoleMustNotInclude, assetRolesFromTopicProfile } from "./story-asset-lifecycle.js";
 import { buildTopicProfile, forbiddenTopicProfiles } from "./topic-ledger.js";
 import { applyYearlyOutcomeToResponse, buildYearlyOutcome } from "./yearly-outcome.js";
 
@@ -55,6 +57,7 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
   const forcedDomain = forcedAnnualDomain({ run, facts, threads });
   const curriculumPlan = selectCurriculumSlot({
     curriculum: storyState.curriculum,
+    originLedger: storyState.originLedger,
     age,
     seed,
     preferredDomain: forcedDomain,
@@ -96,6 +99,18 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
     age,
     candidate: topicProfile,
   });
+  const assetRoles = assetRolesFromTopicProfile({
+    assetLedger: storyState.assetLedger,
+    topicProfile,
+    backgroundThreads,
+    age,
+  });
+  const experiencePlan = selectExperienceIntent({
+    experience: storyState.experience,
+    age,
+    seed,
+    curriculumSlot: curriculumPlan.curriculumSlot,
+  });
   const threeLayerFocus = buildThreeLayerFocus({
     run,
     primaryDelta,
@@ -111,6 +126,7 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
     topicProfile,
     forbiddenTopics,
     threeLayerFocus,
+    experiencePlan,
   });
 
   return {
@@ -122,6 +138,9 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
     threeLayerFocus,
     topicProfile,
     forbiddenTopicProfiles: forbiddenTopics,
+    assetRoles,
+    experienceIntent: experiencePlan.intent,
+    experiencePlan,
     annualAgenda,
     yearPurpose: purposeFor(primaryDelta),
     primaryDelta,
@@ -133,6 +152,7 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
     requiredTextSignals,
     backgroundThreads,
     forbiddenEventShapes,
+    mustNotInclude: assetRoleMustNotInclude(assetRoles),
     eventShapeHistory: recentEventShapes,
     freshnessRules: {
       mustHaveNewYearlyDelta: true,
@@ -181,6 +201,8 @@ export function buildAnnualSimulationOutcome(annualFactPackage) {
         }]
       : [],
     topicUpdates: annualFactPackage.topicProfile ? [annualFactPackage.topicProfile] : [],
+    assetSpotlights: assetSpotlightsForAnnualPackage(annualFactPackage),
+    experienceUpdates: annualFactPackage.experiencePlan ? [annualFactPackage.experiencePlan] : [],
     annualAgendas: annualFactPackage.annualAgenda ? [annualFactPackage.annualAgenda] : [],
     threadUpdates: [
       {
@@ -234,6 +256,23 @@ export function applyAnnualFactPackageToResponse(response, annualFactPackage, { 
     ]),
   ];
   return applyYearlyOutcomeToResponse(next, yearlyOutcome);
+}
+
+function assetSpotlightsForAnnualPackage(annualFactPackage = {}) {
+  const age = annualFactPackage.age ?? 0;
+  const topic = annualFactPackage.topicProfile ?? {};
+  return [
+    topic.objectFocus,
+    topic.arena,
+    topic.institutionFocus,
+  ]
+    .filter((assetId) => assetId && assetId !== "none")
+    .map((assetId) => ({
+      age,
+      assetId,
+      role: annualFactPackage.assetRoles?.[assetId]?.role === "background_only" ? "background_echo" : "primary_driver",
+      source: "annual_fact_package",
+    }));
 }
 
 function choosePrimaryDelta({ run, age, facts, threads, forbiddenEventShapes, seed, curriculumSlot }) {
@@ -440,7 +479,7 @@ function buildThreeLayerFocus({ run, primaryDelta, backgroundThreads, curriculum
   };
 }
 
-function buildAnnualAgenda({ age, curriculumPlan, primaryDelta, selectedAxes, topicProfile, forbiddenTopics, threeLayerFocus } = {}) {
+function buildAnnualAgenda({ age, curriculumPlan, primaryDelta, selectedAxes, topicProfile, forbiddenTopics, threeLayerFocus, experiencePlan } = {}) {
   return {
     age,
     lifeStage: curriculumPlan.lifeStage,
@@ -452,6 +491,7 @@ function buildAnnualAgenda({ age, curriculumPlan, primaryDelta, selectedAxes, to
     topicFamily: topicProfile.topicFamily,
     arena: topicProfile.arena,
     forbiddenTopicFamilies: [...new Set(forbiddenTopics.map((topic) => topic.topicFamily).filter(Boolean))],
+    experienceIntent: experiencePlan?.intent ?? "",
     threeLayerFocus,
   };
 }
