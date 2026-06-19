@@ -144,7 +144,10 @@ function buildMockBody(worldId, run, eventSeed, generationContext, nextAge, even
   const companionLine = companionLabel ? `${companionLabel}仍和你在一起，让这段日子不算孤单。` : "";
   const theme = eventTheme(eventSeed, generationContext);
   if (eventContract?.annualFactPackage?.primaryDelta?.eventShape === "institution_arrival_changes_life") {
-    return `${name}这一年不再只是被后山的牵引困住。${memoryLine}${companionLine}春末，碧云宗终于派来一名外门弟子到青石村。他带着宗门令牌和搜山符，要查清后山灵兽的传闻，也顺口问起当年灵根检测后被搁置的外门选拔。你想起那只灵兽脖子上的断裂符文铁环，心里隐约觉得它和玉简、宗门令牌之间有某种关联。父亲下意识把你挡在身后，母亲则攥紧袖口，不愿让宗门知道你曾接触过玉简和那只灵兽。村民围在老槐树下七嘴八舌，既盼着宗门解决危险，又害怕自家被牵连。你能感觉到，玉简、灵兽和选拔这三件事终于压到同一个时刻：今年真正改变你生活的，是宗门的人已经站到了你家门前，你必须决定自己要隐瞒、试探，还是让父母陪你说出一部分真相。`;
+    const requiredHumanDelta = eventContract.annualFactPackage.requiredHumanDelta
+      ? `今年的人生主事是：${eventContract.annualFactPackage.requiredHumanDelta}。`
+      : "";
+    return `${name}这一年不再只是被后山的牵引困住。${memoryLine}${companionLine}${requiredHumanDelta}春末，碧云宗终于派来一名外门弟子到青石村。他带着宗门令牌和搜山符，要查清后山灵兽的传闻，也顺口问起当年灵根检测后被搁置的外门选拔。你想起那只灵兽脖子上的断裂符文铁环，心里隐约觉得它和玉简、宗门令牌之间有某种关联。父亲下意识把你挡在身后，母亲则攥紧袖口，不愿让宗门知道你曾接触过玉简和那只灵兽。村民围在老槐树下七嘴八舌，既盼着宗门解决危险，又害怕自家被牵连。你能感觉到，玉简、灵兽和选拔这三件事终于压到同一个时刻：今年真正改变你生活的，是宗门的人已经站到了你家门前，你必须决定自己要隐瞒、试探，还是让父母陪你说出一部分真相。`;
   }
   if (eventContract?.annualFactPackage?.primaryDelta) {
     return buildAnnualMockBody({ name, memoryLine, companionLine, eventContract });
@@ -339,7 +342,13 @@ function buildChoices(worldId, eventContract) {
 }
 
 function buildAnnualMockBody({ name, memoryLine, companionLine, eventContract }) {
-  const { primaryDelta, backgroundThreads = [] } = eventContract.annualFactPackage;
+  const {
+    primaryDelta,
+    backgroundThreads = [],
+    curriculumSlot,
+    requiredHumanDelta,
+    threeLayerFocus,
+  } = eventContract.annualFactPackage;
   const backgroundLine = backgroundThreads.length > 0
     ? "此前留下的线索没有消失，只是退到这年生活变化的背后，像一条没有断开的暗线。"
     : "";
@@ -354,7 +363,13 @@ function buildAnnualMockBody({ name, memoryLine, companionLine, eventContract })
     world_pressure: "外部压力进入了普通日子，家人和周围人不得不改变原来的生活节奏。",
     institution: "更大的组织终于压到家门口，此前被拖延的事情必须给出回应。",
   }[primaryDelta.domain] ?? "生活里出现了新的变化，让旧问题不能再按原样重复。";
-  return `${name}这一年真正改变生活的，不是把旧场景再走一遍，而是${primaryDelta.title}。${memoryLine}${companionLine}${primaryDelta.description}${domainDetail}${backgroundLine}眼下的压力变成了一个新的年度岔口：你要怎样适应这项安排、怎样观察旧线索在背后的影响，又要不要把自己的想法说给可信的大人听。`;
+  const curriculumLine = requiredHumanDelta
+    ? `今年的主事先落在人生课程「${curriculumSlot}」上：${requiredHumanDelta}。`
+    : "";
+  const layerLine = threeLayerFocus?.lifeBase
+    ? "修仙或世界异常只能作为味道和背景回响，不能抢走这年生活本身的主位。"
+    : "";
+  return `${name}这一年真正改变生活的，不是把旧场景再走一遍，而是${primaryDelta.title}。${memoryLine}${companionLine}${curriculumLine}${primaryDelta.description}${domainDetail}${backgroundLine}${layerLine}因为父亲、母亲或身边人已经看见了新的生活变化，眼下的压力变成了一个新的年度岔口：你要怎样适应这项安排、怎样观察旧线索在背后的影响，又要不要把自己的想法说给可信的大人听。`;
 }
 
 function buildAnnualChoices(worldId, annualFactPackage) {

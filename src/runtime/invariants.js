@@ -69,6 +69,20 @@ function checkStoryState(previousRun, run, errors) {
       errors.push(`thread stage cannot move backwards: ${thread.threadId}`);
     }
   }
+
+  checkUniqueRecords(run.worldState?.storyState?.curriculum?.recentSlots ?? [], "curriculum recent slot", (item) => `${item.age}:${item.slot}`, errors);
+  checkUniqueRecords(run.worldState?.storyState?.topicLedger?.recentTopics ?? [], "topic ledger record", (item) => (
+    `${item.age}:${item.topicFamily}:${item.arena}:${item.objectFocus}:${item.pressureType}`
+  ), errors);
+}
+
+function checkUniqueRecords(records, label, keyFn, errors) {
+  const seen = new Set();
+  for (const record of records) {
+    const key = keyFn(record);
+    if (seen.has(key)) errors.push(`${label} duplicated: ${key}`);
+    seen.add(key);
+  }
 }
 
 function checkPlayerView(playerView, errors) {

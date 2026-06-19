@@ -264,6 +264,15 @@ function storyStatePatchToEvents({ run, storyState, turnId, age, source, metadat
   for (const shape of storyState?.recentEventShapes ?? []) {
     events.push(createDomainEvent({ type: "story.event_shape_recorded", run, turnId, age, source, payload: { shape }, metadata }));
   }
+  for (const slot of storyState?.curriculum?.recentSlots ?? []) {
+    events.push(createDomainEvent({ type: "story.curriculum_recorded", run, turnId, age, source, payload: slot, metadata }));
+  }
+  for (const topic of storyState?.topicLedger?.recentTopics ?? []) {
+    events.push(createDomainEvent({ type: "story.topic_recorded", run, turnId, age, source, payload: topic, metadata }));
+  }
+  for (const agenda of storyState?.annualAgendas ?? []) {
+    events.push(createDomainEvent({ type: "story.annual_agenda_recorded", run, turnId, age, source, payload: agenda, metadata }));
+  }
   for (const [axisId, axis] of Object.entries(storyState?.axes ?? {})) {
     for (const delta of axis?.recentDeltas ?? []) {
       events.push(createDomainEvent({

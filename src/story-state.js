@@ -1,3 +1,6 @@
+import { createDefaultCurriculumState, normalizeCurriculumState, recordCurriculumSlot } from "./life-curriculum.js";
+import { createDefaultTopicLedger, normalizeTopicLedger, recordTopicProfile } from "./topic-ledger.js";
+
 export const STORY_STATE_SCHEMA_VERSION = "mvp.story_state.v1";
 
 export const STORY_AXIS_IDS = [
@@ -26,6 +29,9 @@ export function createEmptyStoryState() {
     forbiddenRepeats: [],
     activePressures: [],
     recentEventShapes: [],
+    curriculum: createDefaultCurriculumState(),
+    topicLedger: createDefaultTopicLedger(),
+    annualAgendas: [],
   };
 }
 
@@ -44,6 +50,9 @@ export function ensureStoryState(run) {
   current.activePressures = Array.isArray(current.activePressures) ? current.activePressures : [];
   current.axes = normalizeAxes(current.axes);
   current.recentEventShapes = Array.isArray(current.recentEventShapes) ? current.recentEventShapes : [];
+  current.curriculum = normalizeCurriculumState(current.curriculum);
+  current.topicLedger = normalizeTopicLedger(current.topicLedger);
+  current.annualAgendas = normalizeAnnualAgendas(current.annualAgendas);
   return current;
 }
 
@@ -55,6 +64,9 @@ export function recordSimulationOutcome(run, outcome = {}) {
   addUnique(storyState.forbiddenRepeats, outcome.forbiddenRepeats ?? []);
   applyAxisUpdates(storyState, outcome.axisUpdates ?? [], nextRun.player?.age ?? 0);
   addRecentEventShapes(storyState, outcome.recentEventShapes ?? []);
+  applyCurriculumUpdates(storyState, outcome.curriculumUpdates ?? []);
+  applyTopicUpdates(storyState, outcome.topicUpdates ?? []);
+  addAnnualAgendas(storyState, outcome.annualAgendas ?? []);
 
   for (const update of outcome.threadUpdates ?? []) {
     if (!update?.threadId) continue;
@@ -86,6 +98,9 @@ export function buildStoryStatePatch(outcome = {}, age = 0) {
   addUnique(storyState.forbiddenRepeats, outcome.forbiddenRepeats ?? []);
   applyAxisUpdates(storyState, outcome.axisUpdates ?? [], age);
   addRecentEventShapes(storyState, outcome.recentEventShapes ?? []);
+  applyCurriculumUpdates(storyState, outcome.curriculumUpdates ?? []);
+  applyTopicUpdates(storyState, outcome.topicUpdates ?? []);
+  addAnnualAgendas(storyState, outcome.annualAgendas ?? []);
   for (const update of outcome.threadUpdates ?? []) {
     if (!update?.threadId) continue;
     const thread = {
@@ -109,6 +124,32 @@ export function buildStoryStatePatch(outcome = {}, age = 0) {
     mergeStrategy: "merge_story_state",
     source: "simulation_kernel",
   };
+}
+
+export function applyCurriculumUpdates(storyState, updates = []) {
+  storyState.curriculum = normalizeCurriculumState(storyState.curriculum);
+  for (const update of updates ?? []) {
+    storyState.curriculum = recordCurriculumSlot(storyState.curriculum, update);
+  }
+}
+
+export function applyTopicUpdates(storyState, updates = []) {
+  storyState.topicLedger = normalizeTopicLedger(storyState.topicLedger);
+  for (const update of updates ?? []) {
+    storyState.topicLedger = recordTopicProfile(storyState.topicLedger, update);
+  }
+}
+
+export function addAnnualAgendas(storyState, agendas = []) {
+  const current = normalizeAnnualAgendas(storyState.annualAgendas);
+  for (const agenda of agendas ?? []) {
+    const normalized = normalizeAnnualAgenda(agenda);
+    if (!normalized) continue;
+    const existing = current.find((item) => item.age === normalized.age && item.curriculumSlot === normalized.curriculumSlot);
+    if (existing) Object.assign(existing, normalized);
+    else current.push(normalized);
+  }
+  storyState.annualAgendas = current.slice(-12);
 }
 
 export function createDefaultAxes() {
@@ -235,4 +276,26 @@ function upsertPressure(pressures, pressure) {
   const existing = pressures.find((item) => item.threadId === pressure.threadId && item.pressureId === pressure.pressureId);
   if (existing) Object.assign(existing, pressure);
   else pressures.push(pressure);
+}
+
+function normalizeAnnualAgendas(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(normalizeAnnualAgenda).filter(Boolean).slice(-12);
+}
+
+function normalizeAnnualAgenda(value = {}) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return undefined;
+  const curriculumSlot = typeof value.curriculumSlot === "string" ? value.curriculumSlot : "";
+  if (!curriculumSlot) return undefined;
+  return {
+    age: Number.isFinite(value.age) ? Math.floor(value.age) : 0,
+    lifeStage: typeof value.lifeStage === "string" ? value.lifeStage : "",
+    curriculumSlot,
+    requiredHumanDelta: typeof value.requiredHumanDelta === "string" ? value.requiredHumanDelta : "",
+    primaryDeltaShape: typeof value.primaryDeltaShape === "string" ? value.primaryDeltaShape : "",
+    primaryAxis: typeof value.primaryAxis === "string" ? value.primaryAxis : "",
+    secondaryAxis: typeof value.secondaryAxis === "string" ? value.secondaryAxis : "",
+    topicFamily: typeof value.topicFamily === "string" ? value.topicFamily : "",
+    arena: typeof value.arena === "string" ? value.arena : "",
+  };
 }
