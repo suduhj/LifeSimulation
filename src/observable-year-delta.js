@@ -73,6 +73,8 @@ const ASSET_TEXT = {
   bamboo_forest: { label: "竹林那件旧事", textSignals: ["竹林"] },
   scripture_pavilion: { label: "藏书阁那条旧闻", textSignals: ["藏书阁"] },
   sect_mine: { label: "矿场那段旧闻", textSignals: ["矿场"] },
+  white_deer: { label: "白鹿那段旧闻", textSignals: ["白鹿"] },
+  old_booklet: { label: "那本旧册子", textSignals: ["册子", "书册", "薄册"] },
 };
 
 export function compileObservableYearDelta({ annualFactPackage = {} } = {}) {
@@ -127,20 +129,28 @@ function institutionArrivalText() {
 
 function backgroundEchoesFor(annualFactPackage) {
   const ids = [
-    ...Object.keys(annualFactPackage.assetRoles ?? {}),
-    ...(annualFactPackage.backgroundThreads ?? []),
+    ...Object.entries(annualFactPackage.assetRoles ?? {})
+      .filter(([, role]) => role?.role === "background_only")
+      .map(([assetId]) => assetId),
   ];
   const unique = [...new Set(ids.filter(Boolean))];
   return unique.slice(0, 3).map((id) => {
+    const role = annualFactPackage.assetRoles?.[id] ?? {};
     const text = ASSET_TEXT[id] ?? { label: "此前那件事", textSignals: [] };
+    const textSignals = uniqueStrings([
+      ...(text.textSignals ?? []),
+      ...(Array.isArray(role.textSignals) ? role.textSignals : []),
+    ]).filter((signal) => !/[a-z_]/i.test(signal));
+    const maxSentences = Number.isFinite(role.maxSentences) ? Math.max(0, Math.floor(role.maxSentences)) : 1;
     return {
       label: text.label,
       role: "background_echo",
-      textSignals: text.textSignals,
-      maxMentions: 1,
+      textSignals,
+      maxMentions: Math.max(1, maxSentences),
+      maxSentences,
       titleAllowed: false,
-      firstParagraphAllowed: false,
-      choiceDriverAllowed: false,
+      firstParagraphAllowed: role.cannotOpenScene === false ? true : false,
+      choiceDriverAllowed: role.cannotDriveChoices === false ? true : false,
     };
   });
 }
@@ -150,4 +160,8 @@ function worldFlavorText(annualFactPackage) {
   if (/talent|subtle/.test(element)) return "天赋或异常只能轻微改变日常反应。";
   if (/institution|sect|official/.test(element)) return "更大的势力只能作为压力来源，不能抢走生活主线。";
   return "世界味道只作为背景质感，主事件仍然是今年的人生变化。";
+}
+
+function uniqueStrings(values = []) {
+  return [...new Set(values.filter((value) => typeof value === "string" && value.trim()).map((value) => value.trim()))];
 }

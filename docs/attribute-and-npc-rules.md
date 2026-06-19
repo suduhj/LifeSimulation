@@ -147,6 +147,12 @@ Talent bonuses can push attributes beyond 20. During starting or mortal-stage se
 | 17-20 | Mortal limit | World-class, historical, almost legendary mortal level. |
 | 20+ | Beyond conventional | Interpretation depends on source; not automatically supernatural. |
 
+Runtime rules:
+
+- `attributeTierForValue()` uses this exact table.
+- Attribute panel peer labels must come from this shared tier function, not from a separate UI-only threshold table.
+- The old coarse origin buckets (`strained`, `ordinary`, `notable`, `advantaged`, `extraordinary`) are only world-origin pool buckets; they are not the player-visible attribute tier table.
+
 ## Attribute Descriptions
 
 ### Appearance
@@ -213,6 +219,8 @@ Family Background is an origin/reality constraint, not an age-sealed personal ab
 
 Low Family Background likewise must not be rendered as an elite family, old-money house, resource allocator, sect branch, or management household. The engine-owned `World Origin Resolver` records a compatible origin in structured state so opening text, eventLog, replay, and panels agree.
 
+Starting identity seeds must be filtered after allocation and kept talents determine final Family Background potential. A low or ordinary final family value must not select `medium_to_high`, `high`, or `high_variance` family-background identities. A high final family value must not select `low`, `very_low`, or `low_to_medium` family-background identities.
+
 ### Luck
 
 | Points | Description |
@@ -241,6 +249,15 @@ The attribute panel uses an Attribute Reality Contract for display:
 - 颜值 shows `尚未定型`, not age-sealed power.
 - 家境 shows `家庭底色`, not age-sealed power.
 - 运气 shows `机缘倾向`, not age-sealed power.
+
+The runtime separates two concepts:
+
+```js
+MATURITY_CAPPED_ATTRIBUTES = new Set(["constitution", "intelligence"])
+IMMEDIATE_REALITY_ATTRIBUTES = new Set(["familyBackground", "luck"])
+```
+
+`appearance` is not maturity-capped, but it is also not immediate reality. It can grow and change as "not yet settled" appearance development without being shown as age-sealed power.
 
 Formula:
 

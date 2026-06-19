@@ -26,6 +26,14 @@ const DEFAULT_ASSETS = {
     assetType: "npc_or_creature",
     textSignals: ["灵兽", "异兽", "spirit_beast"],
   },
+  white_deer: {
+    assetType: "npc_or_creature",
+    textSignals: ["白鹿"],
+  },
+  old_booklet: {
+    assetType: "object",
+    textSignals: ["册子", "书册", "薄册"],
+  },
 };
 
 export function createDefaultAssetLedger() {
@@ -99,6 +107,9 @@ export function evaluateAssetRoles({ assetLedger, age = 0, assets = [] } = {}) {
       forbiddenRoles: backgroundOnly ? unique([...entry.forbiddenRoles, "primary_driver"]) : entry.forbiddenRoles,
       cooldownUntilAge: backgroundOnly ? Math.max(entry.cooldownUntilAge ?? 0, lastPrimaryAge(ledger, assetId) + 3) : entry.cooldownUntilAge,
       textSignals: unique([...(DEFAULT_ASSETS[assetId]?.textSignals ?? []), ...(entry.textSignals ?? [])]),
+      maxSentences: entry.maxSentences,
+      cannotOpenScene: entry.cannotOpenScene,
+      cannotDriveChoices: entry.cannotDriveChoices,
     };
   }
   return result;
@@ -143,6 +154,9 @@ function normalizeAssetEntry(assetId, value = {}) {
     allowedRoles: unique(Array.isArray(value.allowedRoles) ? value.allowedRoles : ["primary_driver", "background_echo", "minor_clue"]),
     forbiddenRoles: unique(Array.isArray(value.forbiddenRoles) ? value.forbiddenRoles : []),
     textSignals: unique([...(defaults.textSignals ?? []), ...(Array.isArray(value.textSignals) ? value.textSignals : [])]),
+    maxSentences: Number.isFinite(value.maxSentences) ? Math.max(0, Math.floor(value.maxSentences)) : 1,
+    cannotOpenScene: typeof value.cannotOpenScene === "boolean" ? value.cannotOpenScene : true,
+    cannotDriveChoices: typeof value.cannotDriveChoices === "boolean" ? value.cannotDriveChoices : true,
   };
 }
 

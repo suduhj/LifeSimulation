@@ -4,6 +4,8 @@ import { getPersonalityOption } from "./personality-options.js";
 import { createEmptyStoryState } from "./story-state.js";
 import { createGrowthLedgerFromAttributes, syncAttributesFromGrowthLedger } from "./growth-ledger.js";
 import { ensureEventLog } from "./runtime/event-log.js";
+import { originTierForAttributeTier } from "./world-origin-resolver.js";
+import { attributeTierForValue } from "./attribute-reality-contract.js";
 
 const ATTRIBUTE_KEYS = ["appearance", "intelligence", "constitution", "familyBackground", "luck"];
 const DEFAULT_ALLOCATION = {
@@ -38,12 +40,19 @@ export function createInitialRun({
   validateAllocation(allocation);
 
   const rng = createRng(seed);
-  const identity = rng.pick(world.identitySeeds.identitySeeds);
+  const identityFallback = rng.pick(world.identitySeeds.identitySeeds);
   const talentDrawResult = drawStartingTalents(world.talentPool.talents, rng);
   const talentDraw = talentDrawResult.talents;
   const selectedTalents = chooseStartingTalents(talentDraw, keptTalentIds);
   const attributes = buildAttributes(allocation, selectedTalents);
   const growthLedger = createGrowthLedgerFromAttributes(attributes, 0);
+  const familyBackgroundPotential = growthLedger.attributes.familyBackground?.potential ?? attributes.familyBackground?.potential ?? 4;
+  const identity = pickCompatibleIdentitySeed({
+    identitySeeds: world.identitySeeds.identitySeeds,
+    familyBackgroundValue: familyBackgroundPotential,
+    seed,
+    fallbackIdentity: identityFallback,
+  });
   const personality = getPersonalityOption(playerProfile.personality);
   const runId = `run_${worldId}_${seed}`;
 
@@ -218,6 +227,44 @@ function buildAttributes(allocation, selectedTalents) {
   }
 
   return attributes;
+}
+
+export function pickCompatibleIdentitySeed({ identitySeeds = [], familyBackgroundValue = 4, seed = 1, fallbackIdentity } = {}) {
+  const candidates = identitySeeds.filter((identity) => identitySeedMatchesFamilyBackground(identity, familyBackgroundValue));
+  if (candidates.includes(fallbackIdentity)) return fallbackIdentity;
+  const pool = candidates.length > 0 ? candidates : identitySeeds;
+  if (pool.length === 0) return fallbackIdentity;
+  const index = Math.abs(hashSeed(`${seed}:${Math.floor(Number(familyBackgroundValue) || 0)}`)) % pool.length;
+  return pool[index] ?? fallbackIdentity ?? pool[0];
+}
+
+export function identitySeedMatchesFamilyBackground(identitySeed, familyBackgroundValue = 4) {
+  const hint = identitySeed?.anchorAttributeHints?.familyBackground;
+  if (!hint) return true;
+  const bucket = originTierForAttributeTier(attributeTierForValue(familyBackgroundValue).id);
+  const allowedBuckets = familyBackgroundBucketsForHint(hint);
+  if (allowedBuckets.length === 0) return true;
+  return allowedBuckets.includes(bucket);
+}
+
+function familyBackgroundBucketsForHint(hint) {
+  const normalized = String(hint ?? "").trim().toLowerCase();
+  if (normalized === "very_low" || normalized === "low") return ["strained"];
+  if (normalized === "low_to_medium") return ["strained", "ordinary", "notable"];
+  if (normalized === "ordinary") return ["ordinary"];
+  if (normalized === "medium" || normalized === "practical") return ["ordinary", "notable", "advantaged"];
+  if (normalized === "variable") return ["strained", "ordinary", "notable", "advantaged"];
+  if (normalized === "medium_to_high") return ["advantaged", "extraordinary"];
+  if (normalized === "high" || normalized === "high_variance") return ["advantaged", "extraordinary"];
+  return [];
+}
+
+function hashSeed(value) {
+  let hash = 0;
+  for (const char of String(value)) {
+    hash = (hash * 31 + char.charCodeAt(0)) | 0;
+  }
+  return hash;
 }
 
 function createInitialWorldProgress(world) {

@@ -34,6 +34,10 @@ export function validateSceneCompliance(response, scene) {
     if (Number.isFinite(echo.maxMentions) && mentionCount > echo.maxMentions) {
       errors.push(`background echo mentioned too often: ${echo.label}`);
     }
+    const sentenceCount = countSentencesContainingSignals(body, signals);
+    if (Number.isFinite(echo.maxSentences) && sentenceCount > echo.maxSentences) {
+      errors.push(`background echo sentence budget exceeded: ${echo.label}`);
+    }
   }
 
   return {
@@ -63,4 +67,13 @@ function countSignals(text, signals = []) {
 
 function firstParagraph(text) {
   return String(text ?? "").split(/\n\s*\n|。/)[0] ?? "";
+}
+
+function countSentencesContainingSignals(text, signals = []) {
+  if (!signals.length) return 0;
+  const sentences = String(text ?? "")
+    .split(/[。！？!?；;\n]+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  return sentences.filter((sentence) => containsAny(sentence, signals)).length;
 }

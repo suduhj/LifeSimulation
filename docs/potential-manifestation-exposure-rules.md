@@ -27,6 +27,7 @@ Every core attribute should support these engine-owned layers:
 4. Maturity cap
    - The age-stage ceiling that prevents infants and children from using adult-level power.
    - Age 18 removes the hard cap, but does not automatically realize all potential.
+   - Runtime maturity caps apply only to Constitution and Intelligence. Appearance, Family Background, and Luck return `Number.MAX_SAFE_INTEGER` from `maturityCapForAge()`.
 5. Locked potential
    - Potential that still exists but has not been realized.
 6. Exposure value
@@ -92,6 +93,7 @@ Rules:
 
 - Family Background usually manifests immediately because birth family, bloodline, identity, sect origin, and social resources are starting conditions.
 - Luck may remain hidden and manifest as event tendency instead of a visible number.
+- Appearance is not maturity-capped, but it is also not treated as immediate reality. It should be shown as "not yet settled" development rather than locked age-sealed power.
 - Mythic talents can alter evidence, exposure, triggers, and capability packages.
 - Some talents may manifest early, late, conditionally, or almost invisibly.
 

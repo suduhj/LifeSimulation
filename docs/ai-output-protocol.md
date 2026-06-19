@@ -32,7 +32,7 @@ Content seeds are inspiration and constraints, not fixed scripts. The AI must ad
 
 For cross-year `life_event` generation, the engine creates an Annual Year Tick v2 contract internally. This contract is authoritative for the year: `curriculumSlot` and `requiredHumanDelta` define the human-life change; `threeLayerFocus.lifeBase` is primary; `threeLayerFocus.worldFlavor` is secondary; `threeLayerFocus.consequenceEcho` is background-only; `topicProfile` and `forbiddenTopicProfiles` control recent-topic repetition; `assetRoles` and `experienceIntent` further constrain old assets and tone.
 
-Real providers should not receive that raw annual fact package as player-renderable text. The engine compiles it into an Observable Scene Object: visible scene title, main human-life change, secondary world flavor, limited background echoes, forbidden player text, and three choice directions. `curriculumSlot`, `threeLayerFocus`, `topicProfile`, `assetRoles`, `experienceIntent`, and raw thread IDs remain engine/GM/debug concepts.
+Real providers should not receive that raw annual fact package as player-renderable text. The engine compiles it into a sanitized Observable Scene Object: visible scene title, main human-life change, secondary world flavor, limited background echoes, and three choice directions. Raw `forbiddenText`, `curriculumSlot`, `threeLayerFocus`, `topicProfile`, `backgroundThreads`, `assetRoles`, `experienceIntent`, and raw thread or asset IDs remain engine/GM/debug concepts and are omitted from the provider-facing annual prompt.
 
 After a valid annual response is accepted, the engine records a Yearly Outcome Ledger entry. This is not AI-authored state authority. The engine maps the curriculum slot to deterministic growth/exposure impact when needed, appends `annual.outcome_recorded` plus growth/exposure DomainEvents, updates the Growth Ledger, and exposes the result through `panelViews.attributes`.
 
@@ -78,11 +78,13 @@ For `life_event`, the engine prompt should include:
 - event generation context: `sourceType`, `sourceInstruction`, pool mode, seed strictness, adaptation mode, and whether AI free generation is allowed when no seed fits
 - selected content seeds, usually 1-3 when `sourceType` is `seed_pool`
 - player selected choice or free-form input, if resolving an action
-- annual outcome and experience context when available: `curriculumSlot`, `requiredHumanDelta`, `threeLayerFocus`, `topicProfile`, `forbiddenTopicProfiles`, `assetRoles`, `experienceIntent`, and background-only asset restrictions
+- annual outcome and experience context when available: a sanitized Observable Scene Object with the required human-life delta, secondary world flavor, limited old-asset echoes, and player-facing choice directions. Raw annual-planning fields such as `curriculumSlot`, `threeLayerFocus`, `topicProfile`, `forbiddenTopicProfiles`, `backgroundThreads`, `assetRoles`, and `experienceIntent` are engine-side contract fields, not provider-facing prose inputs.
 - hard constraints from `game-design/ai-generation-rules.md`
 - required output schema version
 
 When an Observable Scene Object is present, it is the prose authority for the turn. The AI must render only that observable scene into `playerText` and choices. It must not expose raw backend planning fields such as `annualFactPackage`, `curriculumSlot`, `threeLayerFocus`, `backgroundThreads`, `assetRoles`, `人生课程`, `年度变化`, `旧线索`, `背景回响`, `主轴`, or `副轴`.
+
+When an Observable Scene Object is present, the provider prompt omits `eventGeneration` and `eventContract` entirely. This prevents seed/source metadata and annual-planning IDs from being learned as player-facing text.
 
 Do not send the whole content pool every turn.
 

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { createAiProvider, createDeepSeekProvider, createInitialRun, createOpenAiCompatibleProvider, generateMvpEndingSummary, loadMvpWorlds, runMockTurns } from "../src/index.js";
+import { buildAnnualFactPackage, createAiProvider, createDeepSeekProvider, createInitialRun, createOpenAiCompatibleProvider, generateMvpEndingSummary, loadMvpWorlds, runMockTurns } from "../src/index.js";
 
 describe("AI provider adapter", () => {
   it("uses mock provider by default-compatible mode", async () => {
@@ -1128,6 +1128,67 @@ describe("AI provider adapter", () => {
     assert.ok(userPrompt.immediatePriorResolution, "immediatePriorResolution must be present");
     assert.match(userPrompt.immediatePriorResolution.body, /PRIOR_RESOLUTION_MARKER/);
     assert.ok(userPrompt.continuityRules.growFromPriorResolution, "growFromPriorResolution rule must be present");
+  });
+
+  it("sanitizes annual observable-scene prompts before sending them to real providers", async () => {
+    const worlds = loadMvpWorlds();
+    const run = createInitialRun({
+      worlds,
+      worldId: "cultivation",
+      seed: 2026062002,
+      playerProfile: { name: "林岚", gender: "female", personality: "curious" },
+    });
+    run.player.age = 8;
+    const annualFactPackage = buildAnnualFactPackage({ run, worlds, seed: 2026062003 });
+    annualFactPackage.curriculumSlot = "mentor_attention";
+    annualFactPackage.requiredHumanDelta = "一位可信大人开始更认真地指导你";
+    annualFactPackage.threeLayerFocus = {
+      lifeBase: { domain: "mentor_attention", role: "primary" },
+      worldFlavor: { element: "subtle_talent_manifestation", role: "secondary", intensity: "low" },
+      consequenceEcho: { source: "jade_token", role: "background_only" },
+    };
+    annualFactPackage.backgroundThreads = ["jade_token"];
+    annualFactPackage.assetRoles = {
+      jade_token: { role: "background_only", textSignals: ["玉片"], forbiddenRoles: ["primary_driver"] },
+    };
+    const expected = buildValidLifeEventResponse(run, {
+      turnId: "turn_sanitized_annual_prompt",
+      title: "9 岁：先生的留意",
+      body: "先生开始更认真地指导你，让你的学习安排发生变化。",
+      validationFlag: "sanitized_annual_prompt",
+    });
+    expected.timeSpan = { ageStart: 8, ageEnd: 9, yearsElapsed: 1, pace: "yearly" };
+
+    let request;
+    const fetchImpl = async (url, init) => {
+      request = { url, init };
+      return {
+        ok: true,
+        async json() {
+          return { choices: [{ message: { content: JSON.stringify(expected) } }] };
+        },
+      };
+    };
+
+    const provider = createDeepSeekProvider({
+      env: { DEEPSEEK_API_KEY: "unit_live_key_123", DEEPSEEK_BASE_URL: "https://example.deepseek.local" },
+      fetchImpl,
+    });
+    await provider.generateLifeEvent({
+      run,
+      worlds,
+      seed: 2026062004,
+      eventContract: { annualFactPackage },
+    });
+    const body = JSON.parse(request.init.body);
+    const userPromptText = body.messages.find((message) => message.role === "user").content;
+    const userPrompt = JSON.parse(userPromptText);
+
+    assert.equal(userPrompt.eventContract, undefined);
+    assert.equal(userPrompt.eventGeneration, undefined);
+    assert.equal(userPrompt.observableScene?.mainScene?.requiredVisibleDelta, "一位可信大人开始更认真地指导你");
+    assert.doesNotMatch(userPromptText, /mentor_attention|curriculumSlot|threeLayerFocus|annualFactPackage|backgroundThreads|assetRoles|jade_token/);
+    assert.doesNotMatch(userPromptText, /旧线索|背景回响|主轴|副轴|年度变化|人生课程/);
   });
 });
 

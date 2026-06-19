@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
+  createInitialRun,
+  loadMvpWorlds,
+} from "../src/index.js";
+import {
   originIsCompatibleWithFamilyBackground,
   resolveWorldOrigin,
 } from "../src/world-origin-resolver.js";
@@ -47,6 +51,48 @@ describe("world origin resolver", () => {
       assert.ok(origin.playerVisibleSummary);
       assert.ok(Array.isArray(origin.mustInclude));
       assert.ok(Array.isArray(origin.mustNotInclude));
+    }
+  });
+
+  it("selects initial identity seeds compatible with final family background in every world", () => {
+    const worlds = loadMvpWorlds();
+    const cases = [
+      {
+        name: "high family background",
+        allocation: { appearance: 0, intelligence: 0, constitution: 0, familyBackground: 20, luck: 0 },
+        forbiddenHints: /very_low|low|low_to_medium/,
+      },
+      {
+        name: "low family background",
+        allocation: { appearance: 6, intelligence: 6, constitution: 6, familyBackground: 0, luck: 2 },
+        forbiddenHints: /medium_to_high|high|high_variance/,
+      },
+    ];
+
+    for (const worldId of ["cultivation", "cthulhu", "wasteland"]) {
+      for (const testCase of cases) {
+        const run = createInitialRun({
+          worlds,
+          worldId,
+          seed: 2026062001,
+          playerProfile: { name: "Lin Lan", gender: "female", personality: "curious" },
+          allocation: testCase.allocation,
+        });
+        const familyValue = run.player.growthLedger.attributes.familyBackground.potential;
+        const origin = resolveWorldOrigin({ run, worldId, seed: run.seed });
+        const hint = JSON.stringify({ familyBackground: run.setup.identitySeed.anchorAttributeHints?.familyBackground });
+
+        assert.equal(
+          originIsCompatibleWithFamilyBackground(origin, familyValue),
+          true,
+          `${worldId} ${testCase.name} resolved origin must be compatible`,
+        );
+        assert.doesNotMatch(
+          hint,
+          testCase.forbiddenHints,
+          `${worldId} ${testCase.name} identitySeed ${run.player.identitySeedId} has incompatible family hint ${hint}`,
+        );
+      }
     }
   });
 });

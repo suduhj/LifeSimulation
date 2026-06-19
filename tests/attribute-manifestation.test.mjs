@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import { loadMvpWorlds, maturityCapForAge, recalculateGrowthLedgerForRun } from "../src/index.js";
+import { applyGrowthEvidence, loadMvpWorlds, maturityCapForAge, recalculateGrowthLedgerForRun } from "../src/index.js";
 import { createInitialRun } from "../src/initial-run.js";
 import { manifestationRatioForAge, runMockTurns } from "../src/run-loop.js";
 
@@ -49,24 +49,30 @@ describe("age-based attribute manifestation", () => {
     );
   });
 
-  it("manifested grows monotonically within the ledger as age advances", () => {
+  it("manifested grows monotonically within the ledger when age advancement includes growth evidence", () => {
     const worlds = loadMvpWorlds();
-    let run = createInitialRun({
+    const run = createInitialRun({
       worlds,
       worldId: "wasteland",
       seed: 77,
       playerProfile: { name: "Ash", gender: "female", personality: "pragmatic" },
     });
-    const key = AGE_KEYS.find((k) => run.player.attributes[k].potential >= 6) ?? "intelligence";
+    const key = "constitution";
     let prev = run.player.attributes[key].manifested;
     let sawGrowth = false;
-    for (let i = 0; i < 12; i += 1) {
-      run = runMockTurns({ run, worlds, turns: 1, seed: 200 + i });
+    for (let i = 0; i < 6; i += 1) {
+      run.player.age += 1;
+      applyGrowthEvidence(run, [{
+        attribute: key,
+        amount: 1,
+        source: "age_advance_training_fixture",
+        reason: "test evidence for growth during age advancement",
+      }]);
       const now = run.player.attributes[key].manifested;
       assert.ok(now >= prev, `${key} manifested should not regress (${prev} -> ${now})`);
       if (now > prev) sawGrowth = true;
       prev = now;
     }
-    assert.ok(sawGrowth, "manifested should visibly grow as the character ages");
+    assert.ok(sawGrowth, "manifested should visibly grow when age advancement has growth evidence");
   });
 });

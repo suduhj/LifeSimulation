@@ -22,6 +22,25 @@ describe("Story Asset Lifecycle", () => {
     assert.ok(roles.jade_token.cooldownUntilAge >= 9);
   });
 
+  it("assigns hard budgets to recurring old assets across named asset families", () => {
+    let ledger = createDefaultAssetLedger();
+    ledger = recordAssetSpotlight(ledger, { age: 8, assetId: "white_deer", role: "primary_driver" });
+
+    const roles = evaluateAssetRoles({ assetLedger: ledger, age: 9, assets: ["white_deer", "old_booklet"] });
+
+    assert.equal(roles.white_deer.role, "background_only");
+    assert.equal(roles.white_deer.maxSentences, 1);
+    assert.equal(roles.white_deer.cannotOpenScene, true);
+    assert.equal(roles.white_deer.cannotDriveChoices, true);
+    assert.ok(roles.white_deer.textSignals.includes("白鹿"));
+    assert.ok(roles.white_deer.forbiddenRoles.includes("primary_driver"));
+
+    assert.equal(roles.old_booklet.maxSentences, 1);
+    assert.equal(roles.old_booklet.cannotOpenScene, true);
+    assert.equal(roles.old_booklet.cannotDriveChoices, true);
+    assert.ok(roles.old_booklet.textSignals.includes("册子"));
+  });
+
   it("puts asset roles into the annual fact package contract", () => {
     const worlds = loadMvpWorlds();
     const run = createCultivationRun(worlds);

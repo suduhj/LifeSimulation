@@ -34,6 +34,61 @@ describe("observable year delta", () => {
     assert.doesNotMatch(text, /mentor_attention|curriculumSlot|threeLayerFocus|backgroundThreads|jade_token|assetRoles/);
     assert.match(delta.forbiddenPlayerText.join("\n"), /人生课程|年度变化|旧线索|背景回响|主轴|副轴/);
   });
+
+  it("carries hard old-asset sentence budgets into observable background echoes", () => {
+    const delta = compileObservableYearDelta({
+      annualFactPackage: {
+        ...mentorAttentionPackage(),
+        backgroundThreads: ["white_deer", "old_booklet"],
+        assetRoles: {
+          white_deer: {
+            role: "background_only",
+            maxSentences: 1,
+            cannotOpenScene: true,
+            cannotDriveChoices: true,
+            textSignals: ["白鹿"],
+          },
+          old_booklet: {
+            role: "background_only",
+            maxSentences: 1,
+            cannotOpenScene: true,
+            cannotDriveChoices: true,
+            textSignals: ["册子"],
+          },
+        },
+      },
+    });
+    const whiteDeer = delta.backgroundEchoes.find((echo) => echo.textSignals.includes("白鹿"));
+    const booklet = delta.backgroundEchoes.find((echo) => echo.textSignals.includes("册子"));
+
+    assert.equal(whiteDeer.maxSentences, 1);
+    assert.equal(whiteDeer.maxMentions, 1);
+    assert.equal(whiteDeer.firstParagraphAllowed, false);
+    assert.equal(whiteDeer.choiceDriverAllowed, false);
+    assert.equal(booklet.maxSentences, 1);
+    assert.equal(booklet.maxMentions, 1);
+  });
+
+  it("does not treat eligible annual assets as background-only echoes", () => {
+    const delta = compileObservableYearDelta({
+      annualFactPackage: {
+        age: 9,
+        curriculumSlot: "external_attention",
+        requiredHumanDelta: "外来目光改变日常安排",
+        primaryDelta: {
+          domain: "institution",
+          eventShape: "institution_arrival_changes_life",
+        },
+        assetRoles: {
+          biyun_sect: { role: "eligible_supporting", textSignals: ["碧云宗"], maxSentences: 1 },
+          jade_token: { role: "background_only", textSignals: ["玉片"], maxSentences: 1 },
+        },
+      },
+    });
+
+    assert.equal(delta.backgroundEchoes.some((echo) => echo.textSignals.includes("碧云宗")), false);
+    assert.equal(delta.backgroundEchoes.some((echo) => echo.textSignals.includes("玉片")), true);
+  });
 });
 
 function mentorAttentionPackage() {

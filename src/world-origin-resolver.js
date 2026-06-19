@@ -95,8 +95,8 @@ export function resolveWorldOrigin({ run, worldId = run?.worldId ?? "cultivation
     value,
     worldId,
   });
-  const tierId = contract.tier.id;
-  const candidates = originsForTier(worldId, tierId);
+  const originTierId = originTierForAttributeTier(contract.tier.id);
+  const candidates = originsForTier(worldId, originTierId);
   const index = Math.abs(Number(seed) || 0) % candidates.length;
   const picked = candidates[index] ?? candidates[0];
 
@@ -106,7 +106,8 @@ export function resolveWorldOrigin({ run, worldId = run?.worldId ?? "cultivation
     worldId,
     attributeKey: "familyBackground",
     familyBackgroundValue: Math.max(0, Math.floor(Number(value) || 0)),
-    familyBackgroundTier: tierId,
+    familyBackgroundTier: originTierId,
+    attributeTier: contract.tier.id,
     label: picked.label,
     playerVisibleSummary: picked.summary,
     mustInclude: contract.originConstraints.mustInclude,
@@ -117,7 +118,16 @@ export function resolveWorldOrigin({ run, worldId = run?.worldId ?? "cultivation
 export function originIsCompatibleWithFamilyBackground(origin, familyBackgroundValue) {
   if (!origin) return false;
   const tier = attributeTierForValue(familyBackgroundValue);
-  return compatibleTierIds(tier.id).includes(origin.familyBackgroundTier);
+  return compatibleTierIds(originTierForAttributeTier(tier.id)).includes(origin.familyBackgroundTier);
+}
+
+export function originTierForAttributeTier(tierId) {
+  if (["extreme_defect", "very_poor", "poor"].includes(tierId)) return "strained";
+  if (["slightly_below_ordinary", "ordinary"].includes(tierId)) return "ordinary";
+  if (["above_ordinary", "excellent"].includes(tierId)) return "notable";
+  if (["elite", "top_mortal", "mortal_limit"].includes(tierId)) return "advantaged";
+  if (tierId === "beyond_conventional") return "extraordinary";
+  return tierId;
 }
 
 function originsForTier(worldId, tierId) {

@@ -55,6 +55,35 @@ describe("scene compliance validator", () => {
     assert.equal(result.valid, false);
     assert.match(result.errors.join("\n"), /background|背景|choice|选项/);
   });
+
+  it("rejects old assets when they exceed the sentence budget", () => {
+    const budgetScene = {
+      ...scene,
+      backgroundEchoes: [
+        {
+          label: "白鹿旧闻",
+          textSignals: ["白鹿"],
+          maxMentions: 10,
+          maxSentences: 1,
+          titleAllowed: false,
+          firstParagraphAllowed: false,
+          choiceDriverAllowed: false,
+        },
+      ],
+    };
+    const response = cleanResponse();
+    response.playerText.body = [
+      "这一年，先生开始更认真地看待你的学习安排，让你放学后多留一会儿。",
+      "村里关于白鹿的闲话还没有散尽。",
+      "有人又把白鹿说成最近一切变化的缘由。",
+      "但真正改变你生活的，仍然是先生和家人重新安排你的学习节奏。",
+    ].join("");
+
+    const result = validateSceneCompliance(response, budgetScene);
+
+    assert.equal(result.valid, false);
+    assert.match(result.errors.join("\n"), /sentence|句|白鹿/);
+  });
 });
 
 function cleanResponse() {

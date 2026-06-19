@@ -73,11 +73,17 @@ export function attributeDisplayPolicy(attribute) {
 
 export function attributeTierForValue(value) {
   const number = Math.max(0, Math.floor(Number(value) || 0));
-  if (number <= 2) return { id: "strained", label: "拮据", rank: 0 };
-  if (number <= 5) return { id: "ordinary", label: "普通", rank: 1 };
-  if (number <= 11) return { id: "notable", label: "小有优势", rank: 2 };
-  if (number <= 24) return { id: "advantaged", label: "优渥", rank: 3 };
-  return { id: "extraordinary", label: "显赫", rank: 4 };
+  if (number <= 0) return { id: "extreme_defect", label: "极端缺陷", rank: 0 };
+  if (number <= 1) return { id: "very_poor", label: "很差", rank: 1 };
+  if (number <= 2) return { id: "poor", label: "较差", rank: 2 };
+  if (number <= 3) return { id: "slightly_below_ordinary", label: "略低普通", rank: 3 };
+  if (number <= 4) return { id: "ordinary", label: "普通", rank: 4 };
+  if (number <= 6) return { id: "above_ordinary", label: "高于普通", rank: 5 };
+  if (number <= 9) return { id: "excellent", label: "优秀", rank: 6 };
+  if (number <= 12) return { id: "elite", label: "精英", rank: 7 };
+  if (number <= 16) return { id: "top_mortal", label: "凡人顶级", rank: 8 };
+  if (number <= 20) return { id: "mortal_limit", label: "凡人极限", rank: 9 };
+  return { id: "beyond_conventional", label: "超常规", rank: 10 };
 }
 
 export function attributeRealityContractFor({ attribute, value = 0, worldId = "" } = {}) {
@@ -100,13 +106,13 @@ export function originConstraintsForFamilyBackground({ tier = attributeTierForVa
   const commonHighMustNot = ["贫苦", "普通猎户", "底层", "破产", "缺粮难民", "边缘流民"];
   const commonLowMustNot = ["旧钱", "管理层", "家族旁支", "资源配给", "商号", "宗门外缘"];
 
-  if (tier.rank >= 3) {
+  if (tier.rank >= 7) {
     return {
       mustInclude: highOriginKeywords(worldId),
       mustNotInclude: commonHighMustNot,
     };
   }
-  if (tier.rank <= 0) {
+  if (tier.rank <= 2) {
     return {
       mustInclude: lowOriginKeywords(worldId),
       mustNotInclude: commonLowMustNot,

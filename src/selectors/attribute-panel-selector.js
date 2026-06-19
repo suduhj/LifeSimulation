@@ -2,6 +2,7 @@ import { developmentStageForAge } from "../growth-ledger.js";
 import {
   attributeDisplayPolicy,
   attributeLabelForPlayer,
+  attributeTierForValue,
 } from "../attribute-reality-contract.js";
 import {
   attributeKeys,
@@ -168,11 +169,7 @@ function progressRatio(value, max) {
 }
 
 function peerLabel(value) {
-  if (value >= 20) return "远超同龄";
-  if (value >= 12) return "同龄罕见";
-  if (value >= 8) return "同龄出众";
-  if (value >= 5) return "略有优势";
-  return "普通";
+  return attributeTierForValue(value).label;
 }
 
 function potentialLabel(value) {

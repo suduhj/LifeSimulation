@@ -936,10 +936,11 @@ function buildOpeningSequencePrompt({ run, world, seed }) {
 
 function buildLifeEventPrompt({ run, world, seed, generationContext, minNextAge, eventContract }) {
   const lastEvent = run.eventHistory?.at(-1);
-  const observableScene = eventContract?.annualFactPackage?.primaryDelta
+  const rawObservableScene = eventContract?.annualFactPackage?.primaryDelta
     ? sceneInputForAi(compileSceneObject({ run, annualFactPackage: eventContract.annualFactPackage }))
     : eventContract?.observableScene ?? null;
-  const safeEventContract = observableScene ? null : eventContract;
+  const observableScene = sanitizeObservableSceneForPrompt(rawObservableScene);
+  const safeEventContract = observableScene ? undefined : eventContract;
   const immediatePriorResolution = lastEvent?.responseType === "action_resolution"
     ? {
         title: lastEvent.playerText?.title,
@@ -967,7 +968,7 @@ function buildLifeEventPrompt({ run, world, seed, generationContext, minNextAge,
       statePatch: "must include all required arrays and scoreDelta",
     },
     timeProgression,
-    eventGeneration: {
+    eventGeneration: observableScene ? undefined : {
       sourceType: generationContext.sourceType,
       sourceInstruction: generationContext.sourceInstruction,
       poolMode: generationContext.poolMode,
@@ -997,6 +998,37 @@ function buildLifeEventPrompt({ run, world, seed, generationContext, minNextAge,
       : "No explicit event contract was selected for this turn; follow world rules and current save state.",
     run: buildRunPromptSnapshot(run),
     world: buildWorldPromptSnapshot(world),
+  };
+}
+
+function sanitizeObservableSceneForPrompt(scene) {
+  if (!scene) return null;
+  return {
+    schemaVersion: scene.schemaVersion,
+    age: scene.age,
+    title: scene.title,
+    mainScene: scene.mainScene
+      ? {
+          openingBeat: scene.mainScene.openingBeat,
+          requiredVisibleDelta: scene.mainScene.requiredVisibleDelta,
+        }
+      : undefined,
+    worldFlavor: scene.worldFlavor?.text ? { text: scene.worldFlavor.text } : undefined,
+    backgroundEchoes: (scene.backgroundEchoes ?? []).map((echo) => ({
+      label: echo.label,
+      limit: Number.isFinite(echo.maxSentences) ? `最多 ${echo.maxSentences} 句` : "最多一句",
+      cannotOpenScene: echo.firstParagraphAllowed === false,
+      cannotDriveChoices: echo.choiceDriverAllowed === false,
+      textSignals: (echo.textSignals ?? []).filter((signal) => (
+        typeof signal === "string" && signal.trim() && !/[a-z_]/i.test(signal)
+      )),
+    })),
+    choices: (scene.choices ?? []).map((choice) => ({
+      id: choice.id,
+      textSeed: choice.textSeed,
+      fuzzySuccessLabel: choice.fuzzySuccessLabel,
+      riskLabel: choice.riskLabel,
+    })),
   };
 }
 

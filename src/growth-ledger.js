@@ -1,7 +1,8 @@
 export const GROWTH_LEDGER_SCHEMA_VERSION = "mvp.growth_ledger.v1";
 export const ATTRIBUTE_KEYS = ["appearance", "intelligence", "constitution", "familyBackground", "luck"];
 
-const REALITY_ATTRIBUTE_KEYS = new Set(["familyBackground", "luck"]);
+export const MATURITY_CAPPED_ATTRIBUTES = new Set(["constitution", "intelligence"]);
+const IMMEDIATE_REALITY_ATTRIBUTE_KEYS = new Set(["familyBackground", "luck"]);
 const MILESTONE_THRESHOLDS = [5, 10, 20, 50, 100, 200];
 
 export function createGrowthLedgerFromAttributes(attributes = {}, age = 0) {
@@ -76,7 +77,7 @@ export function recalculateGrowthLedger(ledger, age = 0) {
       + entry.permanentModifier,
     ));
     const maturityCap = maturityCapForAge(age, key, potential);
-    const realized = REALITY_ATTRIBUTE_KEYS.has(key)
+    const realized = IMMEDIATE_REALITY_ATTRIBUTE_KEYS.has(key)
       ? potential
       : clamp(floorNumber(entry.realized), 0, potential);
     const rawEffective = realized + entry.temporaryModifier;
@@ -96,7 +97,7 @@ export function recalculateGrowthLedger(ledger, age = 0) {
 }
 
 export function maturityCapForAge(age, attribute = "", _potential = 0) {
-  if (REALITY_ATTRIBUTE_KEYS.has(attribute)) return Number.MAX_SAFE_INTEGER;
+  if (!MATURITY_CAPPED_ATTRIBUTES.has(attribute)) return Number.MAX_SAFE_INTEGER;
   const a = Math.max(0, Math.floor(Number(age) || 0));
   if (a >= 18) return Number.MAX_SAFE_INTEGER;
   if (a <= 0) return 3;
@@ -260,7 +261,7 @@ function normalizeLedgerEntry(key, value, age) {
 }
 
 function inferInitialRealized({ key, source, base, talentPotential, growthBonus, permanentModifier, potential }) {
-  if (REALITY_ATTRIBUTE_KEYS.has(key)) return potential;
+  if (IMMEDIATE_REALITY_ATTRIBUTE_KEYS.has(key)) return potential;
   const manifested = Number.isFinite(source.manifested) ? floorNumber(source.manifested) : 0;
   const earlyTalentRealization = Math.floor(Math.max(0, talentPotential) * 0.1);
   const layerRealized = base + growthBonus + permanentModifier + earlyTalentRealization;
