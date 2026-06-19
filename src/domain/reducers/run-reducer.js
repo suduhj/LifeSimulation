@@ -76,6 +76,9 @@ export function reduceRunEvent(run, event) {
     case "story.annual_agenda_recorded":
       applyStoryOutcome(nextRun, { annualAgendas: [event.payload] });
       break;
+    case "annual.outcome_recorded":
+      applyStoryOutcome(nextRun, { yearlyOutcomes: [event.payload] });
+      break;
     case "npc.relationship_changed":
       applyRelationshipChange(nextRun, event.payload);
       break;
@@ -221,6 +224,7 @@ function storyStatePatchToOutcome(storyState) {
     curriculumUpdates: storyState?.curriculum?.recentSlots ?? [],
     topicUpdates: storyState?.topicLedger?.recentTopics ?? [],
     annualAgendas: storyState?.annualAgendas ?? [],
+    yearlyOutcomes: storyState?.yearlyOutcomes ?? [],
   };
 }
 

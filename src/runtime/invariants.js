@@ -74,6 +74,12 @@ function checkStoryState(previousRun, run, errors) {
   checkUniqueRecords(run.worldState?.storyState?.topicLedger?.recentTopics ?? [], "topic ledger record", (item) => (
     `${item.age}:${item.topicFamily}:${item.arena}:${item.objectFocus}:${item.pressureType}`
   ), errors);
+  checkUniqueRecords(
+    run.worldState?.storyState?.yearlyOutcomes ?? [],
+    "yearly outcome",
+    (item) => item.outcomeId ?? `${item.age}:${item.curriculum?.slot}`,
+    errors,
+  );
 }
 
 function checkUniqueRecords(records, label, keyFn, errors) {

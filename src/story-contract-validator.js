@@ -31,6 +31,9 @@ export function validateStoryContract(response, contract) {
   if (contract.curriculumSlot && !looksLikeCurriculumSlot(text, contract.curriculumSlot, contract.requiredHumanDelta)) {
     errors.push(`response does not satisfy curriculum slot ${contract.curriculumSlot}`);
   }
+  if (contract.curriculumSlot && !choicesSupportCurriculum(response?.choices, contract.curriculumSlot, contract.requiredHumanDelta)) {
+    errors.push(`response choices do not support curriculum slot ${contract.curriculumSlot}`);
+  }
 
   for (const profile of contract.forbiddenTopicProfiles ?? []) {
     if (topicProfileMatchesText(text, profile)) {
@@ -62,6 +65,58 @@ function looksLikeCurriculumSlot(text, slot, requiredHumanDelta = "") {
     talent_subtle_manifestation: /(天赋|异常|梦|感知|微热|不寻常).{0,40}(轻微|日常|小|细微)/s.test(text),
     external_attention: /(外人|宗门|官方|营地|陌生|来人|目光).{0,40}(改变|注意|安排|日常)/s.test(text),
   }[slot] ?? false;
+}
+
+function choicesSupportCurriculum(choices = [], slot, requiredHumanDelta = "") {
+  if (!Array.isArray(choices) || choices.length === 0) return true;
+  const choiceText = choices.map((choice) => choice?.text ?? "").filter(Boolean);
+  if (choiceText.length === 0) return true;
+  if (requiredHumanDelta && choiceText.some((text) => text.includes(requiredHumanDelta))) return true;
+  const signals = [...curriculumChoiceSignals(slot), ...commonAnnualChoiceSignals()];
+  return choiceText.some((text) => signals.some((signal) => signal && text.includes(signal)));
+}
+
+function commonAnnualChoiceSignals() {
+  return [
+    "新的生活安排",
+    "这项安排",
+    "生活安排",
+    "可信的大人",
+    "父母",
+    "父亲",
+    "母亲",
+    "师长",
+    "长辈",
+    "安排",
+    "观察",
+    "沟通",
+    "谈一谈",
+    "鏂扮殑鐢熸椿",
+    "瀹夋帓",
+    "鐢熸椿",
+    "鍙俊",
+    "澶т汉",
+    "鐖舵瘝",
+    "鐖朵翰",
+    "姣嶄翰",
+    "瑙傚療",
+    "璋堜竴璋",
+  ];
+}
+
+function curriculumChoiceSignals(slot) {
+  return {
+    peer_relationship: ["同龄", "伙伴", "朋友", "态度", "相处", "关系", "peer", "鍚岄緞", "浼欎即", "鏈嬪弸"],
+    family_boundary: ["父亲", "母亲", "家里", "边界", "规矩", "安排", "沟通", "鐖朵翰", "姣嶄翰", "瀹堕噷"],
+    household_responsibility: ["家务", "责任", "帮忙", "帮助", "小事", "照护者", "取水", "烧火", "差事", "瀹跺姟", "璐ｄ换", "甯収", "灏忎簨", "鐓ф姢", "鍙栨按"],
+    learning_path: ["学习", "功课", "先生", "师长", "读书", "练字", "课程", "安排", "瀛︿範", "鍔熻", "鍏堢敓"],
+    mentor_attention: ["师长", "先生", "长辈", "请教", "指导", "评价", "弟子", "宗门", "询问", "甯堥暱", "鍏堢敓", "闀胯緢", "寮熷瓙", "瀹楅棬", "璇㈤棶"],
+    body_growth: ["身体", "体力", "力气", "承载", "成长", "能做", "韬綋", "浣撳姏", "鍔涙皵"],
+    health_or_care: ["照护", "休养", "身体", "睡眠", "发热", "照看", "鐓ф姢", "浼戝吇", "鐫＄湢"],
+    village_social_life: ["村里", "邻居", "名声", "日常", "位置", "相处", "鏉戦噷", "閭诲眳", "鍚嶅０"],
+    talent_subtle_manifestation: ["天赋", "异常", "感知", "微热", "细微", "日常", "澶╄祴", "寮傚父", "鎰熺煡"],
+    external_attention: ["外界", "外人", "宗门", "官方", "营地", "目光", "注意", "澶栫晫", "瀹楅棬", "瀹樻柟"],
+  }[slot] ?? [];
 }
 
 export function assertStoryContract(response, contract) {

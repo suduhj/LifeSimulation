@@ -1411,24 +1411,15 @@ function renderRun(run) {
   const panelViews = currentPanelViews();
   const mainPanel = panelViews?.main;
   const lines = mainPanel?.summaryLines?.length
-    ? [
-      ...mainPanel.summaryLines,
-      `经历事件：${run.eventHistoryCount ?? 0}`,
-      `当前评分：${run.score ?? 0}`,
-    ]
+    ? [...mainPanel.summaryLines]
     : [
       `角色：${run.player.name}｜${genderLabel(run.player.gender)}｜${run.player.age} 岁`,
       `世界：${worldLabel(run.worldId)}`,
       `性格倾向：${personalityLabel(run.player.personality?.id ?? run.player.personality)}`,
-      `经历事件：${run.eventHistoryCount ?? 0}`,
-      `当前评分：${run.score ?? 0}`,
     ];
 
   if (run.ending?.completed) {
     lines.push(`人生结局：${run.ending.name ?? "已结算"}｜总评 ${run.ending.score ?? run.score ?? 0}`);
-  }
-  if (panelViews?.story?.currentPressure) {
-    lines.push(`剧情压力：${panelViews.story.currentPressure}`);
   }
 
   const talentPositionLine = renderTalentPositionLine(run.player.talents ?? [], run.worldId);

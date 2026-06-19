@@ -1,5 +1,6 @@
 import { createDefaultCurriculumState, normalizeCurriculumState, recordCurriculumSlot } from "./life-curriculum.js";
 import { createDefaultTopicLedger, normalizeTopicLedger, recordTopicProfile } from "./topic-ledger.js";
+import { addYearlyOutcomes, normalizeYearlyOutcomes } from "./yearly-outcome.js";
 
 export const STORY_STATE_SCHEMA_VERSION = "mvp.story_state.v1";
 
@@ -32,6 +33,7 @@ export function createEmptyStoryState() {
     curriculum: createDefaultCurriculumState(),
     topicLedger: createDefaultTopicLedger(),
     annualAgendas: [],
+    yearlyOutcomes: [],
   };
 }
 
@@ -53,6 +55,7 @@ export function ensureStoryState(run) {
   current.curriculum = normalizeCurriculumState(current.curriculum);
   current.topicLedger = normalizeTopicLedger(current.topicLedger);
   current.annualAgendas = normalizeAnnualAgendas(current.annualAgendas);
+  current.yearlyOutcomes = normalizeYearlyOutcomes(current.yearlyOutcomes);
   return current;
 }
 
@@ -67,6 +70,7 @@ export function recordSimulationOutcome(run, outcome = {}) {
   applyCurriculumUpdates(storyState, outcome.curriculumUpdates ?? []);
   applyTopicUpdates(storyState, outcome.topicUpdates ?? []);
   addAnnualAgendas(storyState, outcome.annualAgendas ?? []);
+  addYearlyOutcomes(storyState, outcome.yearlyOutcomes ?? []);
 
   for (const update of outcome.threadUpdates ?? []) {
     if (!update?.threadId) continue;
@@ -101,6 +105,7 @@ export function buildStoryStatePatch(outcome = {}, age = 0) {
   applyCurriculumUpdates(storyState, outcome.curriculumUpdates ?? []);
   applyTopicUpdates(storyState, outcome.topicUpdates ?? []);
   addAnnualAgendas(storyState, outcome.annualAgendas ?? []);
+  addYearlyOutcomes(storyState, outcome.yearlyOutcomes ?? []);
   for (const update of outcome.threadUpdates ?? []) {
     if (!update?.threadId) continue;
     const thread = {
