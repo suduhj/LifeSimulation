@@ -20,14 +20,6 @@ const attrLabels = {
   luck: "运气",
 };
 
-const cultivationAttrLabels = {
-  appearance: "仙姿",
-  intelligence: "悟性",
-  constitution: "根骨",
-  familyBackground: "出身/底蕴",
-  luck: "气运",
-};
-
 const worldLabels = {
   cultivation: "修仙世界",
   cthulhu: "克苏鲁世界",
@@ -1100,9 +1092,7 @@ function renderTalentSummaryCard(talent) {
 function renderFateAttributeLines(run) {
   const allocation = run.setup?.allocation ?? {};
   return attrKeys.map((key) => {
-    const baseLabel = attrLabels[key] ?? "未知属性";
-    const worldSpecificLabel = attrLabel(key, run.worldId);
-    const label = run.worldId === "cultivation" ? `${worldSpecificLabel}（${baseLabel}）` : baseLabel;
+    const label = attrLabels[key] ?? "未知属性";
     const attr = run.player.attributes?.[key] ?? {};
     const base = allocation[key] ?? attr.base ?? 0;
     const ledger = run.player.growthLedger?.attributes?.[key] ?? {};
@@ -1111,12 +1101,22 @@ function renderFateAttributeLines(run) {
     const effective = ledger.effective ?? attr.effective ?? attr.manifested ?? 0;
     const realized = ledger.realized ?? attr.realized ?? attr.manifested ?? effective;
     const lockedPotential = ledger.lockedPotential ?? attr.lockedPotential ?? Math.max(0, potential - realized);
+    const sealText = fateAttributeSealText(key, lockedPotential);
     // Show how talents lift each attribute (基础 + 天赋 = 潜能) and what is actually usable now.
     const potentialText = talentBonus > 0
       ? `潜能 ${potential}（基础 ${base} + 天赋 ${talentBonus}）`
       : `潜能 ${potential}（基础 ${base}）`;
-    return `${label}：${potentialText}，当前 ${effective}，已兑现 ${realized}，年龄封存 ${lockedPotential}`;
+    return `${label}：${potentialText}，当前 ${effective}，已兑现 ${realized}，${sealText}`;
   });
+}
+
+function fateAttributeSealText(key, lockedPotential) {
+  if (key === "constitution") return `年龄封存 ${lockedPotential}`;
+  if (key === "intelligence") return `经验封存 ${lockedPotential}`;
+  if (key === "appearance") return "尚未定型";
+  if (key === "familyBackground") return "家庭底色";
+  if (key === "luck") return "机缘倾向";
+  return `年龄封存 ${lockedPotential}`;
 }
 
 function parseOpeningSections(body) {
@@ -1588,6 +1588,9 @@ function renderAttributeGroup(group) {
 
 function renderAttributeGrowthCard(card) {
   const ratio = clampPercent(card.manifestedRatio);
+  const sealMetric = card.showAgeSeal === false
+    ? `<span>${escapeHtml(card.ageSealTitle ?? "")}${card.ageSealLabel ? `｜${escapeHtml(card.ageSealLabel)}` : ""}</span>`
+    : `<span class="age-sealed">${escapeHtml(card.ageSealTitle ?? "年龄封存")} ${escapeHtml(card.ageSealed ?? 0)}｜${escapeHtml(card.ageSealLabel ?? "")}</span>`;
   return `
     <article class="attribute-growth-card">
       <div class="attribute-card-head">
@@ -1610,7 +1613,7 @@ function renderAttributeGrowthCard(card) {
         </div>
       </div>
       <div class="attribute-card-metrics">
-        <span class="age-sealed">${escapeHtml(card.ageSealTitle ?? "年龄封存")} ${escapeHtml(card.ageSealed ?? 0)}｜${escapeHtml(card.ageSealLabel ?? "")}</span>
+        ${sealMetric}
         <span>${escapeHtml(card.exposureTitle ?? "外界关注")} ${escapeHtml(card.exposureLabel ?? "")}</span>
       </div>
     </article>
@@ -1837,8 +1840,7 @@ function talentDisplayName(talent) {
   return candidates.find((value) => hasSafePlayerLabel(value)) ?? "";
 }
 
-function attrLabel(id, worldId) {
-  if (worldId === "cultivation" && cultivationAttrLabels[id]) return cultivationAttrLabels[id];
+function attrLabel(id, _worldId) {
   return attrLabels[id] ?? "未知属性";
 }
 

@@ -1,5 +1,9 @@
 import { selectEventGenerationContext } from "./event-source-selector.js";
 import { isNpcHiddenFromOpening, visibleNpcLabel } from "./localization.js";
+import {
+  compileSceneObject,
+  renderSceneObjectToMockResponse,
+} from "./scene-object-compiler.js";
 
 export function generateMockLifeEvent({ run, worlds, seed = 1, eventContract } = {}) {
   const world = worlds?.[run?.worldId];
@@ -10,10 +14,18 @@ export function generateMockLifeEvent({ run, worlds, seed = 1, eventContract } =
   const generationContext = selectEventGenerationContext({ world, run, seed });
   const eventSeed = generationContext.selectedSeeds[0] ?? buildSyntheticEventSeed(generationContext.sourceType, world);
   const turnId = `turn_${run.eventHistory.length + 1}`;
+  const contractAge = Number(eventContract?.annualFactPackage?.age);
   const yearsElapsed = chooseYearsElapsed(run, seed);
-  const nextAge = run.player.age + yearsElapsed;
+  const nextAge = Number.isFinite(contractAge) ? contractAge : run.player.age + yearsElapsed;
+  const actualYearsElapsed = Math.max(0, nextAge - run.player.age);
   const progressTarget = pickProgressTarget(world);
   const currentProgress = run.worldState.progress?.[progressTarget] ?? 0;
+  const observableScene = eventContract?.annualFactPackage?.primaryDelta
+    ? compileSceneObject({ run, annualFactPackage: eventContract.annualFactPackage })
+    : null;
+  const sceneRendering = observableScene
+    ? renderSceneObjectToMockResponse({ scene: observableScene, run })
+    : null;
 
   return {
     schemaVersion: "mvp.ai_event_response.v1",
@@ -24,8 +36,8 @@ export function generateMockLifeEvent({ run, worlds, seed = 1, eventContract } =
     timeSpan: {
       ageStart: run.player.age,
       ageEnd: nextAge,
-      yearsElapsed,
-      pace: yearsElapsed <= 1 ? "scene_or_short_stage" : "life_stage",
+      yearsElapsed: actualYearsElapsed,
+      pace: actualYearsElapsed <= 1 ? "scene_or_short_stage" : "life_stage",
       paceReasonKey: "mvp.mock.continuous_life_journal",
     },
     selectedSeeds: [
@@ -46,8 +58,8 @@ export function generateMockLifeEvent({ run, worlds, seed = 1, eventContract } =
       difficultyLabel: "offline_mock",
     },
     playerText: {
-      title: buildMockTitle(world.id, nextAge),
-      body: buildMockBody(world.id, run, eventSeed, generationContext, nextAge, eventContract),
+      title: sceneRendering?.title ?? buildMockTitle(world.id, nextAge),
+      body: sceneRendering?.body ?? buildMockBody(world.id, run, eventSeed, generationContext, nextAge, eventContract),
       visibleChanges: [`${progressLabel(progressTarget)} +1`],
       worldProgressSummary: [`${progressLabel(progressTarget)} 开始变化。`],
       relationshipSummary: [],
@@ -59,7 +71,8 @@ export function generateMockLifeEvent({ run, worlds, seed = 1, eventContract } =
       summaryTags: eventSeed.sceneTags.slice(0, 4),
       sourceType: generationContext.sourceType,
     },
-    choices: buildChoices(world.id, eventContract),
+    observableScene,
+    choices: sceneRendering?.choices ?? buildChoices(world.id, eventContract),
     freeform: {
       allowed: true,
       clarificationNeeded: false,
@@ -364,12 +377,12 @@ function buildAnnualMockBody({ name, memoryLine, companionLine, eventContract })
     institution: "更大的组织终于压到家门口，此前被拖延的事情必须给出回应。",
   }[primaryDelta.domain] ?? "生活里出现了新的变化，让旧问题不能再按原样重复。";
   const curriculumLine = requiredHumanDelta
-    ? `今年的主事先落在人生课程「${curriculumSlot}」上：${requiredHumanDelta}。`
+    ? `今年真正落到眼前的变化是：${requiredHumanDelta}。`
     : "";
   const layerLine = threeLayerFocus?.lifeBase
-    ? "修仙或世界异常只能作为味道和背景回响，不能抢走这年生活本身的主位。"
+    ? "那些更远的异常只在背后留下余波，不能抢走这年生活本身的主位。"
     : "";
-  return `${name}这一年真正改变生活的，不是把旧场景再走一遍，而是${primaryDelta.title}。${memoryLine}${companionLine}${curriculumLine}${primaryDelta.description}${domainDetail}${backgroundLine}${layerLine}因为父亲、母亲或身边人已经看见了新的生活变化，眼下的压力变成了一个新的年度岔口：你要怎样适应这项安排、怎样观察旧线索在背后的影响，又要不要把自己的想法说给可信的大人听。`;
+  return `${name}这一年真正改变生活的，不是把旧场景再走一遍，而是${primaryDelta.title}。${memoryLine}${companionLine}${curriculumLine}${primaryDelta.description}${domainDetail}${backgroundLine}${layerLine}因为父亲、母亲或身边人已经看见了新的生活变化，眼下的压力变成了一个新的岔口：你要怎样适应这项安排，怎样留意背后的余波，又要不要把自己的想法说给可信的大人听。`;
 }
 
 function buildAnnualChoices(worldId, annualFactPackage) {

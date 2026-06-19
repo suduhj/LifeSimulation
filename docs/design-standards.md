@@ -70,11 +70,30 @@ The key rule is page separation during creation and timeline continuity during l
 - Talent cards must show Chinese name, rarity, and manifestation type by default. Clicking or hovering should reveal a real detailed description, point bonuses, attribute impact, narrative effect, possible risk, and manifestation explanation. Any player-facing talent introduction must include a `点数加成` line. If the talent has attribute bonuses, list concrete values such as `悟性 +35；根骨 +35`; if it has no direct opening point bonus, explicitly show `无直接开局点数加成`. Details must use the talent's effects, tags, rarity, and world context rather than a generic template. Hidden triggers and future route conditions remain GM/backend-only.
 - The state summary must include the player's current talents and the current values of the five attribute layers as they change during the story. Talent details are opened by click/hover. Explanations for `当前表现`, `天赋潜能`, and `异常关注` should live behind inline help or detail UI, not as always-visible long tutorial text.
 - Important NPCs in ordinary UI must use the player's current knowledge only. Undiscovered hidden NPCs, true roles, backstage factions, and raw IDs must not appear in fate preview, initial relationships, timeline text, state summary, or choices. They may appear only in GM/debug data.
+- Base attribute labels are fixed across all worlds: 颜值, 智力, 体质, 家境, 运气. Do not replace them with 修仙-only aliases such as 仙姿, 悟性, 根骨, 出身/底蕴, or 气运 in ordinary UI.
 - Frontend display terms for attribute layers are:
   - `potential` -> `天赋潜能`
   - `manifested` -> `当前表现`
   - `exposure` -> `异常关注`
-- Cultivation World may world-theme the five base attributes, but must preserve the mapping: Appearance = 仙姿, Intelligence = 悟性, Constitution = 根骨, Family Background = 出身/底蕴, Luck = 气运.
+- Attribute-card sealing terms are attribute-specific: 体质 uses `年龄封存`, 智力 uses `经验封存`, 颜值 uses `尚未定型`, 家境 uses `家庭底色`, and 运气 uses `机缘倾向`.
+- Ordinary annual event text must never expose backend planning terms such as `人生课程`, `年度变化`, `旧线索`, `背景回响`, `主轴`, `副轴`, raw snake_case IDs, `curriculumSlot`, `threeLayerFocus`, `backgroundThreads`, or `assetRoles`. These are GM/debug or engine-contract concepts only.
+
+## Observable Scene Runtime
+
+Annual scenes use the Observable Scene Runtime boundary:
+
+```text
+System Truth
+  -> Attribute Reality Contract
+  -> World Origin Resolver
+  -> Observable Year Delta
+  -> Scene Object
+  -> AI / Mock Slot Rendering
+  -> Scene Compliance Validator
+  -> EventLog / GrowthLedger / PanelViews
+```
+
+The system truth can contain IDs, curriculum slots, topic ledgers, asset roles, yearly outcomes, and growth evidence. Ordinary player-facing text only receives the compiled Scene Object: visible title intent, current human-life change, limited world flavor, background echoes with role limits, and three choice directions. Background echoes may lightly appear, but they cannot own the title, first paragraph, or choices unless the engine promotes them to the main scene.
 
 ## Visual Direction Draft
 

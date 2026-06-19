@@ -1,3 +1,5 @@
+import { detectForbiddenPlayerText } from "./player-text-guard.js";
+
 const RESPONSE_TYPES = new Set([
   "life_event",
   "action_resolution",
@@ -132,6 +134,9 @@ export function detectPlayerTextLeaks(response) {
     } else if (BACKEND_LEAK_ENGLISH_PHRASE.test(text)) {
       errors.push(`${label} must not contain English sentences/phrases in Chinese player-facing text`);
     }
+  }
+  for (const leak of detectForbiddenPlayerText(response)) {
+    errors.push(`${leak.path} must not expose backend planning terms or ids (${leak.term})`);
   }
   return errors;
 }

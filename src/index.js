@@ -22,6 +22,13 @@ export { assessFreeformClarification, generateFreeformClarificationRequest } fro
 export { generateFreeformResolution } from "./freeform-resolution.js";
 export { buildCapabilityPackages, buildDevelopmentalExpression } from "./capability-package.js";
 export {
+  ATTRIBUTE_REALITY_KEYS,
+  attributeDisplayPolicy,
+  attributeLabelForPlayer,
+  attributeRealityContractFor,
+  attributeTierForValue,
+} from "./attribute-reality-contract.js";
+export {
   CHILDHOOD_CURRICULUM_SLOTS,
   createDefaultCurriculumState,
   curriculumSignalsForSlot,
@@ -43,6 +50,7 @@ export {
   syncAttributesFromGrowthLedger,
 } from "./growth-ledger.js";
 export { generateMockLifeEvent } from "./mock-ai.js";
+export { compileObservableYearDelta } from "./observable-year-delta.js";
 export { buildNextEventContract } from "./narrative-director.js";
 export { generateInitialImportantNPCs } from "./npc-generator.js";
 export { generateOpeningSequence } from "./opening-sequence.js";
@@ -52,6 +60,11 @@ export {
   normalizeOpeningOriginLedger,
   originFactorsForLedger,
 } from "./opening-origin-ledger.js";
+export {
+  collectPlayerTextFields,
+  detectForbiddenPlayerText,
+  hasForbiddenPlayerText,
+} from "./player-text-guard.js";
 export {
   EXPERIENCE_DIRECTOR_SCHEMA_VERSION,
   createDefaultExperienceState,
@@ -97,6 +110,8 @@ export {
   recordAssetSpotlight,
 } from "./story-asset-lifecycle.js";
 export { assertStoryContract, validateStoryContract } from "./story-contract-validator.js";
+export { assertSceneCompliance, validateSceneCompliance } from "./scene-compliance-validator.js";
+export { compileSceneObject, sceneInputForAi } from "./scene-object-compiler.js";
 export {
   buildTopicProfile,
   createDefaultTopicLedger,
@@ -114,6 +129,7 @@ export {
   growthImpactForCurriculumSlot,
 } from "./yearly-outcome.js";
 export { createWebSessionStore } from "./web-session-store.js";
+export { originIsCompatibleWithFamilyBackground, resolveWorldOrigin } from "./world-origin-resolver.js";
 export {
   SETUP_ATTRIBUTE_KEYS,
   SETUP_ATTRIBUTE_LABELS,

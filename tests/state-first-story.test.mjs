@@ -114,7 +114,8 @@ describe("state-first story continuity", () => {
 
     const nextEvent = generateMockLifeEvent({ run, worlds, seed: 42, eventContract });
 
-    assert.match(nextEvent.playerText.body, /这一年真正改变生活|新的年度岔口|旧线索/);
+    assert.match(nextEvent.playerText.body, /这一年真正遇到的变化|没有成为主事|新安排/);
+    assert.doesNotMatch(nextEvent.playerText.body, /人生课程|年度变化|旧线索|背景回响|主轴|副轴/);
     assert.doesNotMatch(nextEvent.playerText.body, /草丛里露出一枚暗红色的小珠/);
     assert.doesNotMatch(nextEvent.playerText.body, /林外传来脚步声/);
     assert.ok(nextEvent.choices.every((choice) => !/小珠|脚步声/.test(choice.text)));
@@ -137,7 +138,8 @@ describe("state-first story continuity", () => {
     const next = handlePlayerInput({ session, input: "1" });
 
     assert.ok(next.currentRun.worldState.storyState.closedFacts.includes("jade_talisman_first_discovery"));
-    assert.match(next.currentEvent.playerText.body, /玉片已被收起|父母限制|后山/);
+    assert.match(next.currentEvent.playerText.body, /家人重新划定|新安排|没有成为主事|普通生活/);
+    assert.doesNotMatch(next.currentEvent.playerText.body, /人生课程|年度变化|旧线索|背景回响|主轴|副轴/);
     assert.doesNotMatch(next.currentEvent.playerText.body, /草丛里露出一枚暗红色的小珠/);
     assert.ok(next.currentEvent.choices.every((choice) => !/小珠|脚步声/.test(choice.text)));
   });

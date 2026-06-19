@@ -1,5 +1,6 @@
 import { visibleTalentName } from "../localization.js";
 import { SETUP_ATTRIBUTE_KEYS, SETUP_ATTRIBUTE_LABELS } from "../setup-session.js";
+import { attributeLabelForPlayer } from "../attribute-reality-contract.js";
 
 export const PANEL_VIEW_SCHEMA_VERSION = "mvp.panel_views.v1";
 
@@ -72,19 +73,10 @@ export function attributeKeys() {
 }
 
 export function attributeLabel(key) {
-  return SETUP_ATTRIBUTE_LABELS[key] ?? friendlyId(key);
+  return attributeLabelForPlayer(key) || SETUP_ATTRIBUTE_LABELS[key] || friendlyId(key);
 }
 
-export function attributeLabelForWorld(key, worldId) {
-  if (worldId === "cultivation") {
-    return {
-      appearance: "仙姿",
-      intelligence: "悟性",
-      constitution: "根骨",
-      familyBackground: "出身/底蕴",
-      luck: "气运",
-    }[key] ?? attributeLabel(key);
-  }
+export function attributeLabelForWorld(key, _worldId) {
   return attributeLabel(key);
 }
 
