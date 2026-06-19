@@ -70,6 +70,10 @@ Ordinary browser panels should read the Selector Graph output exposed as `panelV
 - Use annual state transition packages as the default cross-year director: the engine must first produce an `annualFactPackage` with the year's primary life delta, primary/secondary axes, required state changes, background threads, and forbidden event shapes. AI/mock providers may render the package, but they must not make an ongoing thread become the year's main event unless the package selected it as the primary delta.
 - Use Annual Year Tick v2 for cross-year variety: every annual package must include a `curriculumSlot`, `requiredHumanDelta`, `threeLayerFocus`, `topicProfile`, `forbiddenTopicProfiles`, and `annualAgenda`. The life curriculum slot is the year's primary subject; world flavor is secondary; old choices and long-running clues are background echoes unless the engine explicitly promotes them.
 - Persist annual curriculum and topic data through the Event-Sourced Life Runtime. `worldState.storyState.curriculum`, `topicLedger`, and `annualAgendas` must be written as story-state patches, converted into DomainEvents, reduced back into the run projection, and preserved by `replayRun(eventLog)`. Do not add new annual director state only to the snapshot.
+- Treat Yearly Outcome Ledger as the annual result authority. A cross-year branch must record `annual.outcome_recorded`; curriculum impact must create growth evidence and/or exposure DomainEvents when applicable; reducers must update Growth Ledger before selectors build `panelViews.attributes`.
+- Manage named recurring story material through Story Asset Lifecycle. Assets such as jade tokens, back mountains, scripture pavilions, mines, sects, and beasts may echo in the background after recent use, but cooldown/background-only roles must stop them from repeatedly becoming the annual primary driver.
+- Use Opening Origin Ledger for early-life variation. Early-year nodes should be generated from structured origin factors and recorded under story state so later curriculum bias can reference lived origin signals; do not reintroduce a fixed 0-6 template as the only ordinary player timeline.
+- Use Player Experience Director to balance player-visible rhythm. Repeated pressure years should be interrupted by growth payoff, quiet recovery, relationship warmth, small victory, mystery hint, or world wonder according to recorded experience state.
 - Treat AI output as untrusted content that must be validated before it changes game state.
 - Real AI provider failures may fall back to local safe mock generation to keep a playtest session alive, but fallback responses must be clearly marked with `provider_fallback` in `internal.validationFlags` and must still pass the same state-patch validation path before changing the run.
 - Store world lore, talent definitions, attribute rules, and event schemas as structured data.
@@ -407,6 +411,11 @@ Core entities:
 - TopicProfile
 - ThreeLayerFocus
 - StoryContractValidation
+- OpeningOriginLedger
+- StoryAssetLifecycle
+- PlayerExperienceDirector
+- YearlyOutcome
+- ExperienceQAReport
 
 ## Testing Expectations
 
@@ -419,6 +428,9 @@ Core entities:
 - Regression tests for state-first continuity: closed story facts must not be reopened, forbidden scene skeletons must not repeat, and mock/provider fallback must consume the same event contract as normal generation.
 - Regression tests for annual state transitions: cross-year branches must receive a new annual life delta, repeated yearly shapes across family/education/social/institution/resource/health/relationship/route/world-pressure domains must not become the year's main event again, annual facts must be written back to story state, and the validator must reject forbidden event-shape reuse.
 - Regression tests for Annual Year Tick v2: ages 5-10 should cover at least four curriculum slots, curriculum/topic/agenda records must survive statePatch-to-DomainEvent replay, forbidden topic profiles must block recent arenas/objects/topic families/pressure types from returning as the main event, and story-contract validation must reject responses that ignore the curriculum slot.
+- Regression tests for Yearly Outcome Ledger: annual branches must emit `annual.outcome_recorded`, growth evidence, and exposure events where applicable; replay must preserve yearly outcomes; Growth Ledger values must change from those events; `panelViews.attributes` must read the updated values.
+- Regression tests for origin-led experience runtime: early-life bodies must vary across runs, origin factors may bias curriculum without forcing a fixed route, asset lifecycle cooldowns must block repeated primary use, and experience rhythm must avoid unbroken pressure streaks.
+- Multi-run acceptance should include `node tools/experience-qa.mjs --runs 10 --age-end 12 --ai mock` before a player-facing release candidate.
 - Regression tests for the Event-Sourced Life Runtime: state patches must convert to DomainEvents before mutating state, `transitionRun()` must not mutate its input run, replay must rebuild the same run from `eventLog`, illegal transitions must fail invariants, and PlayerView must remain label-first and hidden-info-free.
 - Regression tests for Selector Graph panel views: main, attribute, and story panels must derive from the same run, web session serialization must expose `panelViews`, the attribute panel must expose grouped growth-manifestation cards, and ordinary frontend rendering must use `panelViews` instead of recomputing panels from raw run internals.
 - Severe continuity or state bugs should receive replay fixtures under `tests/replay-fixtures/` and be covered by `npm run replay:bugs`.
