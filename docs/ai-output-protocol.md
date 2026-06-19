@@ -31,6 +31,8 @@ Content seeds are inspiration and constraints, not fixed scripts. The AI must ad
 
 For cross-year `life_event` generation, the engine may include an Annual Year Tick v2 `eventContract`. This contract is authoritative for the year. `curriculumSlot` and `requiredHumanDelta` define the year's main human-life change; `threeLayerFocus.lifeBase` is primary; `threeLayerFocus.worldFlavor` is secondary; `threeLayerFocus.consequenceEcho` is background-only. `topicProfile` records what this year is about, and `forbiddenTopicProfiles` lists recent arenas, objects, topic families, or pressure types that must not become the main event again.
 
+After a cross-year event is accepted, the engine builds a `YearlyOutcome` from the annual fact package and response. This outcome, not the prose, is the annual settlement authority. It can add engine-owned `growthEvidenceChanges`, exposure changes, topic records, and an `annual.outcome_recorded` event so annual growth, topic history, and panel summaries survive save/load replay.
+
 The MVP event sources are:
 
 - `seed_pool`: use selected soft seeds as style, trigger, and constraint references.
@@ -270,6 +272,8 @@ The current MVP run loop applies these patches conservatively:
 - `growthEvidenceChanges`: preferred growth path. AI may submit evidence such as training, chores, study, injury recovery, or practice; the engine decides how much realized growth actually becomes effective.
 - `scoreDelta`: adjusts the run score.
 
+For annual events, AI may omit `growthEvidenceChanges`. The engine still applies the Yearly Outcome mapping from the annual curriculum slot. AI should not duplicate or fight this by inventing direct `effective`, `realized`, or event-log values.
+
 The engine does not allow AI to replace the whole save. Patches must target specific fields.
 
 AI must not directly author or overwrite `effective`, `realized`, `maturityCap`, or `lockedPotential`. Those values are recalculated by `src/growth-ledger.js`.
@@ -362,6 +366,7 @@ Use potential values only for destiny and long-term tendency.
 If growth is justified, submit statePatch.growthEvidenceChanges; do not directly author effective, realized, maturityCap, or lockedPotential.
 Do not author DomainEvents, eventLog entries, or direct run mutations. The engine converts accepted statePatch entries into DomainEvents and reducers settle state.
 If eventContract.annualFactPackage is present, render curriculumSlot and requiredHumanDelta as the year's main human-life change. Keep worldFlavor secondary and consequenceEcho background-only. Do not promote forbiddenTopicProfiles or old clue objects into the main event.
+If eventContract includes annual outcome expectations, keep the body and all three choices aligned with the curriculum slot. The engine will settle the final YearlyOutcome; AI should write the lived year, not claim authority over the save.
 Do not narrate locked capabilities as already usable.
 Use exposure values to decide who notices abnormalities.
 Keep the selected world distinct. Do not import mechanics from other worlds unless the context explicitly allows it.

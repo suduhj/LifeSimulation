@@ -30,6 +30,14 @@ export {
   selectCurriculumSlot,
 } from "./life-curriculum.js";
 export {
+  ANNUAL_OUTCOME_CONTRACT_SCHEMA_VERSION,
+  YEARLY_OUTCOME_SCHEMA_VERSION,
+  applyYearlyOutcomeToResponse,
+  buildAnnualOutcomeContract,
+  buildYearlyOutcome,
+  growthImpactForCurriculumSlot,
+} from "./yearly-outcome.js";
+export {
   ATTRIBUTE_KEYS,
   GROWTH_LEDGER_SCHEMA_VERSION,
   applyGrowthEvidence,

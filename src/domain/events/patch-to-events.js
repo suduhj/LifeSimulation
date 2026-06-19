@@ -213,6 +213,17 @@ function worldStateChangeToEvents({ run, change, turnId, age, source, metadata }
   if (change.target === "storyState") {
     return storyStatePatchToEvents({ run, storyState: change.value, turnId, age, source: change.source ?? source, metadata });
   }
+  if (change.target === "yearlyOutcome") {
+    return [createDomainEvent({
+      type: "annual.outcome_recorded",
+      run,
+      turnId,
+      age,
+      source: change.source ?? source,
+      payload: structuredClone(change.value),
+      metadata,
+    })];
+  }
   if (change.target === "ending") {
     return [createDomainEvent({
       type: "ending.reached",
@@ -272,6 +283,9 @@ function storyStatePatchToEvents({ run, storyState, turnId, age, source, metadat
   }
   for (const agenda of storyState?.annualAgendas ?? []) {
     events.push(createDomainEvent({ type: "story.annual_agenda_recorded", run, turnId, age, source, payload: agenda, metadata }));
+  }
+  for (const outcome of storyState?.yearlyOutcomes ?? []) {
+    events.push(createDomainEvent({ type: "annual.outcome_recorded", run, turnId, age, source, payload: outcome, metadata }));
   }
   for (const [axisId, axis] of Object.entries(storyState?.axes ?? {})) {
     for (const delta of axis?.recentDeltas ?? []) {

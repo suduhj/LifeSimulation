@@ -887,11 +887,11 @@ function attachSimulationOutcome(response, simulationOutcome, run) {
 function buildContractedMockLifeEvent({ run, worlds, seed }) {
   const eventContract = buildNextEventContract({ run, worlds, seed });
   const event = generateMockLifeEvent({ run, worlds, seed, eventContract });
-  return applyAnnualFactPackageToResponse(assertStoryContract(event, eventContract), eventContract?.annualFactPackage);
+  return applyAnnualFactPackageToResponse(assertStoryContract(event, eventContract), eventContract?.annualFactPackage, run);
 }
 
 async function buildContractedProviderLifeEvent({ aiProvider, run, worlds, seed, minNextAge }) {
   const eventContract = buildNextEventContract({ run, worlds, seed });
   const event = await safeGenerateLifeEvent({ aiProvider, run, worlds, seed, minNextAge, eventContract });
-  return applyAnnualFactPackageToResponse(assertStoryContract(event, eventContract), eventContract?.annualFactPackage);
+  return applyAnnualFactPackageToResponse(assertStoryContract(event, eventContract), eventContract?.annualFactPackage, run);
 }

@@ -17,6 +17,7 @@ This project is a multi-world AI life simulator. The current playable MVP suppor
 - Five-axis lightweight world simulation: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence are tracked as structured `storyState.axes`
 - Annual Year Tick director: every cross-year branch gets an engine-owned yearly life delta; repeated yearly shapes are blocked across family, education, social, institution, resource, health, relationship, route, and world-pressure domains
 - Annual Year Tick v2 curriculum layer: each year first selects a human-life curriculum slot, then schedules world flavor and old consequences as secondary/background layers; `curriculum`, `topicLedger`, and `annualAgendas` persist through DomainEvents and replay
+- Yearly Outcome Ledger v1: every annual branch records a system-owned `YearlyOutcome` that turns the curriculum slot into realized growth, exposure changes, topic impact, and panel-display intent before DomainEvents update the run
 - Persistent important NPCs, local saves, endings, and scoring
 
 ## Quick Start
@@ -42,6 +43,8 @@ Attribute bonuses from talents enter long-term potential first. The engine-owned
 Accepted AI, mock, GM, and system changes now pass through the event-sourced runtime: `statePatch` is converted into DomainEvents, `transitionRun()` applies reducers and invariants, saves include `run.eventLog`, and load prefers deterministic replay over trusting a stale snapshot.
 
 Cross-year story generation now uses a curriculum-led annual agenda. The engine chooses the year's human-life slot first, such as family boundary, learning path, peer relationship, mentor attention, body growth, care, village life, subtle talent manifestation, external attention, or household responsibility. World elements can add flavor, and old plot threads can echo in the background, but the annual contract prevents recently overused arenas, objects, topic families, and pressure types from becoming the main event again.
+
+Annual branches also produce a Yearly Outcome Ledger record. The Annual Agenda tells the AI what the year should be about; the Yearly Outcome tells the engine what the year changed. For example, `learning_path` adds realized intelligence and intelligence exposure even if the AI did not propose `growthEvidenceChanges`; `body_growth` realizes constitution; `external_attention` mainly increases exposure. These outcomes are persisted as `annual.outcome_recorded` events and rebuild through `replayRun(eventLog)`.
 
 Browser panel data now follows a lightweight CQRS split: reducers produce the current run projection, then Selector Graph functions build `panelViews` for the main panel, attribute panel, and story panel. Ordinary UI should render those selector views first; raw run, event-log, growth-ledger, and hidden fields remain compatibility or GM/debug data.
 

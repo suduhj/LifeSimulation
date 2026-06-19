@@ -6,6 +6,7 @@ import {
 } from "./story-state.js";
 import { curriculumSignalsForSlot, selectCurriculumSlot } from "./life-curriculum.js";
 import { buildTopicProfile, forbiddenTopicProfiles } from "./topic-ledger.js";
+import { applyYearlyOutcomeToResponse, buildYearlyOutcome } from "./yearly-outcome.js";
 
 export const ANNUAL_FACT_PACKAGE_SCHEMA_VERSION = "mvp.annual_fact_package.v1";
 
@@ -144,23 +145,25 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
   };
 }
 
-export function buildAnnualSimulationOutcome(annualFactPackage) {
+export function buildAnnualSimulationOutcome(annualFactPackage, { run, response } = {}) {
   if (!annualFactPackage?.primaryDelta) {
     return {
       factsAdded: [],
       factsClosed: [],
       forbiddenRepeats: [],
       threadUpdates: [],
+      yearlyOutcomes: [],
       memoryText: "",
     };
   }
   const age = Number(annualFactPackage.age ?? 0);
   const delta = annualFactPackage.primaryDelta;
   const annualFactId = `annual_age_${age}_${delta.eventShape}`;
+  const yearlyOutcome = buildYearlyOutcome({ run, annualFactPackage, response });
   return {
     factsAdded: [
       annualFactId,
-      ...annualFactPackage.requiredStateChanges,
+      ...(annualFactPackage.requiredStateChanges ?? []),
     ],
     factsClosed: [],
     forbiddenRepeats: annualFactPackage.forbiddenEventShapes,
@@ -181,6 +184,7 @@ export function buildAnnualSimulationOutcome(annualFactPackage) {
       : [],
     topicUpdates: annualFactPackage.topicProfile ? [annualFactPackage.topicProfile] : [],
     annualAgendas: annualFactPackage.annualAgenda ? [annualFactPackage.annualAgenda] : [],
+    yearlyOutcomes: yearlyOutcome ? [yearlyOutcome] : [],
     threadUpdates: [
       {
         threadId: `annual_${delta.domain}`,
@@ -193,11 +197,11 @@ export function buildAnnualSimulationOutcome(annualFactPackage) {
   };
 }
 
-export function applyAnnualFactPackageToResponse(response, annualFactPackage) {
+export function applyAnnualFactPackageToResponse(response, annualFactPackage, run) {
   if (!response || !annualFactPackage?.primaryDelta) return response;
   const next = structuredClone(response);
   const delta = annualFactPackage.primaryDelta;
-  const outcome = buildAnnualSimulationOutcome(annualFactPackage);
+  const outcome = buildAnnualSimulationOutcome(annualFactPackage, { run, response });
 
   next.event ??= {};
   next.event.eventShape = delta.eventShape;
@@ -231,7 +235,7 @@ export function applyAnnualFactPackageToResponse(response, annualFactPackage) {
       "engine_owned_year_delta",
     ]),
   ];
-  return next;
+  return applyYearlyOutcomeToResponse(next, outcome.yearlyOutcomes?.[0]);
 }
 
 function choosePrimaryDelta({ run, age, facts, threads, forbiddenEventShapes, seed, curriculumSlot }) {

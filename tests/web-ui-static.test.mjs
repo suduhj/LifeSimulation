@@ -232,7 +232,8 @@ describe("web UI contract", () => {
     assert.match(app, /state\.session\?\.panelViews/);
     assert.match(app, /renderSummaryAttributes\(panelViews\?\.attributes/);
     assert.match(app, /panelViews\?\.main/);
-    assert.match(app, /panelViews\?\.story/);
+    assert.match(app, /currentPanelViews\(session\)\?\.story/);
+    assert.doesNotMatch(app, /经历事件：|当前评分：|剧情压力：/);
     assert.doesNotMatch(app, /renderSummaryAttributes\(run\.player\.attributes,\s*run\.worldId,\s*run\.player\.growthLedger\)/);
   });
 
