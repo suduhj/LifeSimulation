@@ -12,7 +12,7 @@ This project is a multi-world AI life simulator. The current playable MVP suppor
 - Capability packages and developmental-expression limits so children do not receive adult power just because they have mythic potential
 - 3 AI-generated choices plus a separate optional free-form action
 - Event-Sourced Life Runtime: accepted changes become append-only DomainEvents, and the current `run` is a replayable projection instead of the save authority
-- Selector Graph panel views: the browser receives `panelViews.main`, `panelViews.attributes`, and `panelViews.story` derived from the authoritative run instead of recomputing panels from raw internals
+- Selector Graph panel views: the browser receives `panelViews.main`, `panelViews.attributes`, and `panelViews.story` derived from the authoritative run; the attribute view is a grouped growth-manifestation dashboard instead of raw ledger rows
 - State-first story continuity: structured facts/thread stages are authoritative, while AI only renders prose inside the next-event contract
 - Five-axis lightweight world simulation: life pressure, talent manifestation, NPC relationships, world opportunity, and choice consequence are tracked as structured `storyState.axes`
 - Annual Year Tick director: every cross-year branch gets an engine-owned yearly life delta; repeated yearly shapes are blocked across family, education, social, institution, resource, health, relationship, route, and world-pressure domains
@@ -37,7 +37,7 @@ If port `5181` is unavailable on your system, the server prints the fallback URL
 
 The browser UI lets you choose a world, create a player character, allocate 20 attribute points, draw 5 talents, keep 3, start a life, choose 1/2/3, or submit a separate free-form attempted action.
 
-Attribute bonuses from talents enter long-term potential first. The engine-owned Growth Ledger decides how much has been realized, what is currently effective at the character's age, and how much potential is still locked. The UI displays current, realized, potential, locked potential, and attention values so mythic talents can feel exciting without turning infants or children into adults.
+Attribute bonuses from talents enter long-term potential first. The engine-owned Growth Ledger decides how much has been realized, what is currently effective at the character's age, and how much potential is still sealed by age/body limits. The browser renders this through a growth-manifestation panel with talent-core attributes, fate-foundation attributes, manifestation progress bars, age-sealed potential, outside attention, and cultivation/world progress.
 
 Accepted AI, mock, GM, and system changes now pass through the event-sourced runtime: `statePatch` is converted into DomainEvents, `transitionRun()` applies reducers and invariants, saves include `run.eventLog`, and load prefers deterministic replay over trusting a stale snapshot.
 
