@@ -29,7 +29,9 @@ Each life-simulation event follows this flow:
 
 Content seeds are inspiration and constraints, not fixed scripts. The AI must adapt them to the current save, player character, NPC relationships, world progress, and prior memory.
 
-For cross-year `life_event` generation, the engine may include an Annual Year Tick v2 `eventContract`. This contract is authoritative for the year. `curriculumSlot` and `requiredHumanDelta` define the year's main human-life change; `threeLayerFocus.lifeBase` is primary; `threeLayerFocus.worldFlavor` is secondary; `threeLayerFocus.consequenceEcho` is background-only. `topicProfile` records what this year is about, and `forbiddenTopicProfiles` lists recent arenas, objects, topic families, or pressure types that must not become the main event again.
+For cross-year `life_event` generation, the engine may include an Annual Year Tick v2 `eventContract`. This contract is authoritative for the year. `curriculumSlot` and `requiredHumanDelta` define the year's main human-life change; `threeLayerFocus.lifeBase` is primary; `threeLayerFocus.worldFlavor` is secondary; `threeLayerFocus.consequenceEcho` is background-only. `topicProfile` records what this year is about, and `forbiddenTopicProfiles` lists recent arenas, objects, topic families, or pressure types that must not become the main event again. When present, `assetRoles` and `experienceIntent` further constrain the rendering: background-only assets may echo but cannot drive the year, and the requested experience rhythm should shape tone without overriding the curriculum slot.
+
+After a valid annual response is accepted, the engine records a Yearly Outcome Ledger entry. This is not AI-authored state authority. The engine maps the curriculum slot to deterministic growth/exposure impact when needed, appends `annual.outcome_recorded` plus growth/exposure DomainEvents, updates the Growth Ledger, and exposes the result through `panelViews.attributes`.
 
 The MVP event sources are:
 
@@ -71,6 +73,7 @@ For `life_event`, the engine prompt should include:
 - event generation context: `sourceType`, `sourceInstruction`, pool mode, seed strictness, adaptation mode, and whether AI free generation is allowed when no seed fits
 - selected content seeds, usually 1-3 when `sourceType` is `seed_pool`
 - player selected choice or free-form input, if resolving an action
+- annual outcome and experience context when available: `curriculumSlot`, `requiredHumanDelta`, `threeLayerFocus`, `topicProfile`, `forbiddenTopicProfiles`, `assetRoles`, `experienceIntent`, and background-only asset restrictions
 - hard constraints from `game-design/ai-generation-rules.md`
 - required output schema version
 
@@ -269,12 +272,15 @@ The current MVP run loop applies these patches conservatively:
 - `memoryUpdates`: appends run memory entries.
 - `growthEvidenceChanges`: preferred growth path. AI may submit evidence such as training, chores, study, injury recovery, or practice; the engine decides how much realized growth actually becomes effective.
 - `scoreDelta`: adjusts the run score.
+- `yearlyOutcomes`: engine-owned annual result records. Providers should not invent them; the annual transition layer inserts them when a cross-year agenda is settled.
 
 The engine does not allow AI to replace the whole save. Patches must target specific fields.
 
 AI must not directly author or overwrite `effective`, `realized`, `maturityCap`, or `lockedPotential`. Those values are recalculated by `src/growth-ledger.js`.
 
 AI must not author DomainEvents directly. DomainEvents are engine-owned records created after validation by `src/domain/events/patch-to-events.js`; only reducers may turn them into run state.
+
+AI must not author Yearly Outcome Ledger records directly. Annual outcome settlement is engine-owned: the response is validated first, then the engine inserts yearly outcomes and converts curriculum impact into growth/exposure DomainEvents.
 
 Example growth evidence:
 
@@ -331,6 +337,8 @@ The engine must reject or repair AI output when:
 - AI applies state changes outside allowed ranges or rules
 - AI skips visible reporting for attribute/state changes
 - AI contradicts persistent run memory
+- AI promotes an `assetRoles` background-only asset, forbidden arena, forbidden object, forbidden topic family, or forbidden pressure type into the annual main event
+- AI ignores the annual `curriculumSlot` or writes choices around an old clue/asset instead of the required human-life delta
 - AI or the adapter fabricates placeholder narrative, or surfaces AI-failure/generation-rule wording such as "AI 返回了事件结果" or "不是凭空出现的事件卡" in `playerText`, instead of routing a degenerate body to the mock fallback
 
 ## Failure Handling
@@ -361,7 +369,8 @@ Use Growth Ledger current effective values and capability packages for age-appro
 Use potential values only for destiny and long-term tendency.
 If growth is justified, submit statePatch.growthEvidenceChanges; do not directly author effective, realized, maturityCap, or lockedPotential.
 Do not author DomainEvents, eventLog entries, or direct run mutations. The engine converts accepted statePatch entries into DomainEvents and reducers settle state.
-If eventContract.annualFactPackage is present, render curriculumSlot and requiredHumanDelta as the year's main human-life change. Keep worldFlavor secondary and consequenceEcho background-only. Do not promote forbiddenTopicProfiles or old clue objects into the main event.
+If eventContract.annualFactPackage is present, render curriculumSlot and requiredHumanDelta as the year's main human-life change. Keep worldFlavor secondary and consequenceEcho background-only. Follow assetRoles: background-only assets may appear only as echoes or minor clues. Do not promote forbiddenTopicProfiles, old clue objects, forbidden arenas, forbidden pressure types, or recently featured assets into the main event.
+Do not author yearlyOutcomes or annual.outcome_recorded events. The engine records Yearly Outcome Ledger entries and converts curriculum impact into growth/exposure DomainEvents after validation.
 Do not narrate locked capabilities as already usable.
 Use exposure values to decide who notices abnormalities.
 Keep the selected world distinct. Do not import mechanics from other worlds unless the context explicitly allows it.
