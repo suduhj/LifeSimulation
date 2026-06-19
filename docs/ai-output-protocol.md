@@ -29,7 +29,7 @@ Each life-simulation event follows this flow:
 
 Content seeds are inspiration and constraints, not fixed scripts. The AI must adapt them to the current save, player character, NPC relationships, world progress, and prior memory.
 
-For cross-year `life_event` generation, the engine may include an Annual Year Tick v2 `eventContract`. This contract is authoritative for the year. `curriculumSlot` and `requiredHumanDelta` define the year's main human-life change; `threeLayerFocus.lifeBase` is primary; `threeLayerFocus.worldFlavor` is secondary; `threeLayerFocus.consequenceEcho` is background-only. `topicProfile` records what this year is about, and `forbiddenTopicProfiles` lists recent arenas, objects, topic families, or pressure types that must not become the main event again.
+For cross-year `life_event` generation, the engine may create an Annual Year Tick v2 contract internally. Real providers should not receive the raw annual fact package as player-renderable text. The engine compiles it into an Observable Scene Object: visible scene title, main human-life change, secondary world flavor, limited background echoes, forbidden player text, and three choice directions. `curriculumSlot`, `threeLayerFocus`, `topicProfile`, `assetRoles`, and raw thread IDs remain engine/GM/debug concepts.
 
 The MVP event sources are:
 
@@ -74,6 +74,8 @@ For `life_event`, the engine prompt should include:
 - hard constraints from `game-design/ai-generation-rules.md`
 - required output schema version
 
+When an Observable Scene Object is present, it is the prose authority for the turn. The AI must render only that observable scene into `playerText` and choices. It must not expose raw backend planning fields such as `annualFactPackage`, `curriculumSlot`, `threeLayerFocus`, `backgroundThreads`, `assetRoles`, `人生课程`, `年度变化`, `旧线索`, `背景回响`, `主轴`, or `副轴`.
+
 Do not send the whole content pool every turn.
 
 For `action_resolution`, the engine prompt should include:
@@ -102,6 +104,8 @@ NPC identity is layered. The prompt may include `playerVisible` and `hiddenInfo`
 Ordinary player-facing text must be Chinese and must not expose backend IDs, raw schema keys, or missing-data placeholders. Do not output raw labels such as `poor_scholar_child`, `sacrifice`, `exploiter`, `lover`, `NPC_4`, `manifested`, `potential`, or `exposure`, and do not replace missing names with player-facing placeholders such as "未命名天赋", "未知天赋", "重要人物", "未知身份", or "身份尚不明确". If safe Chinese player-visible wording is unavailable, the AI should omit the undiscovered item or write around the known scene facts.
 
 For attribute growth, AI prose must follow the engine-provided capability package. Potential means destiny or future ceiling, not current ability. Current checks and narration use `effective`/current capability only, and player-facing prose should express this as ordinary Chinese such as "当前能表现", "还没有完全兑现", or age-appropriate ability, not raw field names.
+
+Player-facing attribute names are fixed across worlds: 颜值, 智力, 体质, 家境, 运气. Do not switch the ordinary UI or visible changes to world-specific base-attribute aliases. Family Background is an origin constraint and must be consistent with the World Origin Resolver; high 家境 cannot be narrated as a poor or bottom-tier origin unless a later event explicitly destroys that background.
 
 Backend context sent only for reasoning and continuity — `recentMemory`, `recentEvents`, `eventGeneration` (including `sourceType`), `continuityRules`, `immediatePriorResolution`, `selectedSeeds`, and `internal` — must never be copied verbatim or paraphrased into `playerText`. In particular, `playerText` (title, body, and choice text) must never contain English sentences, raw snake_case IDs such as `noble_dynasty_child`, or backend concept words such as `素材种子`, `seed`, `sourceType`, `事件来源`, or `run started`. Rewrite any such backend information as pure in-world Chinese that the player character can actually perceive, or omit it.
 
@@ -327,6 +331,8 @@ The engine must reject or repair AI output when:
 - AI leaks hidden information in player-facing text before the save has revealed it
 - AI exposes raw NPC IDs, backend role keys, true templates, hidden route roles, or future NPC reveal facts in ordinary `playerText`
 - AI leaks backend context into `playerText` (title, body, or choice text): raw snake_case IDs such as `noble_dynasty_child`, leaked English sentences/phrases such as `Run started in cultivation with identity seed`, or backend concept tokens such as `素材种子`, `sourceType`, or `run started`. This is enforced on real-provider output by `detectPlayerTextLeaks`; a leaking response is routed into repair and then to the mock fallback. The guard is intentionally applied only to provider output, not to author-controlled mock/dev/GM/engine responses.
+- AI leaks Observable Scene Runtime backend planning terms such as `人生课程`, `年度变化`, `旧线索`, `背景回响`, `主轴`, `副轴`, `curriculumSlot`, `threeLayerFocus`, `backgroundThreads`, or `assetRoles` into ordinary player text.
+- AI promotes a background-only scene echo into the title, first paragraph, or choice driver when the Scene Object marks it as background-only.
 - AI makes ordinary NPCs all-excellent without special justification
 - AI applies state changes outside allowed ranges or rules
 - AI skips visible reporting for attribute/state changes
@@ -361,7 +367,7 @@ Use Growth Ledger current effective values and capability packages for age-appro
 Use potential values only for destiny and long-term tendency.
 If growth is justified, submit statePatch.growthEvidenceChanges; do not directly author effective, realized, maturityCap, or lockedPotential.
 Do not author DomainEvents, eventLog entries, or direct run mutations. The engine converts accepted statePatch entries into DomainEvents and reducers settle state.
-If eventContract.annualFactPackage is present, render curriculumSlot and requiredHumanDelta as the year's main human-life change. Keep worldFlavor secondary and consequenceEcho background-only. Do not promote forbiddenTopicProfiles or old clue objects into the main event.
+If observableScene is present, render its mainScene.requiredVisibleDelta as the year's main human-life change. Keep worldFlavor secondary and backgroundEchoes within their allowed roles. Do not promote old clue objects, old arenas, or background-only assets into the title, opening paragraph, or choices.
 Do not narrate locked capabilities as already usable.
 Use exposure values to decide who notices abnormalities.
 Keep the selected world distinct. Do not import mechanics from other worlds unless the context explicitly allows it.

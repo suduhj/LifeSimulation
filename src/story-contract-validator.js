@@ -1,5 +1,7 @@
 import { detectStaleAnnualEventShape } from "./annual-state-transition.js";
 import { curriculumSignalsForSlot } from "./life-curriculum.js";
+import { compileSceneObject } from "./scene-object-compiler.js";
+import { validateSceneCompliance } from "./scene-compliance-validator.js";
 import { topicProfileMatchesText } from "./topic-ledger.js";
 
 export function validateStoryContract(response, contract) {
@@ -46,6 +48,13 @@ export function validateStoryContract(response, contract) {
 
   for (const phrase of contract.mustNotInclude ?? []) {
     if (phrase && text.includes(phrase)) errors.push(`response includes forbidden phrase: ${phrase}`);
+  }
+
+  const scene = contract.observableScene
+    ?? (contract.annualFactPackage?.primaryDelta ? compileSceneObject({ annualFactPackage: contract.annualFactPackage }) : null);
+  if (scene) {
+    const sceneValidation = validateSceneCompliance(response, scene);
+    errors.push(...sceneValidation.errors);
   }
 
   return { valid: errors.length === 0, errors };

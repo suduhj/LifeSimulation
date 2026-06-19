@@ -44,12 +44,12 @@ describe("selector graph panel views", () => {
     assert.equal(talentGroup.title, "天赋主属性");
     assert.deepEqual(
       talentGroup.cards.map((card) => card.name),
-      ["仙姿", "悟性", "根骨"],
+      ["颜值", "智力", "体质"],
     );
     assert.equal(fateGroup.title, "基础命格");
     assert.deepEqual(
       fateGroup.cards.map((card) => card.name),
-      ["出身/底蕴", "气运"],
+      ["家境", "运气"],
     );
     assert.equal(progressGroup.title, "修行进度");
     assert.deepEqual(
@@ -57,7 +57,7 @@ describe("selector graph panel views", () => {
       ["境界", "根基", "功法", "资源"],
     );
 
-    const rootBone = talentGroup.cards.find((card) => card.name === "根骨");
+    const rootBone = talentGroup.cards.find((card) => card.name === "体质");
     assert.ok(rootBone);
     assert.equal(rootBone.currentLabel, "当前表现");
     assert.equal(rootBone.manifestedLabel, "显化进度");
@@ -112,7 +112,7 @@ describe("selector graph panel views", () => {
       },
       keptTalentIds: ["chaos_spirit_embryo", "strong_blood", "steady_hands"],
     });
-    const before = findAttributeCard(getAttributePanelView(run), "根骨");
+    const before = findAttributeCard(getAttributePanelView(run), "体质");
     const response = generateMockLifeEvent({ run, worlds, seed: 122 });
     response.statePatch.growthEvidenceChanges = [
       {
@@ -125,7 +125,7 @@ describe("selector graph panel views", () => {
     ];
 
     const nextRun = applyAiResponseToRun(run, response);
-    const after = findAttributeCard(getAttributePanelView(nextRun), "根骨");
+    const after = findAttributeCard(getAttributePanelView(nextRun), "体质");
 
     assert.equal(after.manifested, before.manifested + 2);
     assert.ok(after.current <= after.manifested);
@@ -182,7 +182,7 @@ describe("selector graph panel views", () => {
     assert.equal(session.panelViews.main.character.name, "Lin Lan");
     assert.equal(session.panelViews.attributes.groups.length, 3);
     assert.equal(session.panelViews.attributes.attributes.length, 5);
-    assert.ok(findAttributeCard(session.panelViews.attributes, "根骨"));
+    assert.ok(findAttributeCard(session.panelViews.attributes, "体质"));
     assert.ok(Array.isArray(session.panelViews.story.timeline));
   });
 });

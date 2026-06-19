@@ -173,7 +173,7 @@ function addAttributeSpecificCapabilities({ attribute, effective, worldId, unloc
 
 function highPotentialLockLabel(attribute) {
   if (attribute === "constitution") return "完整发挥神话体质";
-  if (attribute === "intelligence") return "完整发挥神话悟性";
+  if (attribute === "intelligence") return "完整发挥神话智力";
   if (attribute === "appearance") return "完整显露超凡气质";
   if (attribute === "luck") return "完全兑现命运眷顾";
   return "完整发挥高阶潜能";

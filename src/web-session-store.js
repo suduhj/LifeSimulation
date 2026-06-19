@@ -429,6 +429,7 @@ function serializeAiResponse(response, run, worlds, { forceFatePreview = false }
       worldProgressSummary: response.playerText.worldProgressSummary,
     } : response.playerText,
     event: response.event,
+    observableScene: response.observableScene,
     choices: Array.isArray(response.choices)
       ? response.choices.map((choice) => ({
         ...choice,

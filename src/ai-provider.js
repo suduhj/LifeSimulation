@@ -10,6 +10,7 @@ import { assertStoryContract } from "./story-contract-validator.js";
 import { talentLabel, visibleTalentName } from "./localization.js";
 import { buildCapabilityPackages, buildDevelopmentalExpression } from "./capability-package.js";
 import { buildPromptView } from "./domain/projections/prompt-view.js";
+import { compileSceneObject, sceneInputForAi } from "./scene-object-compiler.js";
 
 const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
 const DEFAULT_DEEPSEEK_MODEL = "deepseek-v4-flash";
@@ -786,8 +787,8 @@ function normalizeInternal(internal) {
 }
 
 // Player-facing fallback labels for attribute targets, so a visible change with no Chinese text
-// never renders the raw English key (e.g. "intelligence +2") to the player. World-specific naming
-// (悟性 vs 智力) is applied by the web layer; this is the safe default for any surface.
+// never renders the raw English key (e.g. "intelligence +2") to the player. The observable
+// attribute runtime keeps the same five player-facing names in every world.
 const ATTRIBUTE_FALLBACK_LABELS = {
   appearance: "颜值",
   intelligence: "智力",
@@ -935,6 +936,10 @@ function buildOpeningSequencePrompt({ run, world, seed }) {
 
 function buildLifeEventPrompt({ run, world, seed, generationContext, minNextAge, eventContract }) {
   const lastEvent = run.eventHistory?.at(-1);
+  const observableScene = eventContract?.annualFactPackage?.primaryDelta
+    ? sceneInputForAi(compileSceneObject({ run, annualFactPackage: eventContract.annualFactPackage }))
+    : eventContract?.observableScene ?? null;
+  const safeEventContract = observableScene ? null : eventContract;
   const immediatePriorResolution = lastEvent?.responseType === "action_resolution"
     ? {
         title: lastEvent.playerText?.title,
@@ -982,9 +987,13 @@ function buildLifeEventPrompt({ run, world, seed, generationContext, minNextAge,
       causalityRule: "The current branch should arise from a prior situation or line of tension. Write the preceding context first, then the choice pressure; never reverse cause and effect.",
       pacingRule: "Avoid empty yearly logs. Generate a meaningful life node with enough context for the player to choose.",
     },
-    eventContract,
-    contractRule: eventContract
-      ? "eventContract is the authoritative narrative contract from the engine. If annualFactPackage is present, it is the yearly life delta authority and must be rendered before any thread flavor. curriculumSlot and threeLayerFocus.lifeBase are the main event: render the requiredHumanDelta as the year's concrete human-life change. worldFlavor is secondary and consequenceEcho is background-only. Do not make forbiddenTopicProfiles, supporting threads, old objects, old arenas, or old institutions become the year's main event. You must render this contract into Chinese prose and three choices. Do not violate mustNotInclude, closedFacts, forbiddenSceneSkeletons, forbiddenEventShapes, requiredStateChanges, or choiceIntents. Do not reopen a closed fact as a first discovery. Do not make a supporting thread become the year's main event if annualFactPackage says another life delta is primary."
+    observableScene,
+    sceneRule: observableScene
+      ? "observableScene 是唯一可写给玩家的年度场景合同。标题、正文和选项必须围绕 mainScene.requiredVisibleDelta；backgroundEchoes 只能轻轻提到，不能进入标题、开头或选项核心。forbiddenText 中的词不得出现在 playerText、choices 或 visibleChanges。"
+      : undefined,
+    eventContract: safeEventContract,
+    contractRule: safeEventContract
+      ? "eventContract is the authoritative narrative contract from the engine. Render it into Chinese prose and three choices without exposing backend field names. Do not violate mustNotInclude, closedFacts, forbiddenSceneSkeletons, forbiddenEventShapes, requiredStateChanges, or choiceIntents. Do not reopen a closed fact as a first discovery."
       : "No explicit event contract was selected for this turn; follow world rules and current save state.",
     run: buildRunPromptSnapshot(run),
     world: buildWorldPromptSnapshot(world),

@@ -1,7 +1,10 @@
 import { developmentStageForAge } from "../growth-ledger.js";
 import {
+  attributeDisplayPolicy,
+  attributeLabelForPlayer,
+} from "../attribute-reality-contract.js";
+import {
   attributeKeys,
-  attributeLabelForWorld,
   developmentStageLabel,
   visibleTalents,
   worldLabel,
@@ -16,7 +19,7 @@ export function getAttributePanelView(run) {
   const attributes = run?.player?.attributes ?? {};
   const worldId = run?.worldId;
   const growthStage = developmentStageLabel(developmentStageForAge(age));
-  const cards = attributeKeys().map((key) => buildAttributeCard({ key, worldId, attributes, growthLedger }));
+  const cards = attributeKeys().map((key) => buildAttributeCard({ key, attributes, growthLedger }));
   const cardByKey = new Map(attributeKeys().map((key, index) => [key, cards[index]]));
   const progressItems = buildProgressItems(run);
   const coreTalent = visibleTalents(run)[0] ?? "";
@@ -56,31 +59,34 @@ export function getAttributePanelView(run) {
   };
 }
 
-function buildAttributeCard({ key, worldId, attributes, growthLedger }) {
+function buildAttributeCard({ key, attributes, growthLedger }) {
   const attr = attributes[key] ?? {};
   const ledger = growthLedger[key] ?? {};
+  const policy = attributeDisplayPolicy(key);
   const current = numberValue(ledger.effective ?? attr.effective ?? attr.manifested);
   const manifested = numberValue(ledger.realized ?? attr.realized ?? attr.manifested ?? current);
   const potential = numberValue(ledger.potential ?? attr.potential);
-  const ageSealed = Math.max(0, numberValue(ledger.lockedPotential ?? attr.lockedPotential ?? potential - manifested));
+  const rawSealed = Math.max(0, numberValue(ledger.lockedPotential ?? attr.lockedPotential ?? potential - manifested));
+  const ageSealed = policy.showSealedValue ? rawSealed : undefined;
   const exposure = numberValue(ledger.exposure ?? attr.exposure);
   const manifestedMax = Math.max(0, potential);
 
   return {
-    name: attributeLabelForWorld(key, worldId),
-    currentLabel: "当前表现",
+    name: attributeLabelForPlayer(key),
+    currentLabel: policy.currentLabel,
     current,
     peerLabel: peerLabel(current),
     potential,
-    potentialLabel: potentialLabel(potential),
-    manifestedLabel: "显化进度",
+    potentialLabel: key === "familyBackground" || key === "luck" ? policy.potentialTitle : potentialLabel(potential),
+    manifestedLabel: policy.manifestedLabel,
     manifested,
     manifestedMax,
     manifestedRatio: progressRatio(manifested, manifestedMax),
-    ageSealTitle: "年龄封存",
+    ageSealTitle: policy.sealTitle,
+    showAgeSeal: policy.showSealedValue,
     ageSealed,
-    ageSealLabel: ageSealLabel(ageSealed, potential),
-    exposureTitle: "外界关注",
+    ageSealLabel: policy.showSealedValue ? ageSealLabel(rawSealed, potential) : policy.sealLabel,
+    exposureTitle: policy.exposureTitle,
     exposure,
     exposureLabel: exposureLabel(exposure),
   };

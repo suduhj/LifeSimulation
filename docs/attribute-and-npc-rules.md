@@ -33,6 +33,18 @@ The game has exactly 5 core attributes:
 - Family Background
 - Luck
 
+Ordinary player-facing UI must display the same five Chinese labels in every world:
+
+| Backend key | Player label |
+|---|---|
+| `appearance` | 颜值 |
+| `intelligence` | 智力 |
+| `constitution` | 体质 |
+| `familyBackground` | 家境 |
+| `luck` | 运气 |
+
+World-specific labels such as `仙姿`, `悟性`, `根骨`, `出身/底蕴`, or `气运` may appear as talent names, prose flavor, or GM/debug explanation when justified, but they must not replace the five base attribute names in ordinary setup, fate preview, attribute panels, visible changes, or player-facing annual scene text.
+
 Removed as core attributes:
 
 - Spirit
@@ -197,6 +209,10 @@ Talent bonuses can push attributes beyond 20. During starting or mortal-stage se
 | 17-20 | Mortal social-resource limit; national or world-level top origin. |
 | 20+ | May come from imperial bloodline, holy land heir, interstellar nobility, divine family, or similar special identity. |
 
+Family Background is an origin/reality constraint, not an age-sealed personal ability. High Family Background must resolve into a compatible concrete origin such as a wealthy, resource-holding, professional, elite, sect-adjacent, old-money, shelter-management, technical, medical, or inherited-resource family depending on the world. It must not be rendered as a poor hunter household, starving refugee, bankrupt family, or other low-origin state unless the save contains a later loss event.
+
+Low Family Background likewise must not be rendered as an elite family, old-money house, resource allocator, sect branch, or management household. The engine-owned `World Origin Resolver` records a compatible origin in structured state so opening text, eventLog, replay, and panels agree.
+
 ### Luck
 
 | Points | Description |
@@ -217,6 +233,14 @@ Talent bonuses can push attributes beyond 20. During starting or mortal-stage se
 Final attribute values must preserve their sources.
 
 Attributes also have potential, manifested, and exposure layers. Potential describes future height, manifested value describes current expression, and exposure describes who notices. See [Potential, Manifestation, And Exposure Rules](./potential-manifestation-exposure-rules.md).
+
+The attribute panel uses an Attribute Reality Contract for display:
+
+- 体质 may show `年龄封存`, because a child body cannot carry all potential yet.
+- 智力 may show `经验封存`, because cognition also needs learning, memory, and life experience.
+- 颜值 shows `尚未定型`, not age-sealed power.
+- 家境 shows `家庭底色`, not age-sealed power.
+- 运气 shows `机缘倾向`, not age-sealed power.
 
 Formula:
 

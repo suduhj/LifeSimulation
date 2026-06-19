@@ -1,5 +1,6 @@
 import { identityLabel, isNpcHiddenFromOpening, talentLabel, visibleNpcLabel, visibleTalentName } from "./localization.js";
 import { buildOpeningOriginLedger } from "./opening-origin-ledger.js";
+import { resolveWorldOrigin } from "./world-origin-resolver.js";
 
 const ATTRIBUTE_KEYS = ["appearance", "intelligence", "constitution", "familyBackground", "luck"];
 
@@ -11,6 +12,7 @@ export function generateOpeningSequence({ run, worlds, seed = 1 } = {}) {
   const identity = run.setup?.identitySeed;
   const hiddenHooks = buildOpeningHiddenHooks(run, world);
   const originLedger = buildOpeningOriginLedger({ run, worlds, seed, actionAge });
+  const resolvedOrigin = resolveWorldOrigin({ run, worldId: run.worldId, seed });
   const earlyLifeTimeline = originLedger.nodes.map((node) => ({
     age: node.age,
     title: node.title,
@@ -48,7 +50,7 @@ export function generateOpeningSequence({ run, worlds, seed = 1 } = {}) {
     },
     playerText: {
       title: "命运预览",
-      body: buildFatePreviewDossier({ run, world }),
+      body: buildFatePreviewDossier({ run, world, resolvedOrigin }),
       visibleChanges: ["命运档案已生成", "开始人生后会从 0 岁进入完整人生时间线"],
       relationshipSummary: [],
       worldProgressSummary: ["身份、身世、家庭背景和天赋风险已形成"],
@@ -101,6 +103,7 @@ export function generateOpeningSequence({ run, worlds, seed = 1 } = {}) {
         { target: "opening.hiddenHooks", value: hiddenHooks, source: "opening_sequence" },
         { target: "opening.unresolvedThreads", value: hiddenHooks.map((hook) => hook.playerVisibleThread), source: "opening_sequence" },
         { target: "opening.earlyLifeTimeline", value: earlyLifeTimeline, source: "opening_sequence" },
+        { target: "opening.resolvedOrigin", value: resolvedOrigin, source: "opening_sequence" },
       ],
       openingOriginLedgers: [originLedger],
       memoryUpdates: [
@@ -119,6 +122,7 @@ export function generateOpeningSequence({ run, worlds, seed = 1 } = {}) {
         rule: "Opening sequence can use hidden identity/NPC context. playerText must not show initial important NPC lists, unresolved details labels, future triggers, or age-by-age early-life progression.",
         hiddenHooks,
         earlyLifeTimeline,
+        resolvedOrigin,
       }),
     },
   };
@@ -128,13 +132,14 @@ export function generateOpeningSequence({ run, worlds, seed = 1 } = {}) {
 // dossier derived from structured run data, never raw AI provider prose. Birth events,
 // early-life narration, family/NPC detail, talent manifestation, and hidden clues must
 // not appear here; they live in opening.earlyLifeTimeline, hiddenHooks, or GM/debug.
-export function buildFatePreviewDossier({ run, world } = {}) {
+export function buildFatePreviewDossier({ run, world, resolvedOrigin } = {}) {
   if (!run || !world) return "";
   const identity = run.setup?.identitySeed;
+  const origin = resolvedOrigin ?? resolveWorldOrigin({ run, worldId: run.worldId, seed: run.seed });
   return [
     `出生地点：${birthPlace(run, world, identity)}`,
-    `出生家庭：${describeFamily(run, world, identity)}`,
-    `家境表现：${familyBackgroundText(run)}`,
+    `出生家庭：${describeFamily(run, world, identity, origin)}`,
+    `家境表现：${familyBackgroundText(run, origin)}`,
     `命运预览：${describeDestinyPreview(run, world)}`,
     `当前处境：${initialSituationText(run, world)}`,
   ].join("\n");
@@ -189,11 +194,12 @@ function wastelandBirthPlace(run) {
   return "勉强维持秩序的废土聚落";
 }
 
-function describeFamily(run, world, identity) {
+function describeFamily(run, world, identity, origin) {
   const visible = identity?.playerVisible?.description ?? identityLabel(identity?.id) ?? "普通家庭";
-  if (world.id === "cultivation") return `${visible}。家中对仙门传闻既向往又畏惧，但不会轻易把孩子推到风口浪尖。`;
-  if (world.id === "wasteland") return `${visible}。活下去比体面更重要，资源决定了亲情能保持多少温度。`;
-  return `${visible}。一家人仍按普通社会的方式生活，但会本能避开某些解释不清的新闻和传闻。`;
+  const originLine = origin?.label ? `具体落点是${origin.label}，${origin.playerVisibleSummary}` : "";
+  if (world.id === "cultivation") return `${visible}。${originLine || "家中对仙门传闻既向往又畏惧，但不会轻易把孩子推到风口浪尖。"}`;
+  if (world.id === "wasteland") return `${visible}。${originLine || "活下去比体面更重要，资源决定了亲情能保持多少温度。"}`;
+  return `${visible}。${originLine || "一家人仍按普通社会的方式生活，但会本能避开某些解释不清的新闻和传闻。"}`;
 }
 
 function guardianText(run, world) {
@@ -213,8 +219,9 @@ function guardianText(run, world) {
   return "父母或监护人按普通人的方式照顾你，对异常只保持含糊的警惕。";
 }
 
-function familyBackgroundText(run) {
+function familyBackgroundText(run, origin) {
   const value = run.player.attributes.familyBackground?.potential ?? 4;
+  if (origin?.playerVisibleSummary) return `${origin.playerVisibleSummary}这份家境不是会随年龄解封的能力，而是出生时就存在的家庭底色。`;
   if (value <= 1) return "资源极度紧张，很多选择从出生起就被贫困或失序压缩。";
   if (value <= 3) return "家中能维持基本生活，但缺少保护、教育和人脉。";
   if (value <= 6) return "普通但稳定，能给你留下正常成长空间。";
@@ -257,7 +264,7 @@ function cultivationDestinyPreview(run, world, talents) {
   if (swordTalent) fragments.push("你似乎对剑与锋芒有天然亲和，手很稳，面对细小变化时比同龄人更容易保持专注。");
   if (craftTalent) fragments.push("你对药草、火候、器物或手工细节格外敏感，这种细致可能让你走向不只一种修行路线。");
   if (!spiritTalent && destinyTalent) fragments.push("你的命格并不张扬，却总在关键处留下偏转；好事和麻烦都可能更容易找到你。");
-  if (fragments.length === 0) fragments.push("你的天赋尚未显得惊世骇俗，但命运的重量已经压在根骨、悟性、出身和气运之间。");
+  if (fragments.length === 0) fragments.push("你的天赋尚未显得惊世骇俗，但命运的重量已经压在体质、智力、家境和运气之间。");
   return fragments.join(" ");
 }
 
