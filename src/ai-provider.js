@@ -10,6 +10,7 @@ import { assertStoryContract } from "./story-contract-validator.js";
 import { talentLabel, visibleTalentName } from "./localization.js";
 import { buildCapabilityPackages, buildDevelopmentalExpression } from "./capability-package.js";
 import { buildPromptView } from "./domain/projections/prompt-view.js";
+import { buildPromptContract, buildPromptSafeRunSnapshot } from "./contracts/prompt/prompt-contract.js";
 import { compileSceneObject, sceneInputForAi } from "./scene-object-compiler.js";
 
 const DEFAULT_DEEPSEEK_BASE_URL = "https://api.deepseek.com";
@@ -957,16 +958,25 @@ function buildLifeEventPrompt({ run, world, seed, generationContext, minNextAge,
         rule: `上一段人生已经结算到 ${minNextAge - 1} 岁。这是新的人生分岔，时间必须向前推进：timeSpan.ageEnd 必须 ≥ ${minNextAge}（可按剧情自然跳过 1 到几年），标题“X 岁”的 X 等于 ageEnd，正文也写这个更晚的年龄。不要停留在上一段的年龄，也不要在同一年里再开一个新分岔。`,
       }
     : null;
+  const promptContract = observableScene ? buildPromptContract({ run, observableScene }) : undefined;
   return {
     task: "generate_next_life_event",
     seed,
-    requiredShape: {
-      responseType: "life_event",
-      interactionMode: "playable_choices",
-      choices: "exactly 3 rich choices, ids choice_1..choice_3",
-      freeform: "allowed true; UI provides optional 4th entry separately",
-      statePatch: "must include all required arrays and scoreDelta",
-    },
+    promptContract,
+    requiredShape: observableScene
+      ? {
+          responseType: "life_event",
+          interactionMode: "playable_choices",
+          choices: "exactly 3 rich choices, ids choice_1..choice_3",
+          freeform: "allowed true; UI provides optional 4th entry separately",
+        }
+      : {
+          responseType: "life_event",
+          interactionMode: "playable_choices",
+          choices: "exactly 3 rich choices, ids choice_1..choice_3",
+          freeform: "allowed true; UI provides optional 4th entry separately",
+          statePatch: "must include all required arrays and scoreDelta",
+        },
     timeProgression,
     eventGeneration: observableScene ? undefined : {
       sourceType: generationContext.sourceType,
@@ -990,13 +1000,13 @@ function buildLifeEventPrompt({ run, world, seed, generationContext, minNextAge,
     },
     observableScene,
     sceneRule: observableScene
-      ? "observableScene 是唯一可写给玩家的年度场景合同。标题、正文和选项必须围绕 mainScene.requiredVisibleDelta；backgroundEchoes 只能轻轻提到，不能进入标题、开头或选项核心。forbiddenText 中的词不得出现在 playerText、choices 或 visibleChanges。"
+      ? "本次年度输入只使用 promptContract 与 observableScene。标题、正文和选项必须围绕 mainScene.requiredVisibleDelta；旁支内容只能轻轻提到，不能进入标题、开头或选项核心。forbiddenText 中的词不得出现在普通玩家可见文本、选项或可见变化。"
       : undefined,
     eventContract: safeEventContract,
     contractRule: safeEventContract
       ? "eventContract is the authoritative narrative contract from the engine. Render it into Chinese prose and three choices without exposing backend field names. Do not violate mustNotInclude, closedFacts, forbiddenSceneSkeletons, forbiddenEventShapes, requiredStateChanges, or choiceIntents. Do not reopen a closed fact as a first discovery."
       : "No explicit event contract was selected for this turn; follow world rules and current save state.",
-    run: buildRunPromptSnapshot(run),
+    run: observableScene ? buildPromptSafeRunSnapshot(run) : buildRunPromptSnapshot(run),
     world: buildWorldPromptSnapshot(world),
   };
 }

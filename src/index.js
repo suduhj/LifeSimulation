@@ -13,6 +13,27 @@ export { generateMvpEndingSummary, shouldTriggerMvpEnding } from "./ending-gener
 export { loadDotEnvFile, loadProjectEnv } from "./env-loader.js";
 export { createDomainEvent } from "./domain/events/event-factory.js";
 export { patchToDomainEvents } from "./domain/events/patch-to-events.js";
+export { buildCanonicalContract, CANONICAL_CONTRACT_SCHEMA_VERSION } from "./contracts/canonical/canonical-contract.js";
+export { buildGmContract, GM_CONTRACT_SCHEMA_VERSION, validateGmContract } from "./contracts/gm/gm-contract.js";
+export {
+  assertPlayerContractSafe,
+  buildPlayerContract,
+  PLAYER_CONTRACT_FORBIDDEN_KEYS,
+  PLAYER_CONTRACT_FORBIDDEN_TERMS,
+  PLAYER_CONTRACT_SCHEMA_VERSION,
+  safePlayerContractFallback,
+  validatePlayerContract,
+} from "./contracts/player/player-contract.js";
+export {
+  assertPromptContractSafe,
+  buildPromptContract,
+  buildPromptSafeRunSnapshot,
+  PROMPT_CONTRACT_FORBIDDEN_KEYS,
+  PROMPT_CONTRACT_FORBIDDEN_TERMS,
+  PROMPT_CONTRACT_SCHEMA_VERSION,
+  validatePromptContract,
+} from "./contracts/prompt/prompt-contract.js";
+export { buildRawContract, RAW_CONTRACT_SCHEMA_VERSION } from "./contracts/raw/raw-contract.js";
 export { buildGmView } from "./domain/projections/gm-view.js";
 export { buildPlayerView } from "./domain/projections/player-view.js";
 export { buildPromptView } from "./domain/projections/prompt-view.js";

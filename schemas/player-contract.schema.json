@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lifesimulation.local/schemas/player-contract.schema.json",
+  "title": "PlayerContract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "header", "currentScene", "choices", "timeline", "panels", "visibleChanges"],
+  "properties": {
+    "schemaVersion": { "const": "mvp.player_contract.v1" },
+    "header": { "type": "object" },
+    "currentScene": { "type": "object" },
+    "choices": { "type": "array" },
+    "timeline": { "type": "array" },
+    "panels": { "type": "object" },
+    "visibleChanges": { "type": "array" }
+  }
+}

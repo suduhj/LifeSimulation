@@ -20,6 +20,7 @@ This project is a multi-world AI life simulator. The current playable MVP suppor
 - Annual Year Tick v2 curriculum layer: each year first selects a human-life curriculum slot, then schedules world flavor and old consequences as secondary/background layers; `curriculum`, `topicLedger`, and `annualAgendas` persist through DomainEvents and replay
 - Yearly Outcome Ledger: every annual agenda records the system-owned yearly result, adds `annual.outcome_recorded`, and turns curriculum impact into Growth Ledger evidence/exposure events that drive the attribute panel
 - Origin-led experience runtime: opening origin factors vary early-life nodes, Story Asset Lifecycle keeps named assets from repeatedly owning the main year, and Player Experience Director balances pressure, growth payoff, wonder, and relationship beats
+- Player-Safe Contract System: ordinary browser rendering consumes `PlayerContract`; GM/debug reads `GMContract`; raw AI/session material is isolated behind `RawContract`; provider prompts use `PromptContract` when annual observable scenes exist
 - Persistent important NPCs, local saves, endings, and scoring
 
 ## Quick Start
@@ -51,6 +52,8 @@ Each cross-year branch also settles a Yearly Outcome Ledger entry before it reac
 Browser panel data now follows a lightweight CQRS split: reducers produce the current run projection, then Selector Graph functions build `panelViews` for the main panel, attribute panel, and story panel. Ordinary UI should render those selector views first; raw run, event-log, growth-ledger, and hidden fields remain compatibility or GM/debug data.
 
 Timeline data now goes through the Canonical Life Runtime. The engine records `life.node_recorded` DomainEvents, stores canonical `LifeNode` records under `worldState.storyState.lifeNodes`, and projects `panelViews.story.timeline` from those nodes. Ordinary timeline entries display only age and node body; AI `playerText.title` remains compatibility/debug data and is not the ordinary timeline authority.
+
+Ordinary browser data now also passes through `PlayerContract`. That contract contains only header, current scene, choices, timeline, panels, and visible changes. Raw response fields such as `currentEvent`, `playerText`, `statePatch`, annual planning IDs, and GM/debug payloads are not valid player-contract content. GM/debug tools can still inspect `GMContract` and `RawContract`.
 
 The web frontend never receives AI provider keys. DeepSeek/OpenAI-compatible requests go through the local Node backend.
 
@@ -177,6 +180,7 @@ Run all core checks:
 ```bash
 npm test
 npm run validate:data
+npm run test:contracts
 npm run replay:bugs
 npm run test:architecture
 npm run audit:content -- --strict

@@ -827,6 +827,7 @@ function renderSession() {
   const session = state.session;
   if (!session) return;
   const opening = isOpeningPreview(session);
+  const contract = safePlayerContract(session);
   els.aiStatus.textContent = aiModeLabel(session.aiMode);
   els.saveButton.disabled = false;
   els.freeformButton.disabled = opening || session.ended || session.pendingFreeformConfirmation || state.loading;
@@ -838,12 +839,61 @@ function renderSession() {
     els.freeformInput.disabled = true;
   } else {
     if (els.eventCard) els.eventCard.hidden = false;
-    renderEvent(session.currentEvent, session);
+    renderEventFromPlayerContract(contract, session);
   }
-  renderRun(session.run);
+  renderRunFromPlayerContract(contract, session.run);
   renderTimeline();
   renderLoading();
   renderDevPanel();
+}
+
+function safePlayerContract(session = state.session) {
+  const contract = session && session.playerContract;
+  if (isPlayerContractSafe(contract)) return contract;
+  return playerContractFallback(session);
+}
+
+function isPlayerContractSafe(contract) {
+  if (!contract || contract.schemaVersion !== "mvp.player_contract.v1") return false;
+  const text = JSON.stringify(contract);
+  if (/"(?:currentEvent|eventHistory|playerText|statePatch|annualFactPackage|curriculumSlot|threeLayerFocus|debug|gmView|rawResponse)"/.test(text)) return false;
+  if (/mentor_attention|curriculumSlot|threeLayerFocus|annualFactPackage|人生课程|背景回响|主轴|副轴|旧线索/.test(text)) return false;
+  return true;
+}
+
+function playerContractFallback(session = state.session) {
+  const run = session?.run ?? {};
+  const panelViews = currentPanelViews(session);
+  const main = panelViews?.main ?? {};
+  const age = Number.isFinite(main.character?.age) ? main.character.age : run.player?.age ?? 0;
+  const world = main.world?.label ?? worldLabel(run.worldId);
+  const name = main.character?.name ?? run.player?.name ?? "";
+  return {
+    schemaVersion: "mvp.player_contract.v1",
+    header: {
+      title: [name, `${age} 岁`, world].filter(Boolean).join(" · "),
+      characterName: name,
+      age,
+      world,
+      growthStage: main.growthStage?.label ?? "",
+      coreTalent: main.coreTalents?.[0] ?? "",
+    },
+    currentScene: {
+      age,
+      nodeType: "safe_fallback",
+      interactionMode: "",
+      freeformAllowed: false,
+      body: "当前内容未通过玩家可见安全检查，已暂时隐藏。",
+    },
+    choices: [],
+    timeline: [],
+    panels: {
+      main,
+      attributes: panelViews?.attributes ?? {},
+      story: { timeline: panelViews?.story?.timeline ?? [] },
+    },
+    visibleChanges: [],
+  };
 }
 
 function renderDevPanel() {
@@ -977,7 +1027,8 @@ function buildTimelineFromLoadedSession(session) {
   if (!isOpeningPreview(session)) {
     entries.push(...buildOpeningTimeline(session));
   }
-  const storyTimeline = currentPanelViews(session)?.story?.timeline ?? [];
+  const contract = safePlayerContract(session);
+  const storyTimeline = contract?.timeline?.length ? contract.timeline : currentPanelViews(session)?.story?.timeline ?? [];
   for (const item of storyTimeline) {
     const entry = {
       kind: item.kind ?? "event",
@@ -991,8 +1042,9 @@ function buildTimelineFromLoadedSession(session) {
       entries.push(entry);
     }
   }
-  if (session?.currentEvent) {
-    entries.push(timelineEntryFromEvent(session.currentEvent, "event"));
+  const currentEntry = timelineEntryFromPlayerContract(contract, "event");
+  if (isRenderableTimelineEntry(currentEntry)) {
+    entries.push(currentEntry);
   }
   return entries;
 }
@@ -1040,13 +1092,19 @@ function mergeVisibleChanges(existing = [], next = []) {
 }
 
 function appendCurrentEventToTimeline() {
-  if (!state.session?.currentEvent || isOpeningPreview(state.session)) return;
-  appendTimelineEvent(state.session.currentEvent, "event");
+  if (!state.session || isOpeningPreview(state.session)) return;
+  appendTimelineEventFromPlayerContract(safePlayerContract(state.session), "event");
 }
 
 function appendTimelineEvent(event, kind = "event") {
   if (!event) return;
   const entry = canonicalTimelineEntryFromEvent(event, kind);
+  if (!isRenderableTimelineEntry(entry) || hasTimelineEntry(entry)) return;
+  state.lifeTimeline.push(entry);
+}
+
+function appendTimelineEventFromPlayerContract(contract, kind = "event") {
+  const entry = timelineEntryFromPlayerContract(contract, kind);
   if (!isRenderableTimelineEntry(entry) || hasTimelineEntry(entry)) return;
   state.lifeTimeline.push(entry);
 }
@@ -1072,6 +1130,18 @@ function canonicalTimelineEntryFromEvent(event, kind) {
     age: event.timeSpan?.ageEnd ?? event.timeSpan?.ageStart,
     body: event.playerText?.body ?? "",
     changes: event.visibleChanges ?? [],
+  };
+}
+
+function timelineEntryFromPlayerContract(contract, kind = "event") {
+  const scene = contract?.currentScene ?? {};
+  return {
+    kind,
+    nodeType: scene.nodeType ?? "annual_event",
+    turnId: `${kind}_${scene.age ?? "current"}_${scene.nodeType ?? "scene"}`,
+    age: scene.age,
+    body: scene.body ?? "",
+    changes: contract?.visibleChanges ?? [],
   };
 }
 
@@ -1356,11 +1426,13 @@ function renderResolution() {
   els.resolutionChanges.innerHTML = "";
 }
 
-function renderEvent(event, session) {
-  els.runMeta.textContent = `${session.run.player.name}｜${worldLabel(session.run.worldId)}｜${session.run.player.age} 岁`;
-  const hasEventContent = event && (hasText(event.playerText?.title) || hasText(event.playerText?.body) || hasVisibleChanges(event.visibleChanges) || (event.choices ?? []).length > 0);
+function renderEventFromPlayerContract(contract, session) {
+  const scene = contract?.currentScene ?? {};
+  const choices = Array.isArray(contract?.choices) ? contract.choices : [];
+  els.runMeta.textContent = contract?.header?.title || `${session.run.player.name}｜${worldLabel(session.run.worldId)}｜${session.run.player.age} 岁`;
+  const hasEventContent = hasText(scene.body) || hasVisibleChanges(contract?.visibleChanges) || choices.length > 0;
   els.eventCard.hidden = !hasEventContent;
-  if (els.currentNodeAge) els.currentNodeAge.textContent = hasEventContent ? `${eventAgeLabel(event, session)} 岁` : "当前";
+  if (els.currentNodeAge) els.currentNodeAge.textContent = hasEventContent ? `${scene.age ?? session.run.player.age} 岁` : "当前";
   if (!hasEventContent) {
     els.eventTitle.textContent = "";
     els.eventBody.textContent = "";
@@ -1368,20 +1440,19 @@ function renderEvent(event, session) {
     els.choices.innerHTML = "";
     return;
   }
-  const age = eventAgeLabel(event, session);
-  els.eventTitle.textContent = formatEventTitle(event.playerText?.title, age, event.playerText?.body, { includeAge: false });
-  els.eventBody.textContent = event.playerText?.body ?? "";
-  els.eventBody.hidden = !hasText(event.playerText?.body);
+  els.eventTitle.textContent = "";
+  els.eventBody.textContent = scene.body ?? "";
+  els.eventBody.hidden = !hasText(scene.body);
   // The current node is the unresolved branch the player is deciding, not a settled outcome.
   // Do not show "+X" consequence chips on it; changes appear only after the action resolves
   // (merged into the corresponding lived timeline node). The event keeps its visibleChanges, so
   // once it scrolls into history as a past timeline node, the change is shown there.
-  const isUnresolvedBranch = event.interactionMode === "playable_choices";
-  els.visibleChanges.innerHTML = (!isUnresolvedBranch && hasVisibleChanges(event.visibleChanges)) ? renderVisibleChanges(event.visibleChanges) : "";
-  els.freeformInput.disabled = state.loading || session.ended || event.freeform?.allowed === false;
-  els.freeformButton.disabled = state.loading || session.ended || session.pendingFreeformConfirmation || event.freeform?.allowed === false;
+  const isUnresolvedBranch = choices.length > 0;
+  els.visibleChanges.innerHTML = (!isUnresolvedBranch && hasVisibleChanges(contract?.visibleChanges)) ? renderVisibleChanges(contract.visibleChanges) : "";
+  els.freeformInput.disabled = state.loading || session.ended || scene.freeformAllowed === false;
+  els.freeformButton.disabled = state.loading || session.ended || session.pendingFreeformConfirmation || scene.freeformAllowed === false;
 
-  if (event.interactionMode === "freeform_confirmation") {
+  if (scene.interactionMode === "freeform_confirmation") {
     els.choices.innerHTML = `
       <button class="choice-button" data-confirm="confirm">确认，把它作为尝试行动执行</button>
       <button class="choice-button" data-confirm="cancel">取消，回到上一个事件</button>
@@ -1393,13 +1464,13 @@ function renderEvent(event, session) {
     return;
   }
 
-  if (event.interactionMode !== "playable_choices") {
+  if (!choices.length) {
     els.choices.innerHTML = "";
     disableInteractiveWhileLoading();
     return;
   }
 
-  els.choices.innerHTML = (event.choices ?? [])
+  els.choices.innerHTML = choices
     .map((choice, index) => `
       <button class="choice-button" data-choice="${escapeHtml(choice.id)}">
         ${index + 1}. ${escapeHtml(choice.text)}
@@ -1413,8 +1484,12 @@ function renderEvent(event, session) {
   disableInteractiveWhileLoading();
 }
 
-function renderRun(run) {
-  const panelViews = currentPanelViews();
+function renderEvent(event, session) {
+  return renderEventFromPlayerContract(safePlayerContract(session), session);
+}
+
+function renderRunFromPlayerContract(contract, run) {
+  const panelViews = contract?.panels ?? currentPanelViews();
   const mainPanel = panelViews?.main;
   const storyPanel = panelViews?.story;
   const lines = mainPanel?.summaryLines?.length
@@ -1437,6 +1512,10 @@ function renderRun(run) {
     `<div class="summary-line">${escapeHtml(renderNpcLine(run.importantNPCs ?? []))}</div>`,
     `<div class="summary-line">${escapeHtml(renderFactionLine(run.factions ?? []))}</div>`,
   ].join("");
+}
+
+function renderRun(run) {
+  return renderRunFromPlayerContract(safePlayerContract(), run);
 }
 
 function currentPanelViews(session) {

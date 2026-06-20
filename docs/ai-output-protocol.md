@@ -26,7 +26,8 @@ Each life-simulation event follows this flow:
 10. `transitionRun()` reduces DomainEvents, checks invariants, appends `eventLog`, and builds PlayerView/PromptView/GMView projections.
 11. Engine records a canonical `life.node_recorded` event for ordinary timeline display.
 12. Engine rejects invalid changes, or asks the AI/player for clarification when needed.
-13. Player sees Selector Graph panel data and canonical LifeNode timeline entries, plus 3 AI-generated choices and an optional 4th free-form entry when interaction mode allows it.
+13. Browser serialization builds Player-Safe contracts: `RawContract` for debug/raw material, `GMContract` for GM tools, `CanonicalContract` for authority snapshots, and `PlayerContract` for ordinary UI.
+14. Player sees only `PlayerContract`: header, current scene, choices, timeline, panels, and visible changes. Raw AI `playerText`, state patches, annual planning IDs, and debug fields are not ordinary UI inputs.
 
 Content seeds are inspiration and constraints, not fixed scripts. The AI must adapt them to the current save, player character, NPC relationships, world progress, and prior memory.
 
@@ -84,7 +85,7 @@ For `life_event`, the engine prompt should include:
 
 When an Observable Scene Object is present, it is the prose authority for the turn. The AI must render only that observable scene into `playerText` and choices. It must not expose raw backend planning fields such as `annualFactPackage`, `curriculumSlot`, `threeLayerFocus`, `backgroundThreads`, `assetRoles`, `人生课程`, `年度变化`, `旧线索`, `背景回响`, `主轴`, or `副轴`.
 
-When an Observable Scene Object is present, the provider prompt omits `eventGeneration` and `eventContract` entirely. This prevents seed/source metadata and annual-planning IDs from being learned as player-facing text.
+When an Observable Scene Object is present, the provider prompt omits `eventGeneration` and `eventContract` entirely. It also includes a `PromptContract` built from safe run context, recent LifeNode summaries, the observable scene, and choice pressure. This prevents seed/source metadata, raw event history bodies, and annual-planning IDs from being learned as player-facing text.
 
 Do not send the whole content pool every turn.
 
