@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lifesimulation.local/schemas/gm-contract.schema.json",
+  "title": "GMContract",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["schemaVersion"],
+  "properties": {
+    "schemaVersion": { "const": "mvp.gm_contract.v1" }
+  }
+}

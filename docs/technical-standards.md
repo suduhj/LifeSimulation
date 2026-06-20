@@ -64,6 +64,7 @@ Ordinary browser panels should read the Selector Graph output exposed as `panelV
 - Use projection views for consumers: PlayerView for ordinary UI, PromptView for AI context, and GMView for developer/debug surfaces. Ordinary PlayerView must not expose hidden information, raw backend IDs, or internal growth-ledger fields.
 - Use the Selector Graph as the CQRS read layer for browser panels. Reducers settle DomainEvents into the authoritative run projection; selectors then derive `panelViews.main`, `panelViews.attributes`, and `panelViews.story`. Ordinary UI should render those views first and avoid duplicating attribute, story, progress, peer-evaluation, manifestation-ratio, age-seal, or exposure calculations.
 - Use Canonical Life Runtime for ordinary timelines. Accepted responses must be projected into `mvp.life_node.v1`, recorded as `life.node_recorded`, merged into `worldState.storyState.lifeNodes`, and exposed through `panelViews.story.timeline`. Ordinary timelines show age plus node body, not AI `playerText.title`.
+- Use Player-Safe Contract System for all ordinary player-visible browser data. `RawContract` may contain AI/provider/session raw material and is for runtime/debug only. `GMContract` may expose debug state. `CanonicalContract` contains authoritative projections such as event log, LifeNodes, Growth Ledger, yearly outcomes, and panel views. `PlayerContract` is the ordinary UI input and may contain only header, current scene, choices, timeline, panels, and visible changes. Ordinary rendering must call the player-contract safety gate before displaying current scene content.
 - Use the Growth Ledger as the authoritative attribute-growth layer. Talent points enter potential immediately, but effective current ability comes only from realized growth, age maturity caps, temporary modifiers, and validated growth evidence.
 - Keep attribute type semantics explicit in the Growth Ledger. Only `constitution` and `intelligence` are maturity-capped; `familyBackground` and `luck` are immediate reality attributes; `appearance` is not maturity-capped but is also not born fully realized. Attribute panel peer labels must use the shared attribute tier table.
 - Filter starting identity seeds by final Family Background potential after allocation and kept talents are known. The world origin resolver may map fine attribute tiers into coarse origin pools, but the selected identity seed must still be compatible with the resulting family-background tier.
@@ -77,6 +78,7 @@ Ordinary browser panels should read the Selector Graph output exposed as `panelV
 - Manage named recurring story material through Story Asset Lifecycle. Assets such as jade tokens, back mountains, scripture pavilions, mines, sects, and beasts may echo in the background after recent use, but cooldown/background-only roles must stop them from repeatedly becoming the annual primary driver.
 - Treat old-asset budgets as hard scene contracts. Recurring assets such as jade tokens, back mountains, white deer, old booklets, scripture pavilions, mines, sects, and beasts can receive `maxSentences`, `cannotOpenScene`, and `cannotDriveChoices`; scene validation must reject over-budget usage.
 - Sanitize provider-facing annual prompts. When an Observable Scene Object exists, the prompt should omit raw `eventGeneration`, raw `eventContract`, `annualFactPackage`, `curriculumSlot`, `threeLayerFocus`, `backgroundThreads`, `assetRoles`, and backend asset IDs, leaving only player-observable scene instructions.
+- Use PromptContract for provider-facing annual observable-scene prompts. It may include safe run context, recent LifeNode summaries, visible scene deltas, and choice pressure. It must not include raw event bodies, raw `playerText`, event-history dumps, backend annual IDs, debug fields, or backend planning terms.
 - Use Opening Origin Ledger for early-life variation. Early-year nodes should be generated from structured origin factors and recorded under story state so later curriculum bias can reference lived origin signals; do not reintroduce a fixed 0-6 template as the only ordinary player timeline.
 - Use Player Experience Director to balance player-visible rhythm. Repeated pressure years should be interrupted by growth payoff, quiet recovery, relationship warmth, small victory, mystery hint, or world wonder according to recorded experience state.
 - Treat AI output as untrusted content that must be validated before it changes game state.
@@ -315,6 +317,11 @@ Core entities:
 - PlayerView
 - PromptView
 - GMView
+- RawContract
+- CanonicalContract
+- PlayerContract
+- GMContract
+- PromptContract
 - PanelViews
 - MainPanelView
 - AttributePanelView
@@ -438,6 +445,7 @@ Core entities:
 - Multi-run acceptance should include `node tools/experience-qa.mjs --runs 10 --age-end 12 --ai mock` before a player-facing release candidate.
 - Regression tests for the Event-Sourced Life Runtime: state patches must convert to DomainEvents before mutating state, `transitionRun()` must not mutate its input run, replay must rebuild the same run from `eventLog`, illegal transitions must fail invariants, and PlayerView must remain label-first and hidden-info-free.
 - Regression tests for Selector Graph panel views: main, attribute, and story panels must derive from the same run, web session serialization must expose `panelViews`, the attribute panel must expose grouped growth-manifestation cards, and ordinary frontend rendering must use `panelViews` instead of recomputing panels from raw run internals.
+- Contract gate tests must run with `npm run test:contracts`. They must verify PlayerContract schema/safety, Raw/GM debug separation, PromptContract leak prevention, web/player static forbidden-field scans, and session serialization of a safe `playerContract`.
 - Severe continuity or state bugs should receive replay fixtures under `tests/replay-fixtures/` and be covered by `npm run replay:bugs`.
 - Manual narrative QA for tone, coherence, and replay value.
 

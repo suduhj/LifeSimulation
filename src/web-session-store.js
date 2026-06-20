@@ -20,8 +20,11 @@ import {
   parseTalentSelectionInput,
   saveRunToFile,
   buildGmView,
+  buildGmContract,
   buildPanelViews,
+  buildPlayerContract,
   buildPlayerView,
+  buildRawContract,
 } from "./index.js";
 import {
   applyDevPresetToRun,
@@ -348,6 +351,17 @@ function serializeSession(sessionId, entry, worlds) {
   // heuristics on the AI response. AI output can disobey (wrong interactionMode/title) or be
   // rewritten by the repair step, so we must not let that decide whether to sanitize.
   const openingFatePreview = session.openingPhase === "background";
+  const run = serializeRun(session.currentRun, worlds);
+  const panelViews = buildPanelViews(session.currentRun);
+  const currentEvent = serializeAiResponse(session.currentEvent, session.currentRun, worlds, { forceFatePreview: openingFatePreview });
+  const resolution = session.resolution ? serializeAiResponse(session.resolution, session.currentRun, worlds) : undefined;
+  const endingSummary = session.endingSummary ? serializeAiResponse(session.endingSummary, session.currentRun, worlds) : undefined;
+  const gmView = entry.devMode ? buildGmView(session.currentRun) : undefined;
+  const playerContract = buildPlayerContract({
+    run: session.currentRun,
+    currentEvent,
+    panelViews,
+  });
   return {
     sessionId,
     aiMode,
@@ -356,13 +370,16 @@ function serializeSession(sessionId, entry, worlds) {
     openingPhase: session.openingPhase,
     inputRequired: session.inputRequired,
     pendingFreeformConfirmation: Boolean(session.pendingFreeformConfirmation),
-    run: serializeRun(session.currentRun, worlds),
-    panelViews: buildPanelViews(session.currentRun),
+    run,
+    panelViews,
     playerView: buildPlayerView(session.currentRun),
-    gmView: entry.devMode ? buildGmView(session.currentRun) : undefined,
-    currentEvent: serializeAiResponse(session.currentEvent, session.currentRun, worlds, { forceFatePreview: openingFatePreview }),
-    resolution: session.resolution ? serializeAiResponse(session.resolution, session.currentRun, worlds) : undefined,
-    endingSummary: session.endingSummary ? serializeAiResponse(session.endingSummary, session.currentRun, worlds) : undefined,
+    playerContract,
+    gmView,
+    gmContract: entry.devMode ? buildGmContract({ run: session.currentRun, currentEvent, rawResponse: session.currentEvent, gmView }) : undefined,
+    rawContract: entry.devMode ? buildRawContract({ currentEvent, rawResponse: session.currentEvent }) : undefined,
+    currentEvent,
+    resolution,
+    endingSummary,
   };
 }
 
