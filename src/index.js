@@ -25,6 +25,14 @@ export {
   validatePlayerContract,
 } from "./contracts/player/player-contract.js";
 export {
+  buildPlayerViewSnapshot,
+  projectPlayerSurface,
+} from "./player-surface-projector.js";
+export {
+  assertPlayerSurfaceSafe,
+  validatePlayerSurface,
+} from "./player-surface-validator.js";
+export {
   assertPromptContractSafe,
   buildPromptContract,
   buildPromptSafeRunSnapshot,

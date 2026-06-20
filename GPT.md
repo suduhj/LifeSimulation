@@ -10,6 +10,8 @@ Before making project changes:
 2. Read the relevant standard files in `docs/`.
 3. Check today's development log in `dev-logs/`.
 
+For any non-trivial fix, architecture change, AI-output change, UI-visible behavior change, persistence/replay change, state synchronization change, or repeated bug, follow `docs/spec-to-proof-operating-system.md` before implementation. The agent must produce a Proof Contract first and wait until the user explicitly says `确认 Proof Contract，开始实现`. During the Proof Contract phase, only read-only inspection is allowed; do not modify files, add tests, format, generate, migrate, build, commit, or push.
+
 After making project changes:
 
 1. Update today's development log.
@@ -44,6 +46,7 @@ When the user adds new product, design, technical, or process requirements durin
 - Design standards: `docs/design-standards.md`
 - Execution plan: `docs/execution-plan.md`
 - Development logging rules: `docs/development-logging.md`
+- Spec-to-Proof operating rule: `docs/spec-to-proof-operating-system.md`
 - Documentation index: `docs/README.md`
 - Shared game design folder: `game-design/`
 - Runtime world data folder: `worlds/`

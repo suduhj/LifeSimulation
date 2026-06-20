@@ -90,6 +90,12 @@ async function handleApi(request, response) {
     return;
   }
 
+  const playerViewMatch = /^\/api\/player\/([^/]+)\/view$/.exec(pathname);
+  if (request.method === "GET" && playerViewMatch) {
+    sendJson(response, 200, store.getPlayerView(decodeURIComponent(playerViewMatch[1])));
+    return;
+  }
+
   if (request.method === "POST" && pathname === "/api/run/save") {
     const body = await readJsonBody(request);
     sendJson(response, 200, store.saveSession(body.sessionId, { path: body.path }));

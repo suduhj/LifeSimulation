@@ -1,5 +1,7 @@
 import { createDomainEvent } from "./event-factory.js";
 import { buildLifeNodeFromResponse } from "../../life-node.js";
+import { projectPlayerSurface } from "../../player-surface-projector.js";
+import { reduceRunEvent } from "../reducers/run-reducer.js";
 
 export function patchToDomainEvents({ run, response, source = "ai_response" } = {}) {
   const events = [];
@@ -202,7 +204,7 @@ export function patchToDomainEvents({ run, response, source = "ai_response" } = 
     response,
     sourceEventIds: sourceEventIdsForLifeNode(patch),
   });
-  events.push(createDomainEvent({
+  const lifeNodeRecorded = createDomainEvent({
     type: "life.node_recorded",
     run,
     turnId,
@@ -210,7 +212,32 @@ export function patchToDomainEvents({ run, response, source = "ai_response" } = 
     source,
     payload: lifeNode,
     metadata,
-  }));
+  });
+  events.push(lifeNodeRecorded);
+
+  const runWithLifeNode = reduceRunEvent(run, lifeNodeRecorded);
+  const playerSurface = projectPlayerSurface({ run: runWithLifeNode });
+  if (playerSurface.accepted) {
+    events.push(createDomainEvent({
+      type: "player_surface.view_recorded",
+      run: runWithLifeNode,
+      turnId,
+      age: playerSurface.view?.currentScene?.age ?? lifeNode.age,
+      source: "player_surface_projector",
+      payload: playerSurface.view,
+      metadata,
+    }));
+  } else if (playerSurface.rejection) {
+    events.push(createDomainEvent({
+      type: "player_surface.rejected",
+      run: runWithLifeNode,
+      turnId,
+      age: lifeNode.age,
+      source: "player_surface_projector",
+      payload: playerSurface.rejection,
+      metadata,
+    }));
+  }
 
   events.push(createDomainEvent({
     type: "run.event_recorded",

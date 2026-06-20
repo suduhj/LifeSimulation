@@ -10,6 +10,7 @@ import {
 } from "../../growth-ledger.js";
 import { ensureStoryState, recordSimulationOutcome } from "../../story-state.js";
 import { buildPlayerVisibleNpcIdentity } from "../../localization.js";
+import { applyPlayerSurfaceRecorded, applyPlayerSurfaceRejected } from "../../player-surface-store.js";
 
 export function reduceRunEvent(run, event) {
   if (event.type === "run.created") {
@@ -90,6 +91,12 @@ export function reduceRunEvent(run, event) {
       break;
     case "life.node_recorded":
       applyStoryOutcome(nextRun, { lifeNodes: [event.payload] });
+      break;
+    case "player_surface.view_recorded":
+      applyPlayerSurfaceRecorded(nextRun, event.payload);
+      break;
+    case "player_surface.rejected":
+      applyPlayerSurfaceRejected(nextRun, event.payload);
       break;
     case "npc.relationship_changed":
       applyRelationshipChange(nextRun, event.payload);

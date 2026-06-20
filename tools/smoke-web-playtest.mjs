@@ -114,12 +114,12 @@ async function exerciseWebFlow({ baseUrl, aiMode, endingAge }) {
     sessionId: session.sessionId,
     action: { kind: "choice", choiceId: "choice_1" },
   });
-  assert(session.resolution?.responseType === "action_resolution", "choice did not produce an action resolution");
-  assert(session.resolution.visibleChanges?.length > 0, "choice resolution did not expose visible changes");
+  assertHasActionResolution(session, "after choice");
+  assert(session.playerView?.visibleChanges?.length > 0, "choice result did not expose visible changes");
   assertPlayableOrEndingSession(session, "after choice");
   assertNoSecrets("after choice", session);
 
-  if (!session.ended) {
+  if (!isEndingSession(session)) {
     session = await postJson(`${baseUrl}/api/run/action`, {
       sessionId: session.sessionId,
       action: {
@@ -133,7 +133,7 @@ async function exerciseWebFlow({ baseUrl, aiMode, endingAge }) {
         action: { kind: "confirm" },
       });
     }
-    assert(session.resolution?.responseType === "action_resolution" || session.currentEvent?.responseType === "ending_summary", "free-form action did not resolve or end the run");
+    assertHasActionResolutionOrEnding(session, "after free-form");
     assertNoSecrets("after free-form", session);
   }
 
@@ -155,7 +155,7 @@ async function exerciseWebFlow({ baseUrl, aiMode, endingAge }) {
   assertNoSecrets("loaded session", session);
 
   let turns = 0;
-  while (!session.ended && turns < 12) {
+  while (!isEndingSession(session) && turns < 12) {
     session = await postJson(`${baseUrl}/api/run/action`, {
       sessionId: session.sessionId,
       action: { kind: "choice", choiceId: "choice_1" },
@@ -164,40 +164,60 @@ async function exerciseWebFlow({ baseUrl, aiMode, endingAge }) {
     turns += 1;
   }
 
-  assert(session.ended, "run did not reach an ending within the smoke-test turn limit");
-  assert(session.currentEvent?.responseType === "ending_summary", "final currentEvent is not an ending summary");
-  assert(session.currentEvent?.choices?.length === 0, "ending summary should not expose playable choices");
-  assert(session.run?.ending?.completed === true, "ending state was not saved into the run");
+  assert(isEndingSession(session), "run did not reach an ending within the smoke-test turn limit");
+  assert(session.playerView?.currentScene?.nodeType === "ending", "final playerView scene is not an ending node");
+  assert(session.playerView?.choices?.length === 0, "ending summary should not expose playable choices");
 
   return {
     worldCount: worldsPayload.worlds.length,
     savedPath: saved.path,
-    finalResponseType: session.currentEvent.responseType,
+    finalResponseType: session.playerView.currentScene.nodeType,
   };
 }
 
 function assertOpeningSession(session, label) {
-  assert(session?.sessionId, `${label} is missing sessionId`);
-  assert(session.run?.player?.attributes, `${label} is missing player attributes`);
-  assert(session.openingPhase === "background", `${label} is not in the opening background phase`);
-  assert(session.currentEvent?.responseType === "life_event", `${label} opening is not a life_event`);
-  assert(session.currentEvent?.interactionMode === "non_interactive", `${label} opening is not non_interactive`);
-  assert(session.currentEvent?.choices?.length === 0, `${label} opening must not expose playable choices`);
-  assert(session.currentEvent?.freeform?.allowed === false, `${label} opening must not allow free-form input`);
-  assert(session.run.player.age >= 5, `${label} opening did not auto-advance early years (age ${session.run.player.age})`);
+  assertPlayerSurfaceSession(session, label);
+  assert(session.playerView.currentScene?.nodeType === "opening_year", `${label} opening is not an opening_year LifeNode`);
+  assert(session.playerView.choices?.length === 0, `${label} opening must not expose playable choices`);
+  assert(session.playerView.currentScene?.age >= 5, `${label} opening did not auto-advance early years (age ${session.playerView.currentScene?.age})`);
 }
 
 function assertPlayableOrEndingSession(session, label) {
-  assert(session?.sessionId, `${label} is missing sessionId`);
-  assert(session.run?.player?.attributes, `${label} is missing player attributes`);
-  assert(Array.isArray(session.run?.summaryLines) && session.run.summaryLines.length > 0, `${label} is missing run summary lines`);
-  if (session.ended) {
-    assert(session.currentEvent?.responseType === "ending_summary", `${label} ended without ending_summary`);
+  assertPlayerSurfaceSession(session, label);
+  if (isEndingSession(session)) {
+    assert(session.playerView?.currentScene?.nodeType === "ending", `${label} ended without an ending LifeNode`);
     return;
   }
-  assert(session.currentEvent?.responseType === "life_event", `${label} current event is not a life_event`);
-  assert(session.currentEvent?.choices?.length === 3, `${label} does not have exactly 3 choices`);
-  assert(session.currentEvent?.freeform?.allowed === true, `${label} does not allow free-form input`);
+  assert(["annual_event", "action_resolution"].includes(session.playerView?.currentScene?.nodeType), `${label} current scene is not playable`);
+  assert(session.playerView?.choices?.length === 3, `${label} does not have exactly 3 choices`);
+}
+
+function assertPlayerSurfaceSession(session, label) {
+  assert(session?.sessionId, `${label} is missing sessionId`);
+  assert(session.playerView?.schemaVersion === "mvp.player_view.v1", `${label} is missing PlayerView`);
+  assert(!("run" in session), `${label} leaked raw run`);
+  assert(!("currentEvent" in session), `${label} leaked raw currentEvent`);
+  assert(!("resolution" in session), `${label} leaked raw resolution`);
+  assert(!("playerContract" in session), `${label} leaked legacy playerContract`);
+  assert(Array.isArray(session.playerView?.panels?.main?.summaryLines), `${label} is missing player summary lines`);
+  assert(Array.isArray(session.playerView?.panels?.attributes?.attributes), `${label} is missing player attributes panel`);
+  assert(Array.isArray(session.playerView?.timeline), `${label} is missing player timeline`);
+}
+
+function assertHasActionResolution(session, label) {
+  assertPlayerSurfaceSession(session, label);
+  const hasResolution = session.playerView.timeline.some((entry) => entry.nodeType === "action_resolution");
+  assert(hasResolution, `${label} did not project an action_resolution LifeNode`);
+}
+
+function assertHasActionResolutionOrEnding(session, label) {
+  assertPlayerSurfaceSession(session, label);
+  if (isEndingSession(session)) return;
+  assertHasActionResolution(session, label);
+}
+
+function isEndingSession(session) {
+  return session?.playerView?.currentScene?.nodeType === "ending";
 }
 
 async function waitForServerUrl(child, getOutput, timeoutMs) {
