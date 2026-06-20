@@ -15,7 +15,7 @@
     "validate:data": "node tools/validate-world-data.mjs",
     "replay:bugs": "node tools/replay-bugs.mjs",
     "test:architecture": "node tools/test-architecture.mjs",
-    "test:contracts": "node --test tests/player-safe-contract.test.mjs tests/prompt-contract.test.mjs tests/web-player-static-boundary.test.mjs tests/player-contract-session.test.mjs"
+    "test:contracts": "node --test tests/player-safe-contract.test.mjs tests/prompt-contract.test.mjs tests/web-player-static-boundary.test.mjs tests/player-contract-session.test.mjs tests/player-surface-runtime.test.mjs"
   },
   "engines": {
     "node": ">=20"

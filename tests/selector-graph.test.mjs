@@ -150,7 +150,7 @@ describe("selector graph panel views", () => {
     assert.doesNotMatch(view.header.characterLine, /幼年/);
   });
 
-  it("serializes panelViews through the web session API so UI panels can read selectors", async () => {
+  it("serializes panelViews through the ordinary PlayerView surface so UI panels can read selectors", async () => {
     const worlds = loadMvpWorlds();
     const store = createWebSessionStore({
       worlds,
@@ -176,14 +176,14 @@ describe("selector graph panel views", () => {
       endingAge: 90,
     });
 
-    assert.equal(session.panelViews.schemaVersion, "mvp.panel_views.v1");
-    assert.equal(session.run.panelViews.schemaVersion, "mvp.panel_views.v1");
-    assert.deepEqual(session.panelViews, session.run.panelViews);
-    assert.equal(session.panelViews.main.character.name, "Lin Lan");
-    assert.equal(session.panelViews.attributes.groups.length, 3);
-    assert.equal(session.panelViews.attributes.attributes.length, 5);
-    assert.ok(findAttributeCard(session.panelViews.attributes, "体质"));
-    assert.ok(Array.isArray(session.panelViews.story.timeline));
+    assert.ok(session.playerView, "ordinary payload exposes panel data only through playerView");
+    assert.equal(session.playerView.panels.main.schemaVersion, "mvp.main_panel_view.v1");
+    assert.equal(session.playerView.panels.main.character.name, "Lin Lan");
+    assert.equal(session.playerView.panels.attributes.groups.length, 3);
+    assert.equal(session.playerView.panels.attributes.attributes.length, 5);
+    assert.ok(findAttributeCard(session.playerView.panels.attributes, "体质"));
+    assert.ok(Array.isArray(session.playerView.panels.story.timeline));
+    assert.deepEqual(Object.keys(session).sort(), ["playerView", "sessionId"].sort());
   });
 });
 

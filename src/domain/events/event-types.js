@@ -20,6 +20,8 @@ export const DOMAIN_EVENT_TYPES = [
   "story.topic_recorded",
   "story.annual_agenda_recorded",
   "life.node_recorded",
+  "player_surface.view_recorded",
+  "player_surface.rejected",
   "npc.relationship_changed",
   "npc.memory_added",
   "npc.visibility_changed",

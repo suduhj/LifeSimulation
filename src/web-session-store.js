@@ -35,6 +35,8 @@ import {
 } from "./dev-tools.js";
 import { isNpcHiddenFromOpening, sanitizePlayerText, visibleNpcLabel } from "./localization.js";
 import { buildFatePreviewDossier } from "./opening-sequence.js";
+import { projectPlayerSurface } from "./player-surface-projector.js";
+import { assertPlayerSurfaceSafe } from "./player-surface-validator.js";
 
 const DEFAULT_ESTIMATED_LIFESPAN = 80;
 
@@ -98,7 +100,7 @@ export function createWebSessionStore({
       });
       const sessionId = sessionIdFactory();
       sessions.set(sessionId, { session, aiMode, seed });
-      return serializeSession(sessionId, sessions.get(sessionId), worlds);
+      return serializePlayerSurfaceSession(sessionId, sessions.get(sessionId));
     },
 
     async startDevRun(input = {}) {
@@ -141,7 +143,7 @@ export function createWebSessionStore({
       const session = await handlePlayerInputAsync({ session: entry.session, input: actionInput });
       const nextEntry = { ...entry, session };
       sessions.set(sessionId, nextEntry);
-      return serializeSession(sessionId, nextEntry, worlds);
+      return serializePlayerSurfaceSession(sessionId, nextEntry);
     },
 
     getDevToolsCatalog() {
@@ -210,7 +212,6 @@ export function createWebSessionStore({
       return {
         sessionId,
         path: absolutePath,
-        run: serializeRun(entry.session.currentRun, worlds),
       };
     },
 
@@ -233,7 +234,11 @@ export function createWebSessionStore({
       });
       const sessionId = sessionIdFactory();
       sessions.set(sessionId, { session, aiMode, seed });
-      return serializeSession(sessionId, sessions.get(sessionId), worlds);
+      return serializePlayerSurfaceSession(sessionId, sessions.get(sessionId));
+    },
+
+    getPlayerView(sessionId) {
+      return serializePlayerSurfaceSession(sessionId, getSessionEntry(sessions, sessionId));
     },
   };
 }
@@ -357,6 +362,7 @@ function serializeSession(sessionId, entry, worlds) {
   const resolution = session.resolution ? serializeAiResponse(session.resolution, session.currentRun, worlds) : undefined;
   const endingSummary = session.endingSummary ? serializeAiResponse(session.endingSummary, session.currentRun, worlds) : undefined;
   const gmView = entry.devMode ? buildGmView(session.currentRun) : undefined;
+  const playerSurface = currentPlayerSurface(session.currentRun);
   const playerContract = buildPlayerContract({
     run: session.currentRun,
     currentEvent,
@@ -372,7 +378,7 @@ function serializeSession(sessionId, entry, worlds) {
     pendingFreeformConfirmation: Boolean(session.pendingFreeformConfirmation),
     run,
     panelViews,
-    playerView: buildPlayerView(session.currentRun),
+    playerView: playerSurface,
     playerContract,
     gmView,
     gmContract: entry.devMode ? buildGmContract({ run: session.currentRun, currentEvent, rawResponse: session.currentEvent, gmView }) : undefined,
@@ -381,6 +387,25 @@ function serializeSession(sessionId, entry, worlds) {
     resolution,
     endingSummary,
   };
+}
+
+function serializePlayerSurfaceSession(sessionId, entry) {
+  const run = entry.session.currentRun;
+  const playerView = currentPlayerSurface(run);
+  assertPlayerSurfaceSafe(playerView);
+  return {
+    sessionId,
+    playerView: structuredClone(playerView),
+  };
+}
+
+function currentPlayerSurface(run) {
+  let playerView = run?.worldState?.playerSurface?.currentView;
+  if (!playerView) {
+    const projected = projectPlayerSurface({ run });
+    playerView = projected.view;
+  }
+  return playerView;
 }
 
 function serializeRun(run, worlds) {

@@ -114,12 +114,17 @@ describe("Player-Safe Contract System", () => {
 
   it("ships player and GM contract schemas as explicit gates", () => {
     const playerSchema = JSON.parse(fs.readFileSync("schemas/player-contract.schema.json", "utf8"));
+    const playerViewSchema = JSON.parse(fs.readFileSync("schemas/player-view.schema.json", "utf8"));
     const gmSchema = JSON.parse(fs.readFileSync("schemas/gm-contract.schema.json", "utf8"));
 
     assert.equal(playerSchema.$id, "https://lifesimulation.local/schemas/player-contract.schema.json");
     assert.equal(playerSchema.additionalProperties, false);
     assert.ok(playerSchema.required.includes("header"));
     assert.ok(playerSchema.required.includes("panels"));
+    assert.equal(playerViewSchema.$id, "https://lifesimulation.local/schemas/player-view.schema.json");
+    assert.equal(playerViewSchema.additionalProperties, false);
+    assert.ok(playerViewSchema.required.includes("currentScene"));
+    assert.ok(playerViewSchema.required.includes("safetyHash"));
     assert.equal(gmSchema.$id, "https://lifesimulation.local/schemas/gm-contract.schema.json");
   });
 });

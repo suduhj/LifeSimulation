@@ -117,7 +117,7 @@ describe("web UI contract", () => {
     assert.match(app, /function showStep/);
     assert.match(app, /function renderTimeline/);
     assert.match(app, /state\.lifeTimeline = \[\]/);
-    assert.match(app, /state\.lifeTimeline = buildOpeningTimeline\(state\.session\)/);
+    assert.match(app, /syncTimelineFromPlayerSurface/);
     assert.match(app, /appendResolutionAndEvent/);
   });
 

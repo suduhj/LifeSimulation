@@ -27,13 +27,15 @@ describe("web/player static contract boundary", () => {
     }
   });
 
-  it("routes ordinary browser rendering through the PlayerContract runtime gate", () => {
+  it("routes ordinary browser rendering through the Player Surface runtime gate", () => {
     const app = fs.readFileSync(path.join("web", "app.js"), "utf8");
 
-    assert.match(app, /function safePlayerContract/);
-    assert.match(app, /session\.playerContract/);
-    assert.match(app, /function renderEventFromPlayerContract/);
-    assert.match(app, /function timelineEntryFromPlayerContract/);
+    assert.match(app, /function safePlayerSurface/);
+    assert.match(app, /session\.playerView/);
+    assert.match(app, /function renderEventFromPlayerSurface/);
+    assert.match(app, /function timelineEntryFromPlayerSurface/);
+    assert.doesNotMatch(app, /function safePlayerContract/);
+    assert.doesNotMatch(app, /renderEventFromPlayerContract/);
   });
 });
 
