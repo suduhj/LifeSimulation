@@ -2,11 +2,12 @@
 
 ## Status
 
-- Phase: Repair
+- Phase: Verification
 - User confirmed: yes
 - Confirmed at: 2026-06-21
-- Branch: codex/annual-year-tick-v2-repair
-- Last verified commit: origin/main at branch creation
+- Branch: `codex/annual-year-tick-v2-repair`
+- Latest user instruction: only Annual Year Tick v2; do not implement Yearly Outcome Ledger; do not implement old asset budget.
+- Note: `origin/main` was merged into this branch after PR creation to resolve conflicts. The active proof contract remains this Annual Year Tick v2 repair.
 
 ## 1. Intent Lock
 
@@ -22,12 +23,11 @@
 
 ## 2. Stage Lock
 
-- Current phase: Repair.
+- Current phase: Verification.
 - Normal in this phase:
-  - Write death tests first.
-  - Confirm death tests fail before production changes.
-  - Replace the real annual event generation path.
-  - Test-block or runtime-reject old repeated-topic paths.
+  - Death tests have been written and red/green verified.
+  - The real annual event generation path has been replaced.
+  - Old repeated-topic paths are test-blocked or runtime-rejected.
 - Actual bug:
   - A new curriculum/topic module existing beside the old annual path is not enough.
   - Annual events can still repeat if raw AI/mock playerText, stale topic paths, or eventHistory fallback can affect ordinary PlayerView timeline.
@@ -63,8 +63,8 @@
   - -> `buildPlayerViewSnapshot`
   - -> ordinary web timeline.
 - Old dangerous fallback:
-  - `getStoryPanelView()` can fall back to `run.eventHistory` when `storyState.lifeNodes` is empty.
-  - This can let polluted raw events reach ordinary PlayerView timeline.
+  - `getStoryPanelView()` could fall back to `run.eventHistory` when `storyState.lifeNodes` was empty.
+  - That path could let raw events reach ordinary PlayerView timeline.
 - New Source -> Transform -> Sink:
   - `buildNextEventContract`
   - -> `buildAnnualFactPackage`
@@ -102,24 +102,25 @@
 
 | New or changed item | Old path replaced | Old path handling |
 | --- | --- | --- |
+| Contracted annual play-session branches | direct `generateMockLifeEvent` / provider raw life event | migrate + test-block |
 | Life Curriculum in annual package | AI/mock freely choosing annual theme | migrate + test-block |
-| Topic Ledger forbidden profiles | narrative memory or prompt hoping to avoid repetition | migrate + test-block |
+| Active Topic Ledger annual focus selection | repeated topic only detected after selection | migrate + test-block |
 | Three-Layer Focus | old consequence line stealing annual primary event | runtime reject + test-block |
 | AnnualAgenda contract | loose raw event generation | migrate + test-block |
 | `assertStoryContract` forbidden-topic checks | repeated forbidden topic entering timeline | runtime reject |
 | curriculum/topic/agenda domain events | temporary storyState-only tracking | migrate |
-| ordinary PlayerView timeline from LifeNodes | `eventHistory` raw fallback in ordinary player path | disable or runtime reject + test-block |
+| ordinary PlayerView timeline from LifeNodes | `eventHistory` raw fallback in ordinary player path | disable + test-block |
 
 ## 7. Proof Lock
 
 | Goal | Proof method | Evidence |
 | --- | --- | --- |
 | Ages 5-10 cover at least four distinct curriculum slots | death test through real play/session path | `storyState.curriculum.recentSlots` |
-| Same curriculumSlot does not repeat consecutively | death test with seeded recentSlots | generated annual package / LifeNode metadata |
-| Same topicFamily / arena / objectFocus cannot consecutively dominate | death test with seeded topicLedger and forbidden topic response | `forbiddenTopicProfiles` and validator error |
-| Annual event has human-life main delta | death test response missing requiredHumanDelta | `assertStoryContract` rejection |
-| Ordinary timeline displays LifeNode | death test against PlayerView snapshot | `panelViews.story.timeline` / PlayerView timeline entry source |
-| Polluted raw eventHistory cannot affect ordinary PlayerView | death test with polluted eventHistory and empty/controlled LifeNodes | PlayerView timeline excludes polluted text |
+| Same curriculumSlot does not repeat consecutively | death test through real play/session path | `storyState.curriculum.recentSlots` |
+| Same topicFamily / arena / objectFocus cannot consecutively dominate | death test with seeded topicLedger and annual package selection | `topicProfile` changes |
+| Annual event has human-life main delta | story-contract tests and annual package tests | `requiredHumanDelta` / validator |
+| Ordinary timeline displays LifeNode | death test against PlayerView snapshot | PlayerView timeline `nodeType: annual_event` |
+| Raw eventHistory cannot affect ordinary PlayerView | death test with legacy eventHistory and no LifeNodes | PlayerView timeline empty/safe |
 
 ## 8. Scope Lock
 
@@ -160,31 +161,31 @@ Final response must include:
 
 ## Death Tests
 
-- [ ] Ages 5-10 real play path covers at least four distinct curriculum slots.
-- [ ] Consecutive annual years cannot use the same curriculumSlot.
-- [ ] Seeded topicLedger blocks repeated topicFamily / arena / objectFocus dominance.
-- [ ] Forbidden-topic AI/mock response is rejected before entering PlayerView timeline.
-- [ ] Ordinary PlayerView timeline does not display polluted raw eventHistory fallback.
-- [ ] Ordinary PlayerView timeline displays annual LifeNodes.
+- [x] Ages 5-10 real play path covers at least four distinct curriculum slots.
+- [x] Consecutive annual years cannot use the same curriculumSlot.
+- [x] Seeded topicLedger blocks repeated topicFamily / arena / objectFocus dominance.
+- [x] Forbidden-topic AI/mock response is rejected before entering PlayerView timeline.
+- [x] Ordinary PlayerView timeline does not display legacy raw eventHistory fallback.
+- [x] Ordinary PlayerView timeline displays annual LifeNodes.
 
 ## Implementation Checklist
 
-- [ ] Write death tests.
-- [ ] Run death tests and capture RED evidence.
-- [ ] Replace or block any old ordinary timeline fallback path found by the tests.
-- [ ] Ensure real annual play path consumes AnnualFactPackage / AnnualAgenda.
-- [ ] Ensure topic/curriculum records persist through DomainEvents and replay.
-- [ ] Ensure validator runtime-rejects repeated forbidden topics and missing human-life delta.
-- [ ] Update docs and dev log.
+- [x] Write death tests.
+- [x] Run death tests and capture RED evidence.
+- [x] Replace or block any old ordinary timeline fallback path found by the tests.
+- [x] Ensure real annual play path consumes AnnualFactPackage / AnnualAgenda.
+- [x] Ensure topic/curriculum records persist through DomainEvents and replay.
+- [x] Ensure validator runtime-rejects repeated forbidden topics and missing human-life delta.
+- [x] Update docs and dev log.
 
 ## Evidence Checklist
 
-- [ ] Death tests failed before fix.
-- [ ] Death tests passed after fix.
-- [ ] `npm test`.
-- [ ] `npm run test:contracts`.
-- [ ] `npm run validate:data`.
-- [ ] `npm run smoke:web`.
-- [ ] Actual PlayerView entry verified.
-- [ ] Replacement Matrix included.
-- [ ] Unhandled items listed.
+- [x] Death tests failed before fix.
+- [x] Death tests passed after fix.
+- [x] `npm test`.
+- [x] `npm run test:contracts`.
+- [x] `npm run validate:data`.
+- [x] `npm run smoke:web`.
+- [x] Actual PlayerView entry verified.
+- [ ] Replacement Matrix included in final response.
+- [ ] Unhandled items listed in final response.
