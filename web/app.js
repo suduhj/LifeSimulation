@@ -570,7 +570,7 @@ async function advanceOpening() {
   });
   state.devLastValidation = null;
   if (state.lifeTimeline.length === 0) {
-    state.lifeTimeline = state.session.playerView ? [] : buildOpeningTimeline(state.session);
+    state.lifeTimeline = [];
   }
   syncTimelineFromPlayerSurface();
   renderSession();
@@ -1015,39 +1015,12 @@ function renderFatePreview(session) {
   els.beginLifeButton.disabled = state.loading || session.ended;
 }
 
-function buildOpeningTimeline(session) {
-  if (!session?.currentEvent) return [];
-  const storedTimeline = session.run?.worldState?.opening?.earlyLifeTimeline;
-  const actionAge = Math.max(0, Number(session.run?.worldState?.opening?.firstActionAge ?? session.run?.player?.age ?? session.currentEvent?.timeSpan?.ageEnd ?? 0));
-  if (actionAge > 0) {
-    return Array.from({ length: actionAge }, (_, age) => {
-      const sourceEntry = Array.isArray(storedTimeline)
-        ? storedTimeline.find((entry) => Number(entry?.age) === age)
-        : undefined;
-      const body = sanitizeOpeningTimelineBody(sourceEntry?.body);
-      return {
-        kind: "opening",
-        age,
-        title: `${age} 岁：${openingTimelineTitleForAge(age, actionAge)}`,
-        body: body || openingTimelineBodyFallback(session, age, actionAge),
-      };
-    }).filter(isRenderableTimelineEntry);
-  }
-  const sections = parseOpeningSections(session.currentEvent.playerText?.body ?? "");
-  const fallbackBody = sections.earlyLife || openingTimelineFallback(session);
-  return splitOpeningBody(fallbackBody, session.currentEvent.timeSpan).map((item) => ({
-    kind: "opening",
-    age: item.age,
-    title: item.title,
-    body: item.body,
-  }));
+function debugOnlyLegacyOpeningTimeline(session) {
+  throw new Error("Legacy opening timeline fallback is debug-only and unavailable to ordinary player UI.");
 }
 
 function buildTimelineFromLoadedSession(session) {
   const entries = [];
-  if (!isOpeningPreview(session)) {
-    entries.push(...buildOpeningTimeline(session));
-  }
   const surface = safePlayerSurface(session);
   const storyTimeline = surface?.timeline?.length ? surface.timeline : currentPanelViews(session)?.story?.timeline ?? [];
   for (const item of storyTimeline) {
@@ -1311,7 +1284,7 @@ function sanitizeOpeningTimelineBody(body) {
   return text;
 }
 
-function openingTimelineTitleForAge(age, actionAge) {
+function legacyOpeningTitleForAgeForDebug(age, actionAge) {
   if (age === 0) return "出生底色";
   if (age === 1) return "依附与感知";
   if (age === 2) return "牙牙学语";
@@ -1322,7 +1295,7 @@ function openingTimelineTitleForAge(age, actionAge) {
   return "缓慢成长";
 }
 
-function openingTimelineBodyFallback(session, age, actionAge) {
+function legacyOpeningBodyFallbackForDebug(session, age, actionAge) {
   const worldId = session?.run?.worldId;
   if (age === 0) {
     if (worldId === "cultivation") return "你出生时还只是襁褓中的孩子，家人能看见的不是完整天赋，而是气息、体温、哭声和周围灵气的细小异样。长辈没有把这些当成定论，只在照看你时更加谨慎。";

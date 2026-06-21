@@ -4,6 +4,13 @@ import { resolveWorldOrigin } from "./world-origin-resolver.js";
 
 export const LIFE_NODE_SCHEMA_VERSION = "mvp.life_node.v1";
 
+export function buildOpeningLifeNodesFromOriginLedger({ run, response, ledger, sourceEventIds = [] } = {}) {
+  const nodes = Array.isArray(ledger?.nodes) ? ledger.nodes : [];
+  return nodes
+    .map((node) => buildOpeningLifeNodeFromOriginNode({ run, response, ledger, node, sourceEventIds }))
+    .filter(Boolean);
+}
+
 export function buildLifeNodeFromResponse({ run, response, sourceEventIds = [] } = {}) {
   const nodeType = nodeTypeForResponse(response);
   const annualOutcome = response?.statePatch?.yearlyOutcomes?.[0];
@@ -56,6 +63,88 @@ function nodeIdFor({ response, age, nodeType, annualOutcome, visibleContract }) 
   }
   const base = response?.turnId || response?.event?.eventId || `${nodeType}_${age}`;
   return `life_node_${safeId(base)}_${nodeType}`;
+}
+
+function buildOpeningLifeNodeFromOriginNode({ run, response, ledger, node, sourceEventIds = [] }) {
+  if (!Number.isFinite(Number(node?.age))) return undefined;
+  const age = Math.max(0, Math.floor(Number(node.age)));
+  const visibleContract = {
+    requiredLifeDelta: openingRequiredLifeDeltaFor(node),
+    mainHumanDomain: "opening_year",
+    forbiddenText: [
+      "出生底色",
+      "依附与感知",
+      "牙牙学语",
+      "好奇初醒",
+      "家庭边界",
+      "性格成形",
+      "岔路前夜",
+      "mentor_attention",
+      "curriculumSlot",
+    ],
+  };
+  const candidate = {
+    schemaVersion: LIFE_NODE_SCHEMA_VERSION,
+    nodeId: `opening_year_${age}_${safeId(run?.runId ?? response?.runId ?? "run")}`,
+    age,
+    nodeType: "opening_year",
+    sourceEventIds,
+    visibleContract,
+    attributeReality: attributeRealityForRun(run),
+    originReality: originRealityForRun(run),
+    storyAssetBudgets: {},
+    paragraphs: [openingBodyFromOriginNode({ run, node, age })].filter(Boolean),
+    choices: [],
+    visibleChanges: [],
+  };
+  const validation = validateLifeNode(candidate);
+  if (validation.ok) return candidate;
+  return fallbackLifeNode({ candidate, validation });
+}
+
+function openingRequiredLifeDeltaFor(node = {}) {
+  const factor = Array.isArray(node.originFactors) ? node.originFactors[0] : undefined;
+  return {
+    learning: "早年学习兴趣开始留下痕迹",
+    household: "家庭日常责任开始塑造你",
+    social: "同龄关系开始影响你的成长",
+    care: "照护与身体状态改变了家人的安排",
+    talent: "天赋迹象只在日常边缘轻微显露",
+  }[factor?.category] ?? "出生与早年环境塑造了你的生活底色";
+}
+
+function openingBodyFromOriginNode({ run, node, age }) {
+  const body = String(node?.body ?? "").trim();
+  if (age === 0) {
+    return [birthRealityPrefix(run), body].filter(Boolean).join("");
+  }
+  return body;
+}
+
+function birthRealityPrefix(run) {
+  const family = run?.player?.growthLedger?.attributes?.familyBackground?.potential
+    ?? run?.player?.attributes?.familyBackground?.potential
+    ?? 4;
+  const worldId = run?.worldId;
+  const tier = family >= 12 ? "high" : family <= 3 ? "low" : "ordinary";
+  const byWorld = {
+    cultivation: {
+      high: "你出生在能接触宗门、商号或修真旧账的人家，最先包围你的不是贫寒，而是资源、规矩和旁人的期待。",
+      ordinary: "你出生在能维持安稳日子的普通人家，家里给得起照看，却仍要小心衡量仙门传闻带来的风险。",
+      low: "你出生在资源紧巴的凡人家庭，柴米、活计和长辈的谨慎比仙门传说更早压到生活里。",
+    },
+    cthulhu: {
+      high: "你出生在体面街区或专业家庭里，医院、档案、社交关系和沉默的规矩从一开始就围住了你。",
+      ordinary: "你出生在表面正常的城市家庭，日常秩序仍能运转，只是某些新闻和传闻被大人轻轻避开。",
+      low: "你出生在城市边缘或拮据家庭里，照看你的人更关心房租、工作和安全，异常只能被压成沉默。",
+    },
+    wasteland: {
+      high: "你出生在掌握物资、医疗、技术或营地关系的家庭里，生存压力没有消失，却从一开始就带着责任和目光。",
+      ordinary: "你出生在勉强有秩序的营地家庭，水、药、食物和监护人的判断共同决定你能怎样长大。",
+      low: "你出生在缺粮、临时棚屋或边缘队伍附近，活下去本身就是第一件被全家盯紧的事。",
+    },
+  };
+  return byWorld[worldId]?.[tier] ?? byWorld.cthulhu[tier];
 }
 
 function visibleContractFor({ response, annualOutcome, observableScene, nodeType }) {
