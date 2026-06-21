@@ -178,7 +178,7 @@ async function createOpeningSessionAsync({ run, worlds, seed, endingAge, aiProvi
 }
 
 function createPlayableSession({ run, worlds, seed, endingAge } = {}) {
-  const currentEvent = generateMockLifeEvent({ run, worlds, seed });
+  const currentEvent = buildContractedMockLifeEvent({ run, worlds, seed });
   const currentRun = applyAiResponseToRun(run, currentEvent);
   if (shouldTriggerMvpEnding(currentRun, { endingAge })) {
     const endingSummary = generateMvpEndingSummary({ run: currentRun, worlds, seed: seed + 999, endingAge });
@@ -207,7 +207,7 @@ function createPlayableSession({ run, worlds, seed, endingAge } = {}) {
 async function createPlayableSessionAsync({ run, worlds, seed, endingAge, aiProvider } = {}) {
   const base = { worlds, seed, endingAge, aiProvider, currentRun: run, currentEvent: undefined, turnCounter: 1 };
   try {
-    const currentEvent = await safeGenerateLifeEvent({
+    const currentEvent = await buildContractedProviderLifeEvent({
       aiProvider,
       run,
       worlds,
@@ -405,7 +405,7 @@ export async function handlePlayerInputAsync({ session, input } = {}) {
 }
 
 function advanceOpeningSync(session) {
-  const nextEvent = normalizeFirstBranchEvent(generateMockLifeEvent({
+  const nextEvent = normalizeFirstBranchEvent(buildContractedMockLifeEvent({
     run: session.currentRun,
     worlds: session.worlds,
     seed: session.seed + session.turnCounter + 1,
@@ -446,7 +446,7 @@ function advanceOpeningSync(session) {
 
 async function advanceOpeningAsync(session) {
   try {
-    const nextEvent = normalizeFirstBranchEvent(await safeGenerateLifeEvent({
+    const nextEvent = normalizeFirstBranchEvent(await buildContractedProviderLifeEvent({
       aiProvider: session.aiProvider,
       run: session.currentRun,
       worlds: session.worlds,
