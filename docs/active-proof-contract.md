@@ -164,7 +164,7 @@ Final response must include:
 - [x] Disable ordinary web fallback path from legacy opening templates.
 - [x] Update docs and dev log.
 - [x] Run full verification.
-- [ ] Push branch and create PR without merging main.
+- [x] Push branch and create PR without merging main.
 
 ## Evidence Checklist
 
