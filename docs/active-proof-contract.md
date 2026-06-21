@@ -6,98 +6,168 @@
 - User confirmed: yes
 - Confirmed phrase: `确认 Proof Contract，开始实现`
 - Confirmed at: 2026-06-21
-- Branch: current working branch
-- Last verified commit: not recorded yet
+- Branch: `codex/yearly-outcome-ledger-v1-repair`
+- Latest user instruction: only Yearly Outcome Ledger v1; do not implement annual director; do not implement old asset budget.
+- Note: `origin/main` was merged into this branch after PR creation to resolve conflicts. Ordinary player delivery is now `PlayerView`; the Yearly Outcome proof uses `playerView.panels.attributes` as the ordinary UI sink.
 
-## Proof Contract
+## Proof Contract: Yearly Outcome Ledger v1
 
 ### 1. Intent Lock
 
 - User-visible result that must change:
-  - Ordinary player 0-6 early timeline must no longer show the fixed template titles `出生底色`, `依附与感知`, `牙牙学语`, `好奇初醒`, `家庭边界`, `性格成形`, or `岔路前夜`.
-  - Ordinary player timeline must be read from `LifeNode -> PlayerView`.
-  - 0-6 opening text must vary by world, character/profile, attributes, and family background.
-  - High and low family background must create different age-0 birth reality.
-  - The three MVP worlds must produce different opening text.
-  - Polluted legacy opening fallback data must not appear in ordinary PlayerView or ordinary web UI.
+  - When an annual year advances, the system must record a `YearlyOutcome`.
+  - That `YearlyOutcome` must create domain events, including `annual.outcome_recorded` and `growth.evidence_added`.
+  - When applicable, it must also create `growth.exposure_changed`.
+  - The reducer must apply those events to `growthLedger`.
+  - `panelViews.attributes` must read the updated `growthLedger` values.
+  - Ordinary Web UI must receive the updated values through `playerView.panels.attributes`.
 - Not the goal:
-  - Do not change the annual director, yearly outcome ledger, growth ledger, AI provider protocol, attribute panel, or post-opening annual repetition behavior.
-  - Do not introduce a large new architecture.
+  - Do not implement a new annual director.
+  - Do not change curriculum slot selection rules.
+  - Do not implement old asset budget.
+  - Do not rewrite opening variation, prompt architecture, or attribute type semantics.
+  - Do not rely on AI returning `growthEvidenceChanges` as the authority for annual growth.
 
 ### 2. Stage Lock
 
-- Current phase: MVP bugfix.
+- Current phase: MVP repair / state synchronization.
 - Normal in this phase:
-  - Same seed and same setup may produce stable results.
-  - GM/debug data may retain legacy opening data for diagnosis.
-  - Opening can remain engine-generated.
+  - Annual fact packages may still be simple.
+  - Curriculum slot selection can remain existing behavior.
+  - AI/mock text can still be the renderer.
+  - GM/debug paths may still expose raw run/event data.
 - Actual bug:
-  - Ordinary player pages can still show fixed 0-6 opening template titles.
-  - Per-age opening content is not fully represented as authoritative LifeNodes for the ordinary timeline.
-  - Legacy `opening.earlyLifeTimeline` and web fallback paths can still influence ordinary UI.
+  - Some annual-event paths can still reach `applyAiResponseToRun()` without a required engine-owned `YearlyOutcome`.
+  - If AI/mock returns no `growthEvidenceChanges`, old paths can produce narrative progression without `annual.outcome_recorded`, without `growth.evidence_added`, and without a `growthLedger` update.
+  - A standalone `yearly-outcome.js` module is not sufficient unless every real annual progression path is forced through it before `patchToDomainEvents()`.
 
 ### 3. Failure Lock
 
 - Current observable failure:
-  - Ordinary timeline shows `0 岁：出生底色`, `1 岁：依附与感知`, `2 岁：牙牙学语`, `3 岁：好奇初醒`, `4 岁：家庭边界`, `5 岁：性格成形`, `6 岁：岔路前夜`.
+  - Annual narrative can advance while the system has no authoritative annual result in `eventLog`.
+  - Attribute/growth panel may remain unchanged because the chain `AnnualFactPackage -> YearlyOutcome -> statePatch.growthEvidenceChanges/exposureChanges -> DomainEvents -> reducer -> growthLedger -> panelViews.attributes -> PlayerView -> UI` is not enforced on every user-facing annual path.
 - Success condition:
-  - Ordinary `playerView.timeline` does not contain the fixed opening template titles.
-  - Ordinary `playerView.timeline` has opening LifeNodes for ages `0..firstActionAge-1`.
-  - Different character/profile/allocation/familyBackground setups in the same world do not produce identical 0-6 bodies.
-  - High/low family background age-0 bodies differ.
-  - Cultivation, Cthulhu, and Wasteland opening bodies differ.
-  - Polluted legacy opening fallback data cannot affect ordinary PlayerView or web timeline.
+  - Advancing a year from the ordinary user path records `annual.outcome_recorded`.
+  - Advancing a year from the ordinary user path records `growth.evidence_added`.
+  - At least one curriculum slot changes `growthLedger.realized` or `growthLedger.exposure`.
+  - `panelViews.attributes` reads the updated `growthLedger` values.
+  - Ordinary `playerView.panels.attributes` carries the updated attribute/current/focus values.
 - Acceptance entry point:
-  - API/store: `createWebSessionStore().startRun()` and `submitAction(... advance_opening ...)`.
-  - Ordinary surface: `mvp.player_view.v1`.
-  - UI: `web/app.js` ordinary timeline rendering.
-  - Reload: `loadSession()` returning ordinary PlayerView.
+  - API/store: `createWebSessionStore().startRun()`, `createWebSessionStore().submitAction()`, and `createWebSessionStore().loadSession()`.
+  - Runtime: `applyAiResponseToRun()` -> `patchToDomainEvents()` -> `transitionRun()` -> `reduceRunEvent()`.
+  - Projection: `buildPanelViews()` -> `getAttributePanelView()` -> `projectPlayerSurface()` -> `playerView.panels.attributes`.
+  - Ordinary UI sink: `web/app.js` rendering the `playerView` payload.
+  - Replay/reload: saved `eventLog` replay through reducer must preserve `yearlyOutcomes` and growth changes.
 
 ### 4. Path Lock
 
-- Old Source -> Transform -> Sink:
-  - `src/opening-origin-ledger.js` `buildOpeningOriginLedger()` / `stageTitleForAge()` / `bodyForAge()` creates fixed stage titles.
-  - `src/opening-sequence.js` `generateOpeningSequence()` maps origin ledger nodes into `statePatch.worldStateChanges: opening.earlyLifeTimeline`; legacy `buildEarlyLifeTimeline()` / `earlyLifeTitleForAge()` remains a fixed-title path.
-  - `src/domain/events/patch-to-events.js` records `opening.origin_recorded` and only one `life.node_recorded` for the whole opening response, so per-age opening nodes do not become LifeNode authority.
-  - `src/selectors/story-panel-selector.js` builds ordinary story timeline from `storyState.lifeNodes`, falling back to legacy event history if LifeNodes are absent.
-  - `web/app.js` `buildOpeningTimeline()` / `openingTimelineTitleForAge()` / `openingTimelineBodyFallback()` / `buildTimelineFromLoadedSession()` can push fixed opening entries into `state.lifeTimeline`.
-  - `web/app.js` `renderTimeline()` renders `state.lifeTimeline` as the ordinary UI sink.
-- New Source -> Transform -> Sink:
-  - Opening origin data produces player-visible opening LifeNodes without fixed template titles.
-  - `patchToDomainEvents()` converts opening response per-age origin nodes into `life.node_recorded` events.
-  - `run-reducer` stores those nodes in `worldState.storyState.lifeNodes`.
-  - `story-panel-selector` projects timeline from `storyState.lifeNodes`.
-  - `player-surface-projector` creates ordinary `playerView.timeline`.
-  - `web/app.js` ordinary timeline reads `session.playerView.timeline` through `syncTimelineFromPlayerSurface()`.
-- Real user entry point:
-  - Browser start flow: `/api/run/start`, then `/api/run/action` with `advance_opening`, then ordinary timeline rendering from `session.playerView.timeline`.
+#### Current Annual Event Source
+
+- `src/play-session.js`
+  - `createPlayableSession()` directly called `generateMockLifeEvent()` and then `applyAiResponseToRun()`.
+  - `createPlayableSessionAsync()` directly called `safeGenerateLifeEvent()` and then `applyAiResponseToRun()`.
+  - `advanceOpeningSync()` directly called `generateMockLifeEvent()` and then `applyAiResponseToRun()` for the first playable branch.
+  - `advanceOpeningAsync()` directly called `safeGenerateLifeEvent()` and then `applyAiResponseToRun()` for the first playable branch.
+  - `resolvePlayerActionSync()` and `resolvePlayerActionAsync()` already used `buildContractedMockLifeEvent()` / `buildContractedProviderLifeEvent()`.
+- `src/narrative-director.js`
+  - `buildNextEventContract()` calls `buildAnnualFactPackage()`.
+- `src/annual-state-transition.js`
+  - `applyAnnualFactPackageToResponse()` builds a `YearlyOutcome` and appends it to `statePatch`.
+- `src/yearly-outcome.js`
+  - `buildYearlyOutcome()` maps curriculum slots to `growthImpact`.
+  - `applyYearlyOutcomeToResponse()` appends `growthEvidenceChanges`, `exposureChanges`, and `yearlyOutcomes`.
+
+#### Current Break In AI/statePatch/growthLedger Chain
+
+- The chain is enforced only when `applyAnnualFactPackageToResponse()` is called.
+- `applyAiResponseToRun()` accepts any validated response and immediately calls `patchToDomainEvents()`.
+- `patchToDomainEvents()` converts existing `statePatch.yearlyOutcomes`, `statePatch.growthEvidenceChanges`, and `statePatch.exposureChanges`; it does not synthesize a missing `YearlyOutcome` from an annual response.
+- Therefore old direct annual paths can bypass `YearlyOutcome` entirely:
+  - raw AI/mock `statePatch` with no annual outcome stays authoritative;
+  - `growth.evidence_added` is absent if AI/mock did not provide growth evidence;
+  - `growthLedger` does not change;
+  - attribute panel has no updated values to show.
+
+#### Current Attribute Panel Source
+
+- `src/selectors/attribute-panel-selector.js`
+  - `getAttributePanelView(run)` reads `run.player.growthLedger.attributes` first.
+  - Attribute cards use `ledger.effective`, `ledger.realized`, `ledger.potential`, and `ledger.exposure`.
+- `src/selectors/index.js`
+  - `buildPanelViews(run)` returns `{ attributes: getAttributePanelView(run) }`.
+- `src/player-surface-projector.js`
+  - `buildPlayerViewSnapshot(run)` embeds selector output into `playerView.panels.attributes`.
+- `src/web-session-store.js`
+  - ordinary user responses return only `{ sessionId, playerView }`.
+- `web/app.js`
+  - ordinary rendering reads `playerView`, including `playerView.panels.attributes`.
+
+#### Old Source -> Transform -> Sink
+
+- Old Source:
+  - AI/mock annual `response.statePatch` and direct annual event paths in `play-session.js`.
+- Old Transform:
+  - `applyAiResponseToRun()` -> `patchToDomainEvents()` converts only what the raw patch already contains.
+  - Missing `yearlyOutcomes` means no `annual.outcome_recorded`.
+  - Missing `growthEvidenceChanges` means no `growth.evidence_added`.
+- Old Sink:
+  - `run.player.growthLedger` remains unchanged.
+  - `buildPanelViews().attributes` sees unchanged ledger values.
+  - `playerView.panels.attributes` and ordinary Web UI show unchanged attribute/growth panel values.
+
+#### New Source -> Transform -> Sink
+
+- New Source:
+  - `AnnualFactPackage` is the source for annual system result.
+- New Transform:
+  - Every user-facing annual event must be wrapped by `applyAnnualFactPackageToResponse()` before `applyAiResponseToRun()`.
+  - `buildYearlyOutcome()` creates the authoritative annual result.
+  - `applyYearlyOutcomeToResponse()` appends `statePatch.yearlyOutcomes`, `growthEvidenceChanges`, and `exposureChanges`.
+  - `patchToDomainEvents()` emits `annual.outcome_recorded`, `growth.evidence_added`, and, when present, `growth.exposure_changed`.
+  - `run-reducer.js` applies growth events to `growthLedger`, then recalculates and syncs attributes.
+  - `projectPlayerSurface()` embeds selector attributes into `playerView.panels.attributes`.
+- New Sink:
+  - `growthLedger` is updated by reducer events.
+  - `getAttributePanelView()` reads updated ledger values.
+  - `playerView.panels.attributes` carries updated values into ordinary session serialization.
+  - ordinary Web UI renders those values from PlayerView.
+
+#### Real User Entry Point
+
+- Browser/API ordinary path:
+  - `/api/run/start` -> `createWebSessionStore().startRun()`
+  - `/api/run/action` -> `createWebSessionStore().submitAction()`
+  - `/api/run/load` -> `createWebSessionStore().loadSession()`
+  - returned payload: `{ sessionId, playerView }`
+  - ordinary UI renders `playerView.panels.attributes`
 
 ### 5. Authority Lock
 
 - Single correct authority:
-  - Timeline content authority: `LifeNode`.
-  - Ordinary player projection: `PlayerView` / Player Surface.
-  - Ordinary UI may render only `PlayerView.timeline`.
+  - Annual growth/result authority: `YearlyOutcome`.
+  - Persistent truth: domain events in `eventLog`.
+  - Current state: reducer-produced `run.player.growthLedger`.
+  - Selector projection: `panelViews.attributes`.
+  - Ordinary display: `playerView.panels.attributes`.
 - Old sources that must lose authority:
-  - `opening.earlyLifeTimeline`.
-  - `originLedger.nodes[].title`.
-  - `openingTimelineTitleForAge()`.
-  - `openingTimelineBodyFallback()`.
-  - Ordinary use of `buildOpeningTimeline()`.
-  - Event-history fallback in ordinary PlayerView timeline.
-  - Raw `currentEvent.playerText`.
+  - AI/raw `statePatch.growthEvidenceChanges` as the only annual growth authority.
+  - Raw `manifestationChanges` as annual growth authority.
+  - Raw `attributeChanges` as annual curriculum-growth authority.
+  - Direct `generateMockLifeEvent()` / `safeGenerateLifeEvent()` annual paths that skip `AnnualFactPackage`.
+  - UI fallback reading raw `run.player.attributes` when PlayerView selector panel data is available.
 
 ### 6. Replacement Lock
 
 | New or changed item | Old path replaced | Old path handling |
 | --- | --- | --- |
-| Per-age opening LifeNodes from event conversion | `opening.earlyLifeTimeline` directly or indirectly driving ordinary timeline | migrate |
-| Multiple `opening_year` LifeNodes | One opening preview LifeNode representing all 0-6 years | migrate |
-| PlayerView timeline from LifeNodes only | `story-panel-selector` eventHistory fallback in ordinary surface | disable + test-block |
-| Web ordinary timeline from `session.playerView.timeline` only | `web/app.js` ordinary `buildOpeningTimeline()` fallback | runtime reject + test-block |
-| Origin ledger stage titles | Fixed player-visible opening titles | debug-only + test-block |
-| Legacy `buildEarlyLifeTimeline()` path | Old hardcoded per-age opening templates | delete or debug-only |
-| Player surface validation/static tests | Polluted old opening fallback entering ordinary UI | runtime reject + test-block |
+| Engine-owned `YearlyOutcome` for each annual event | AI/mock raw annual `statePatch` as sole annual result source | migrate + test-block |
+| Contracted annual response wrapper before `applyAiResponseToRun()` | Direct `generateMockLifeEvent()` / `safeGenerateLifeEvent()` annual paths in `play-session.js` | migrate |
+| Required `statePatch.yearlyOutcomes` for annual user paths | Annual response with no `annual.outcome_recorded` | test-block |
+| `growthEvidenceChanges` synthesized from curriculum slot | AI returning no growth patch causing no yearly growth | migrate + death test |
+| `growth.exposure_changed` from yearly outcome exposure impact | Exposure changing only if AI raw patch happens to include it | migrate + death test |
+| Reducer-applied `growthLedger` | UI or selectors inferring annual growth from text/raw attributes | disable + test-block |
+| `playerView.panels.attributes` as ordinary UI source | Web UI fallback using raw `run.player.attributes` despite selector panel availability | debug-only fallback + test-block |
+| Replay of `annual.outcome_recorded` and growth events | Story snapshot-only annual outcome that disappears or is ignored on replay | migrate + death test |
 
 Allowed handling: delete / disable / migrate / debug-only / runtime reject / test-block.
 
@@ -105,76 +175,94 @@ Allowed handling: delete / disable / migrate / debug-only / runtime reject / tes
 
 | Goal | Proof method | Evidence |
 | --- | --- | --- |
-| PlayerView does not show fixed opening titles | Death test through `startRun` / `advance_opening`, scanning `playerView.timeline` | Red/green test output |
-| Same-world different setups vary 0-6 opening bodies | Death test comparing timeline bodies for different setup inputs | Red/green test output |
-| High/low family background age-0 bodies differ | Death test comparing age-0 bodies | Red/green test output |
-| Three worlds produce different opening bodies | Death test over cultivation / cthulhu / wasteland | Red/green test output |
-| Polluted legacy fallback is unreachable | Death test injecting polluted `opening.earlyLifeTimeline` and legacy data before PlayerView projection | Red/green test output |
-| Ordinary web no longer renders old fallback | Static/death test plus `smoke:web` and screenshot | Evidence package |
-| Old path handling is explicit | Replacement Matrix and diff | Final response |
+| Advancing one year records `annual.outcome_recorded` | Death test through ordinary/session or transition path that previously skipped `applyAnnualFactPackageToResponse()` | Red failure before fix; green after fix |
+| Advancing one year records `growth.evidence_added` | Death test with mock response whose growth patch is empty | Red failure before fix; green after fix |
+| A curriculum slot changes `growthLedger.realized` or `growthLedger.exposure` | Death test comparing before/after ledger values after transition | Red/green output and ledger fragment |
+| `panelViews.attributes` shows updated values | Death test building selector after transition and comparing card values | Red/green output and panel fragment |
+| Ordinary UI attribute panel shows updated values | Death test through `createWebSessionStore()` returned `playerView.panels.attributes` | Red/green output and PlayerView fragment |
+| Old annual raw path cannot bypass YearlyOutcome | Death test exercises direct annual source path and asserts eventLog contains annual/growth events | Red/green output |
+| Replay/reload preserves yearly outcome and growth | Death test replaying eventLog or save/load and comparing `storyState.yearlyOutcomes` + ledger values | Red/green output |
 
 ### 8. Scope Lock
 
 - Allowed changes:
-  - `docs/active-proof-contract.md`.
-  - Opening/LifeNode/PlayerView/timeline source files needed to replace the actual user path.
-  - Opening / PlayerView / contract tests.
-  - Relevant docs and `dev-logs/2026-06-21.md`.
+  - `docs/active-proof-contract.md`
+  - `src/play-session.js`
+  - Tests for yearly outcome ledger, annual growth impact, selector/panel sync, ordinary web/player surface entry, replay/reload
+  - Documentation and dev log for this repair
 - Forbidden changes:
-  - Annual director.
-  - Yearly outcome ledger.
-  - Growth ledger.
-  - AI provider protocol broad rewrite.
-  - Attribute panel behavior.
-  - Post-opening repetition systems.
-  - Direct merge to main.
+  - Annual director or curriculum selection redesign.
+  - Old asset budget.
+  - Opening timeline changes.
+  - LifeNode architecture rewrite.
+  - Prompt/AI provider broad rewrite.
+  - Attribute type-system changes unrelated to proving yearly outcome drives the panel.
+  - Direct push to or merge into `main`.
 - Not handled in this task:
-  - 7+ annual event repetition.
-  - Old asset budgets for back mountain, white deer, jade token, etc.
-  - Attribute growth linkage.
+  - Repetition of annual topics.
+  - Back mountain / white deer / jade token budget.
+  - 0-6 opening variation.
+  - Full UI redesign of the growth panel.
 - If a new issue is discovered:
-  - Stop expanding scope, record it as follow-up, and do not mix it into this repair.
+  - Stop expanding scope.
+  - Record it as follow-up.
+  - Continue only if it blocks the locked YearlyOutcome Source -> Transform -> Sink proof.
 
 ### 9. Delivery Lock
 
 Final response must include:
 
 - Replacement Matrix.
-- Death tests.
+- Death tests, with red and green evidence.
 - Evidence package.
 - Modified files.
 - Actual user entry verification.
+- `eventLog` fragment containing `annual.outcome_recorded` and `growth.evidence_added`.
+- `growthLedger` before/after fragment.
+- `panelViews.attributes` and `playerView.panels.attributes` fragments showing updated values.
+- Ordinary UI evidence or `smoke:web` evidence.
 - Unhandled items.
 - PR link.
 
 ## Death Tests
 
-- [x] Ordinary `PlayerView.timeline` must not show fixed opening template titles.
-- [x] Same world with different character/attributes/familyBackground must not produce identical 0-6 opening bodies.
-- [x] High and low family background age-0 birth reality must differ.
-- [x] Cultivation, Cthulhu, and Wasteland opening text must differ.
-- [x] Polluted old opening fallback must not appear in ordinary PlayerView or ordinary web UI.
+- [x] Advancing one year through the actual user/session path records `annual.outcome_recorded`.
+- [x] Advancing one year through the actual user/session path records `growth.evidence_added`.
+- [x] AI/mock returning no growth patch still receives engine-owned yearly growth from curriculum slot.
+- [x] At least one curriculum slot changes `growthLedger.realized` or `growthLedger.exposure`.
+- [x] `panelViews.attributes` reads the updated growth ledger values.
+- [x] Ordinary `playerView.panels.attributes` shows the updated attribute/focus values.
+- [x] Old direct annual path cannot reach ordinary user result without a `YearlyOutcome`.
+- [x] Replay/reload preserves `YearlyOutcome` and the growth ledger changes.
 
 ## Implementation Checklist
 
+- [x] After user confirmation, create/switch to a dedicated branch for Yearly Outcome Ledger v1.
 - [x] Write death tests first.
-- [x] Run death tests and record red failure.
-- [x] Convert per-age opening origin nodes into LifeNodes.
-- [x] Remove or debug-isolate fixed opening title authority.
-- [x] Disable ordinary web fallback path from legacy opening templates.
+- [x] Run targeted death tests and capture red failures.
+- [x] Replace direct annual response paths with the YearlyOutcome path.
+- [x] Ensure missing yearly outcome on annual events is test-blocked.
+- [x] Ensure reducer updates `growthLedger` from growth events.
+- [x] Ensure selector/PlayerView/UI read updated values.
 - [x] Update docs and dev log.
-- [x] Run full verification.
+- [x] Run targeted tests.
+- [x] Run `npm test`.
+- [x] Run `npm run test:contracts`.
+- [x] Run `npm run validate:data`.
+- [x] Run `npm run smoke:web`.
 - [x] Push branch and create PR without merging main.
 
 ## Evidence Checklist
 
-- [x] Death tests failed before fix.
-- [x] Death tests passed after fix.
-- [x] `npm test`.
-- [x] `npm run test:contracts`.
-- [x] `npm run validate:data`.
-- [x] `npm run smoke:web`.
-- [x] Ordinary player entry screenshot.
-- [x] `PlayerView.timeline` fragment.
 - [x] `git diff --stat`.
+- [x] Death tests red output.
+- [x] Death tests green output.
+- [x] Full verification command outputs.
+- [x] `eventLog` fragment with `annual.outcome_recorded`.
+- [x] `eventLog` fragment with `growth.evidence_added`.
+- [x] `eventLog` fragment with `growth.exposure_changed` when applicable.
+- [x] `growthLedger` before/after.
+- [x] `panelViews.attributes` before/after.
+- [x] `playerView.panels.attributes` before/after.
+- [x] Ordinary user entry verification.
 - [ ] Replacement Matrix in final response.
