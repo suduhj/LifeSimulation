@@ -1037,7 +1037,7 @@ function buildTimelineFromLoadedSession(session) {
     }
   }
   const currentEntry = timelineEntryFromPlayerSurface(surface, "event");
-  if (isRenderableTimelineEntry(currentEntry)) {
+  if (isRenderableTimelineEntry(currentEntry) && !entries.some((existing) => sameTimelineIdentity(existing, currentEntry))) {
     entries.push(currentEntry);
   }
   return entries;
@@ -1152,6 +1152,7 @@ function timelineEntryFromPlayerSurface(surface, kind = "event") {
   return {
     kind,
     nodeType: scene.nodeType ?? "annual_event",
+    nodeId: scene.nodeId,
     turnId: `${kind}_${scene.age ?? "current"}_${scene.nodeType ?? "scene"}`,
     age: scene.age,
     body: scene.body ?? "",

@@ -54,12 +54,14 @@ export function buildPlayerViewSnapshot(run) {
   const projectedTimeline = buildTimeline(panelViews);
   const projectedCurrentScene = currentSceneFromOpeningPreview(run) ?? projectedTimeline.at(-1) ?? emptyScene(run);
   const currentNodeId = projectedCurrentScene.rawNodeId ?? "";
-  const timeline = projectedTimeline.map(publicTimelineEntry);
+  const timeline = projectedTimeline
+    .filter((entry) => !sameRawNode(entry, projectedCurrentScene))
+    .map(publicTimelineEntry);
   const currentScene = publicTimelineEntry(projectedCurrentScene);
   const choices = choicesForCurrentNode(run, currentNodeId);
   const visibleChanges = visibleChangesForCurrentNode(run, currentNodeId);
   const header = buildHeader({ run, panelViews });
-  const sourceLifeNodeIds = timeline.map((entry) => entry.nodeId).filter(Boolean);
+  const sourceLifeNodeIds = projectedTimeline.map((entry) => publicTimelineEntry(entry).nodeId).filter(Boolean);
   const sourceEventIds = sourceEventIdsForLifeNodes(run);
   const base = {
     schemaVersion: PLAYER_VIEW_SCHEMA_VERSION,
@@ -138,6 +140,11 @@ function buildTimeline(panelViews) {
 function publicTimelineEntry(entry = {}) {
   const { rawNodeId, ...publicEntry } = entry;
   return publicEntry;
+}
+
+function sameRawNode(left = {}, right = {}) {
+  if (left.rawNodeId && right.rawNodeId) return left.rawNodeId === right.rawNodeId;
+  return left.nodeId && right.nodeId && left.nodeId === right.nodeId;
 }
 
 function choicesForCurrentNode(run, nodeId) {

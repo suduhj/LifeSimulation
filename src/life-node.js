@@ -1,5 +1,5 @@
 import { attributeRealityContractFor } from "./attribute-reality-contract.js";
-import { validateLifeNode } from "./life-node-validator.js";
+import { LIFE_NODE_FORBIDDEN_TEMPLATE_PHRASES, validateLifeNode } from "./life-node-validator.js";
 import { resolveWorldOrigin } from "./world-origin-resolver.js";
 
 export const LIFE_NODE_SCHEMA_VERSION = "mvp.life_node.v1";
@@ -217,26 +217,30 @@ function storyAssetBudgetsFor({ observableScene, response }) {
 }
 
 function paragraphsForResponse({ response, visibleContract, nodeType, age, observableScene }) {
-  if (nodeType === "annual_event") return annualParagraphs({ visibleContract, observableScene, age });
   const body = stripTitleFromBody(response?.playerText?.body ?? "", age);
-  const paragraphs = String(body)
-    .split(/\n{2,}|\r?\n/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
+  const paragraphs = paragraphsFromBody(body);
+  if (nodeType === "annual_event") {
+    if (
+      paragraphs.length
+      && !containsTemplatePhrase(paragraphs.join("\n"))
+      && annualBodyMatchesScene({ body: paragraphs.join("\n"), observableScene, visibleContract })
+    ) {
+      return paragraphs;
+    }
+    return annualParagraphs({ visibleContract, observableScene, age });
+  }
   if (paragraphs.length) return paragraphs;
   if (nodeType === "action_resolution") return ["你的选择已经落下，身边的人和接下来的日子因此出现了新的变化。"];
   if (nodeType === "ending") return ["这一段人生走到尾声，留下的结果被系统记录下来。"];
-  return [`这一年真正改变的是：${visibleContract.requiredLifeDelta || "身边生活出现了新的安排"}`];
+  return [fallbackAnnualParagraph({ visibleContract, observableScene, age })];
 }
 
 function annualParagraphs({ visibleContract, observableScene, age }) {
-  const requiredDelta = visibleContract?.requiredLifeDelta || observableScene?.mainScene?.requiredVisibleDelta || "身边生活出现了新的安排";
-  const openingBeat = observableScene?.mainScene?.openingBeat || "";
-  const worldFlavor = observableScene?.worldFlavor?.text || observableScene?.worldFlavor?.element || "";
-  const first = `${age}岁这一年，${requiredDelta}。${openingBeat}`.trim();
-  const second = worldFlavor
-    ? `这件事首先改变的是你的日常节奏，${worldFlavor}只在旁边添了一层世界气息，没有盖过今年真正的人生变化。`
-    : "这件事首先改变的是你的日常节奏，也让身边人对你的安排和目光出现了新的方向。";
+  const openingBeat = sanitizeNarrativeSentence(observableScene?.mainScene?.openingBeat);
+  const first = openingBeat
+    ? `${age}岁这一年，${openingBeat}`
+    : fallbackAnnualParagraph({ visibleContract, observableScene, age });
+  const second = annualFollowupParagraph(visibleContract?.mainHumanDomain ?? observableScene?.mainScene?.domain);
   return [first, second].filter(Boolean);
 }
 
@@ -250,32 +254,39 @@ function choicesForResponse(response = {}) {
 }
 
 function fallbackLifeNode({ candidate, validation }) {
-  const lifeDelta = candidate.visibleContract?.requiredLifeDelta || "身边生活出现了新的安排";
   const paragraphs = candidate.nodeType === "action_resolution"
     ? ["你的选择被记录下来，眼下的生活因此出现了新的后续。"]
-    : [`这一年，${lifeDelta}。`];
+    : [fallbackAnnualParagraph({
+      visibleContract: candidate.visibleContract,
+      observableScene: undefined,
+      age: candidate.age,
+    })];
   return {
     ...candidate,
     paragraphs,
-    choices: sanitizeChoices(candidate.choices),
-    visibleChanges: sanitizeVisibleChanges(candidate.visibleChanges),
+    choices: sanitizeChoices(candidate.choices, candidate.storyAssetBudgets),
+    visibleChanges: sanitizeVisibleChanges(candidate.visibleChanges, candidate.storyAssetBudgets),
     internalValidationErrors: validation.errors,
   };
 }
 
-function sanitizeChoices(choices = []) {
+function sanitizeChoices(choices = [], storyAssetBudgets = {}) {
+  const signals = budgetSignals(storyAssetBudgets);
   return (choices ?? []).map((choice, index) => ({
     id: choice.id ?? `choice_${index + 1}`,
-    text: choice.text || "先稳住眼下的新变化，再观察身边人的反应。",
+    text: isUnsafePlayerLine(choice.text, signals)
+      ? fallbackChoiceText(index)
+      : choice.text || fallbackChoiceText(index),
     riskLabel: choice.riskLabel ?? "unknown",
     fuzzySuccessLabel: choice.fuzzySuccessLabel ?? "",
   }));
 }
 
-function sanitizeVisibleChanges(changes = []) {
+function sanitizeVisibleChanges(changes = [], storyAssetBudgets = {}) {
+  const signals = budgetSignals(storyAssetBudgets);
   return (Array.isArray(changes) ? changes : []).filter((change) => {
     const text = typeof change === "string" ? change : change?.text;
-    return !/\b[a-z][a-z0-9]*_[a-z0-9_]+\b/i.test(String(text ?? ""));
+    return !isUnsafePlayerLine(text, signals);
   });
 }
 
@@ -283,6 +294,102 @@ function stripTitleFromBody(body, age) {
   const text = String(body ?? "").trim();
   if (!text) return "";
   return text.replace(new RegExp(`^\\s*${age}\\s*岁\\s*[:：][^\\n]+\\n?`), "").trim();
+}
+
+function paragraphsFromBody(body) {
+  return String(body ?? "")
+    .split(/\n{2,}|\r?\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+}
+
+function containsTemplatePhrase(text) {
+  return LIFE_NODE_FORBIDDEN_TEMPLATE_PHRASES.some((phrase) => String(text ?? "").includes(phrase));
+}
+
+function annualBodyMatchesScene({ body, observableScene, visibleContract }) {
+  if (!observableScene) return true;
+  const text = String(body ?? "");
+  const anchors = [
+    observableScene?.mainScene?.openingBeat,
+    observableScene?.mainScene?.requiredVisibleDelta,
+    visibleContract?.requiredLifeDelta,
+  ].flatMap(textAnchors);
+  return anchors.some((anchor) => anchor && text.includes(anchor));
+}
+
+function textAnchors(value) {
+  const text = String(value ?? "").trim();
+  if (!text) return [];
+  const cleaned = text.replace(/[，。；、,.!?！？;:：]/g, " ");
+  const words = cleaned.split(/\s+/).map((word) => word.trim()).filter((word) => word.length >= 4);
+  return [
+    text.slice(0, Math.min(14, text.length)),
+    ...words.slice(0, 4),
+  ].filter((anchor) => anchor.length >= 4);
+}
+
+function sanitizeNarrativeSentence(value) {
+  const text = String(value ?? "").trim();
+  if (!text || containsTemplatePhrase(text)) return "";
+  return text.replace(/[。.!?！？]*$/, "。");
+}
+
+function fallbackAnnualParagraph({ visibleContract, age }) {
+  const domain = visibleContract?.mainHumanDomain;
+  const detail = annualDomainOpening(domain);
+  return `${age}岁这一年，${detail}`;
+}
+
+function annualFollowupParagraph(domain) {
+  return {
+    learning_path: "新的安排让你每天接触的人、书本和任务有了变化，家人也开始用更认真的眼光看待你的学习。",
+    mentor_attention: "那位大人不再只把你当成跟着跑的孩子，开始给你更具体的提醒，也观察你是否能稳定地回应。",
+    peer_relationship: "同龄人的态度不再和从前完全一样，你需要学着在玩伴、闲话和小小的试探之间拿捏分寸。",
+    household_responsibility: "家里的活计被重新分给你一部分，长辈看重的不只是你做得快不快，也看你能不能坚持。",
+    body_growth: "身体变化让家人重新衡量你的作息、饮食和能做的事，你也更清楚自己仍受年龄限制。",
+    health_or_care: "照护方式发生了细微调整，家人更在意你的睡眠、饮食和日常反应，而不是急着给异常下结论。",
+    external_attention: "旁人的目光比过去多了一些，你需要在被注意和保持平常之间找到新的距离。",
+    talent_subtle_manifestation: "细小异常只在日常里闪过，真正改变你生活的仍是身边人因此调整了对你的安排。",
+    family_boundary: "家里的规矩变得更清楚，你第一次意识到有些决定不是靠好奇就能越过去。",
+    village_social_life: "村里的闲话和来往改变了你能接触到的人，也让你更早学会分辨谁只是好奇，谁是真的关心。",
+  }[domain] ?? "身边的人开始调整对你的安排，你能接触到的日常范围也跟着改变。";
+}
+
+function annualDomainOpening(domain) {
+  return {
+    learning_path: "你的学习安排变得更具体，长辈把识字、记诵或手上练习排进了更稳定的日子里。",
+    mentor_attention: "一位可信的大人开始更认真地看待你，不再把你的反应全都当作孩童偶然。",
+    peer_relationship: "至少一个同龄人对你的态度发生了变化，平日相处不再完全像从前那样简单。",
+    household_responsibility: "家里交给你的日常责任变重了一点，你开始被要求把小事做得更稳。",
+    body_growth: "你的身体和精力出现了新的变化，家人也随之调整了对你的照看。",
+    health_or_care: "家人对你的照护方式发生了变化，睡眠、饮食和外出的规矩都被重新看了一遍。",
+    external_attention: "外人的目光开始更明显地落到你身上，家人因此变得比过去更谨慎。",
+    talent_subtle_manifestation: "你在日常里露出一点不寻常的反应，却仍被压在孩童生活能解释的范围内。",
+    family_boundary: "家里给你划出的边界变得更清楚，你第一次认真感到规矩会改变一个孩子每天能做什么。",
+    village_social_life: "村里的来往和闲话把你推到更多人眼前，你开始学着在熟人社会里安放自己。",
+  }[domain] ?? "身边的日常安排出现了新的变化，你需要在其中找到自己的位置。";
+}
+
+function fallbackChoiceText(index) {
+  return [
+    "先照新的安排做下去，留心身边人的具体反应。",
+    "找一个可信的大人问清这次变化的缘由。",
+    "暂时不急着表态，观察这件事会怎样改变接下来的日子。",
+  ][index] ?? "先稳住眼下的新变化，再观察身边人的反应。";
+}
+
+function isUnsafePlayerLine(value, signals = []) {
+  const text = String(value ?? "");
+  if (/\b[a-z][a-z0-9]*_[a-z0-9_]+\b/i.test(text)) return true;
+  if (containsTemplatePhrase(text)) return true;
+  return signals.some((signal) => signal && text.includes(signal));
+}
+
+function budgetSignals(storyAssetBudgets = {}) {
+  return Object.values(storyAssetBudgets ?? {})
+    .flatMap((budget) => Array.isArray(budget?.textSignals) ? budget.textSignals : [])
+    .filter(Boolean);
 }
 
 function safeId(value) {
