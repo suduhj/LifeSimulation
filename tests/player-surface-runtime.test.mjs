@@ -109,6 +109,36 @@ describe("Dual-Surface Life Runtime", () => {
     assert.ok(projected.rejection.errors.length > 0);
     assert.doesNotMatch(JSON.stringify(projected.view), /mentor_attention|curriculumSlot|主轴|后山/);
   });
+  it("disables legacy eventHistory as an ordinary PlayerView timeline source", () => {
+    const worlds = loadMvpWorlds();
+    const run = createInitialRun({
+      worlds,
+      worldId: "cultivation",
+      seed: 2026062103,
+      playerProfile: { name: "Lin Lan", gender: "female", personality: "curious" },
+    });
+    run.player.age = 8;
+    run.worldState.storyState.lifeNodes = [];
+    run.eventHistory.push({
+      turnId: "old_annual_raw",
+      responseType: "life_event",
+      interactionMode: "playable_choices",
+      timeSpan: { ageStart: 7, ageEnd: 8, yearsElapsed: 1 },
+      playerText: {
+        title: "8 age legacy annual title",
+        body: "legacy safe looking annual text should not become ordinary timeline",
+      },
+      choices: [{ id: "choice_1", text: "take the old safe looking choice" }],
+      event: { eventId: "old_raw", sourceType: "ai_raw" },
+    });
+
+    const projected = projectPlayerSurface({ run });
+
+    assert.equal(projected.accepted, true);
+    assert.equal(projected.view.currentScene.nodeType, "none");
+    assert.deepEqual(projected.view.timeline, []);
+    assert.doesNotMatch(JSON.stringify(projected.view ?? {}), /legacy safe looking annual text|legacy annual title|old safe looking choice/);
+  });
 });
 
 function createStore(sessionId) {

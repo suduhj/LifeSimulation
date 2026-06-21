@@ -7,6 +7,8 @@ import {
   buildAnnualFactPackage,
   buildNextEventContract,
   createInitialRun,
+  createPlaySession,
+  handlePlayerInput,
   loadMvpWorlds,
   replayRun,
   validateStoryContract,
@@ -67,6 +69,88 @@ describe("Annual Year Tick v2", () => {
     assert.ok(new Set(slots).size >= 4, `expected at least four annual life slots, got ${slots.join(",")}`);
     for (let index = 1; index < slots.length; index += 1) {
       assert.notEqual(slots[index], slots[index - 1]);
+    }
+  });
+
+  it("records curriculum, topic ledger, annual agenda, and annual LifeNode through the real opening-to-play path", () => {
+    const worlds = loadMvpWorlds();
+    const run = createCultivationRun(worlds, 0);
+
+    const opening = createPlaySession({ run, worlds, seed: 2026062101, endingAge: 90 });
+    const session = handlePlayerInput({ session: opening, input: "start" });
+    const storyState = session.currentRun.worldState.storyState;
+    const currentAge = session.currentRun.player.age;
+
+    assert.ok(
+      storyState.curriculum.recentSlots.some((slot) => slot.age === currentAge),
+      "real first annual branch must record a curriculum slot for the displayed year",
+    );
+    assert.ok(
+      storyState.topicLedger.recentTopics.some((topic) => topic.age === currentAge),
+      "real first annual branch must record a topic profile for the displayed year",
+    );
+    assert.ok(
+      storyState.annualAgendas.some((agenda) => agenda.age === currentAge),
+      "real first annual branch must record an annual agenda for the displayed year",
+    );
+    assert.ok(
+      storyState.lifeNodes.some((node) => node.age === currentAge && node.nodeType === "annual_event"),
+      "ordinary timeline must be backed by an annual LifeNode for the displayed year",
+    );
+    assert.ok(
+      session.currentRun.eventLog.events.some((event) => event.type === "story.curriculum_recorded"),
+      "curriculum must be persisted as a domain event",
+    );
+    assert.ok(
+      session.currentRun.eventLog.events.some((event) => event.type === "story.topic_recorded"),
+      "topic ledger must be persisted as a domain event",
+    );
+    assert.equal(session.currentRun.worldState.playerSurface.currentView.currentScene.nodeType, "annual_event");
+  });
+
+  it("covers at least four curriculum slots through the real session path from ages 5 to 10", () => {
+    const worlds = loadMvpWorlds();
+    const run = createCultivationRun(worlds, 0);
+    run.player.age = 4;
+    run.eventHistory.push({
+      turnId: "pre_annual_entry",
+      responseType: "life_event",
+      interactionMode: "non_interactive",
+      timeSpan: { ageStart: 0, ageEnd: 4, yearsElapsed: 4 },
+      playerText: { title: "pre annual entry", body: "pre annual entry" },
+      event: { eventId: "pre_annual_entry", sourceType: "test_setup" },
+    });
+    let session = createPlaySession({ run, worlds, seed: 2026062102, endingAge: 90 });
+
+    while (!session.ended && session.currentRun.player.age < 10) {
+      session = handlePlayerInput({ session, input: "1" });
+    }
+
+    const annualSlots = session.currentRun.worldState.storyState.curriculum.recentSlots
+      .filter((slot) => slot.age >= 5 && slot.age <= 10)
+      .map((slot) => slot.slot);
+
+    assert.ok(new Set(annualSlots).size >= 4, `real session path should cover at least four slots, got ${annualSlots.join(",")}`);
+    for (let index = 1; index < annualSlots.length; index += 1) {
+      assert.notEqual(annualSlots[index], annualSlots[index - 1], "real session path must not repeat the same curriculum slot consecutively");
+    }
+  });
+
+  it("does not choose the same topic family, arena, or object focus as the recent annual primary topic", () => {
+    const worlds = loadMvpWorlds();
+    const run = createCultivationRun(worlds, 7);
+    const first = buildAnnualFactPackage({ run, worlds, seed: 2026062110 });
+    const repeatedRun = structuredClone(run);
+    repeatedRun.worldState.storyState.topicLedger = {
+      recentTopics: [{ ...first.topicProfile, age: first.age - 1 }],
+    };
+
+    const next = buildAnnualFactPackage({ run: repeatedRun, worlds, seed: 2026062110 });
+
+    assert.notEqual(next.topicProfile.topicFamily, first.topicProfile.topicFamily);
+    assert.notEqual(next.topicProfile.arena, first.topicProfile.arena);
+    if (first.topicProfile.objectFocus !== "none") {
+      assert.notEqual(next.topicProfile.objectFocus, first.topicProfile.objectFocus);
     }
   });
 

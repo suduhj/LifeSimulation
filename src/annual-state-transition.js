@@ -4,7 +4,13 @@ import {
   ensureStoryState,
   selectStoryAxes,
 } from "./story-state.js";
-import { curriculumSignalsForSlot, selectCurriculumSlot } from "./life-curriculum.js";
+import {
+  CHILDHOOD_CURRICULUM_SLOTS,
+  curriculumLifeStageForAge,
+  curriculumSignalsForSlot,
+  requiredHumanDeltaForSlot,
+  selectCurriculumSlot,
+} from "./life-curriculum.js";
 import { selectExperienceIntent } from "./player-experience-director.js";
 import { assetRoleMustNotInclude, assetRolesFromTopicProfile } from "./story-asset-lifecycle.js";
 import { buildTopicProfile, forbiddenTopicProfiles } from "./topic-ledger.js";
@@ -65,22 +71,27 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
     consequencePressure: storyState.axes?.choiceConsequence?.level ?? 0,
   });
 
-  const primaryDelta = choosePrimaryDelta({
+  const plannedAnnualFocus = selectAnnualFocus({
     run,
     age,
     facts,
     threads,
     forbiddenEventShapes,
     seed,
-    curriculumSlot: curriculumPlan.curriculumSlot,
+    curriculumPlan,
+    topicLedger: storyState.topicLedger,
   });
+  const effectiveCurriculumPlan = plannedAnnualFocus.curriculumPlan;
+  const primaryDelta = plannedAnnualFocus.primaryDelta;
+  const topicProfile = plannedAnnualFocus.topicProfile;
+  const forbiddenTopics = plannedAnnualFocus.forbiddenTopics;
 
   const backgroundThreads = chooseBackgroundThreads({ threads, facts, primaryDelta });
-  const requiredStateChanges = requiredStateChangesFor(primaryDelta, age, curriculumPlan.curriculumSlot);
+  const requiredStateChanges = requiredStateChangesFor(primaryDelta, age, effectiveCurriculumPlan.curriculumSlot);
   const requiredTextSignals = [
     ...requiredTextSignalsFor(primaryDelta),
-    curriculumPlan.requiredHumanDelta,
-    ...curriculumSignalsForSlot(curriculumPlan.curriculumSlot).slice(0, 3),
+    effectiveCurriculumPlan.requiredHumanDelta,
+    ...curriculumSignalsForSlot(effectiveCurriculumPlan.curriculumSlot).slice(0, 3),
   ].filter(Boolean);
   const hasRepeatedShape = forbiddenEventShapes.length > 0;
   const hasInstitutionObligation = primaryDelta.domain === "institution";
@@ -88,17 +99,6 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
     preferredAxis: axisPreferenceFor(primaryDelta.domain),
     age,
     seed,
-  });
-  const topicProfile = buildTopicProfile({
-    age,
-    worldId: run?.worldId,
-    curriculumSlot: curriculumPlan.curriculumSlot,
-    primaryDelta,
-  });
-  const forbiddenTopics = forbiddenTopicProfiles({
-    topicLedger: storyState.topicLedger,
-    age,
-    candidate: topicProfile,
   });
   const assetRoles = assetRolesFromTopicProfile({
     assetLedger: storyState.assetLedger,
@@ -121,7 +121,7 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
   });
   const annualAgenda = buildAnnualAgenda({
     age,
-    curriculumPlan,
+    curriculumPlan: effectiveCurriculumPlan,
     primaryDelta,
     selectedAxes,
     topicProfile,
@@ -133,9 +133,9 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
   return {
     schemaVersion: ANNUAL_FACT_PACKAGE_SCHEMA_VERSION,
     age,
-    lifeStage: curriculumPlan.lifeStage,
-    curriculumSlot: curriculumPlan.curriculumSlot,
-    requiredHumanDelta: curriculumPlan.requiredHumanDelta,
+    lifeStage: effectiveCurriculumPlan.lifeStage,
+    curriculumSlot: effectiveCurriculumPlan.curriculumSlot,
+    requiredHumanDelta: effectiveCurriculumPlan.requiredHumanDelta,
     threeLayerFocus,
     topicProfile,
     forbiddenTopicProfiles: forbiddenTopics,
@@ -275,6 +275,56 @@ function assetSpotlightsForAnnualPackage(annualFactPackage = {}) {
       role: annualFactPackage.assetRoles?.[assetId]?.role === "background_only" ? "background_echo" : "primary_driver",
       source: "annual_fact_package",
     }));
+}
+
+function selectAnnualFocus({ run, age, facts, threads, forbiddenEventShapes, seed, curriculumPlan, topicLedger } = {}) {
+  const plans = candidateCurriculumPlans(curriculumPlan, age);
+  let fallback;
+  for (const plan of plans) {
+    const primaryDelta = choosePrimaryDelta({
+      run,
+      age,
+      facts,
+      threads,
+      forbiddenEventShapes,
+      seed,
+      curriculumSlot: plan.curriculumSlot,
+    });
+    const topicProfile = buildTopicProfile({
+      age,
+      worldId: run?.worldId,
+      curriculumSlot: plan.curriculumSlot,
+      primaryDelta,
+    });
+    const forbiddenTopics = forbiddenTopicProfiles({
+      topicLedger,
+      age,
+      candidate: topicProfile,
+    });
+    const candidate = { curriculumPlan: plan, primaryDelta, topicProfile, forbiddenTopics };
+    fallback ??= candidate;
+    if (forbiddenTopics.length === 0) return candidate;
+  }
+  return fallback;
+}
+
+function candidateCurriculumPlans(preferredPlan = {}, age = 0) {
+  const seen = new Set();
+  const result = [];
+  for (const slot of [preferredPlan.curriculumSlot, ...CHILDHOOD_CURRICULUM_SLOTS]) {
+    if (!slot || seen.has(slot)) continue;
+    seen.add(slot);
+    result.push({
+      age,
+      lifeStage: preferredPlan.lifeStage ?? curriculumLifeStageForAge(age),
+      curriculumSlot: slot,
+      requiredHumanDelta: slot === preferredPlan.curriculumSlot
+        ? preferredPlan.requiredHumanDelta
+        : requiredHumanDeltaForSlot(slot),
+      coverageStatus: slot === preferredPlan.curriculumSlot ? preferredPlan.coverageStatus : "topic_fresh_alternative",
+    });
+  }
+  return result;
 }
 
 function choosePrimaryDelta({ run, age, facts, threads, forbiddenEventShapes, seed, curriculumSlot }) {

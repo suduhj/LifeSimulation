@@ -484,15 +484,15 @@ async function advanceOpeningAsync(session) {
 
 function normalizeFirstBranchEvent(event, run) {
   if (!event || event.responseType !== "life_event") return event;
-  const age = Number(run?.player?.age ?? event.timeSpan?.ageStart ?? 0);
+  const age = Number(event.timeSpan?.ageEnd ?? run?.player?.age ?? event.timeSpan?.ageStart ?? 0);
   const normalized = structuredClone(event);
   normalized.timeSpan = {
     ...(normalized.timeSpan ?? {}),
-    ageStart: age,
+    ageStart: Number(run?.player?.age ?? event.timeSpan?.ageStart ?? age),
     ageEnd: age,
-    yearsElapsed: 0,
+    yearsElapsed: Math.max(0, age - Number(run?.player?.age ?? event.timeSpan?.ageStart ?? age)),
     pace: normalized.timeSpan?.pace ?? "scene_or_short_stage",
-    paceReasonKey: "first_branch_current_age",
+    paceReasonKey: "first_branch_annual_tick",
   };
   normalized.playerText = {
     ...(normalized.playerText ?? {}),
