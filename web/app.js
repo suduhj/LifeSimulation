@@ -570,8 +570,9 @@ async function advanceOpening() {
   });
   state.devLastValidation = null;
   if (state.lifeTimeline.length === 0) {
-    state.lifeTimeline = buildOpeningTimeline(state.session);
+    state.lifeTimeline = [];
   }
+  syncTimelineFromPlayerSurface();
   renderSession();
   showStep("life");
   toast("第一个人生分岔已经出现。");
@@ -827,8 +828,8 @@ function renderSession() {
   const session = state.session;
   if (!session) return;
   const opening = isOpeningPreview(session);
-  const contract = safePlayerContract(session);
-  els.aiStatus.textContent = aiModeLabel(session.aiMode);
+  const surface = safePlayerSurface(session);
+  els.aiStatus.textContent = aiModeLabel(session.aiMode ?? els.aiMode?.value);
   els.saveButton.disabled = false;
   els.freeformButton.disabled = opening || session.ended || session.pendingFreeformConfirmation || state.loading;
   renderResolution();
@@ -839,29 +840,29 @@ function renderSession() {
     els.freeformInput.disabled = true;
   } else {
     if (els.eventCard) els.eventCard.hidden = false;
-    renderEventFromPlayerContract(contract, session);
+    renderEventFromPlayerSurface(surface, session);
   }
-  renderRunFromPlayerContract(contract, session.run);
+  renderRunFromPlayerSurface(surface, session.run);
   renderTimeline();
   renderLoading();
   renderDevPanel();
 }
 
-function safePlayerContract(session = state.session) {
-  const contract = session && session.playerContract;
-  if (isPlayerContractSafe(contract)) return contract;
-  return playerContractFallback(session);
+function safePlayerSurface(session = state.session) {
+  const surface = session && session.playerView;
+  if (isPlayerSurfaceSafe(surface)) return surface;
+  return playerSurfaceFallback(session);
 }
 
-function isPlayerContractSafe(contract) {
-  if (!contract || contract.schemaVersion !== "mvp.player_contract.v1") return false;
-  const text = JSON.stringify(contract);
+function isPlayerSurfaceSafe(surface) {
+  if (!surface || surface.schemaVersion !== "mvp.player_view.v1") return false;
+  const text = JSON.stringify(surface);
   if (/"(?:currentEvent|eventHistory|playerText|statePatch|annualFactPackage|curriculumSlot|threeLayerFocus|debug|gmView|rawResponse)"/.test(text)) return false;
   if (/mentor_attention|curriculumSlot|threeLayerFocus|annualFactPackage|人生课程|背景回响|主轴|副轴|旧线索/.test(text)) return false;
   return true;
 }
 
-function playerContractFallback(session = state.session) {
+function playerSurfaceFallback(session = state.session) {
   const run = session?.run ?? {};
   const panelViews = currentPanelViews(session);
   const main = panelViews?.main ?? {};
@@ -869,7 +870,10 @@ function playerContractFallback(session = state.session) {
   const world = main.world?.label ?? worldLabel(run.worldId);
   const name = main.character?.name ?? run.player?.name ?? "";
   return {
-    schemaVersion: "mvp.player_contract.v1",
+    schemaVersion: "mvp.player_view.v1",
+    viewId: "safe_player_surface_fallback",
+    sourceLifeNodeIds: [],
+    sourceEventIds: [],
     header: {
       title: [name, `${age} 岁`, world].filter(Boolean).join(" · "),
       characterName: name,
@@ -893,6 +897,8 @@ function playerContractFallback(session = state.session) {
       story: { timeline: panelViews?.story?.timeline ?? [] },
     },
     visibleChanges: [],
+    generatedAtTurn: 0,
+    safetyHash: "fallback",
   };
 }
 
@@ -970,6 +976,10 @@ function renderDevDebugInfo() {
 }
 
 function isOpeningPreview(session) {
+  if (session?.playerView) {
+    return session.playerView.currentScene?.nodeType === "opening_year"
+      && (!Array.isArray(session.playerView.choices) || session.playerView.choices.length === 0);
+  }
   return session?.openingPhase === "background" || session?.inputRequired === "opening_continue" || session?.currentEvent?.event?.sourceType === "opening_sequence";
 }
 
@@ -978,6 +988,17 @@ function renderFatePreview(session) {
   const opening = isOpeningPreview(session);
   els.fatePreviewPanel.hidden = !opening;
   if (!opening) return;
+
+  if (session?.playerView && !session.run) {
+    const surface = safePlayerSurface(session);
+    const header = surface.header ?? {};
+    els.fatePreviewMeta.textContent = [header.characterName, header.world].filter(Boolean).join(" · ");
+    els.fateTalents.innerHTML = "";
+    els.fateAttributes.innerHTML = renderSummaryAttributes(surface.panels?.attributes, {}, undefined, undefined);
+    els.fateStory.textContent = surface.currentScene?.body ?? "";
+    els.beginLifeButton.disabled = state.loading || session.ended;
+    return;
+  }
 
   const run = session.run;
   const event = session.currentEvent;
@@ -994,41 +1015,14 @@ function renderFatePreview(session) {
   els.beginLifeButton.disabled = state.loading || session.ended;
 }
 
-function buildOpeningTimeline(session) {
-  if (!session?.currentEvent) return [];
-  const storedTimeline = session.run?.worldState?.opening?.earlyLifeTimeline;
-  const actionAge = Math.max(0, Number(session.run?.worldState?.opening?.firstActionAge ?? session.run?.player?.age ?? session.currentEvent?.timeSpan?.ageEnd ?? 0));
-  if (actionAge > 0) {
-    return Array.from({ length: actionAge }, (_, age) => {
-      const sourceEntry = Array.isArray(storedTimeline)
-        ? storedTimeline.find((entry) => Number(entry?.age) === age)
-        : undefined;
-      const body = sanitizeOpeningTimelineBody(sourceEntry?.body);
-      return {
-        kind: "opening",
-        age,
-        title: `${age} 岁：${openingTimelineTitleForAge(age, actionAge)}`,
-        body: body || openingTimelineBodyFallback(session, age, actionAge),
-      };
-    }).filter(isRenderableTimelineEntry);
-  }
-  const sections = parseOpeningSections(session.currentEvent.playerText?.body ?? "");
-  const fallbackBody = sections.earlyLife || openingTimelineFallback(session);
-  return splitOpeningBody(fallbackBody, session.currentEvent.timeSpan).map((item) => ({
-    kind: "opening",
-    age: item.age,
-    title: item.title,
-    body: item.body,
-  }));
+function debugOnlyLegacyOpeningTimeline(session) {
+  throw new Error("Legacy opening timeline fallback is debug-only and unavailable to ordinary player UI.");
 }
 
 function buildTimelineFromLoadedSession(session) {
   const entries = [];
-  if (!isOpeningPreview(session)) {
-    entries.push(...buildOpeningTimeline(session));
-  }
-  const contract = safePlayerContract(session);
-  const storyTimeline = contract?.timeline?.length ? contract.timeline : currentPanelViews(session)?.story?.timeline ?? [];
+  const surface = safePlayerSurface(session);
+  const storyTimeline = surface?.timeline?.length ? surface.timeline : currentPanelViews(session)?.story?.timeline ?? [];
   for (const item of storyTimeline) {
     const entry = {
       kind: item.kind ?? "event",
@@ -1042,7 +1036,7 @@ function buildTimelineFromLoadedSession(session) {
       entries.push(entry);
     }
   }
-  const currentEntry = timelineEntryFromPlayerContract(contract, "event");
+  const currentEntry = timelineEntryFromPlayerSurface(surface, "event");
   if (isRenderableTimelineEntry(currentEntry)) {
     entries.push(currentEntry);
   }
@@ -1051,6 +1045,10 @@ function buildTimelineFromLoadedSession(session) {
 
 function appendResolutionAndEvent() {
   if (!state.session) return;
+  if (state.session.playerView && !state.session.resolution) {
+    syncTimelineFromPlayerSurface();
+    return;
+  }
   mergeResolutionIntoLatestTimelineEntry(state.session.resolution);
   if (state.session.ended && state.session.currentEvent) {
     appendTimelineEvent(state.session.currentEvent, state.session.ended ? "ending" : "event");
@@ -1093,7 +1091,7 @@ function mergeVisibleChanges(existing = [], next = []) {
 
 function appendCurrentEventToTimeline() {
   if (!state.session || isOpeningPreview(state.session)) return;
-  appendTimelineEventFromPlayerContract(safePlayerContract(state.session), "event");
+  appendTimelineEventFromPlayerSurface(safePlayerSurface(state.session), "event");
 }
 
 function appendTimelineEvent(event, kind = "event") {
@@ -1103,10 +1101,26 @@ function appendTimelineEvent(event, kind = "event") {
   state.lifeTimeline.push(entry);
 }
 
-function appendTimelineEventFromPlayerContract(contract, kind = "event") {
-  const entry = timelineEntryFromPlayerContract(contract, kind);
+function appendTimelineEventFromPlayerSurface(surface, kind = "event") {
+  const entry = timelineEntryFromPlayerSurface(surface, kind);
   if (!isRenderableTimelineEntry(entry) || hasTimelineEntry(entry)) return;
   state.lifeTimeline.push(entry);
+}
+
+function syncTimelineFromPlayerSurface(session = state.session) {
+  const surface = safePlayerSurface(session);
+  const entries = Array.isArray(surface?.timeline) ? surface.timeline : [];
+  for (const item of entries) {
+    const entry = {
+      kind: item.kind ?? item.nodeType ?? "event",
+      nodeType: item.nodeType,
+      nodeId: item.nodeId,
+      age: item.age,
+      body: item.body ?? "",
+      changes: item.changes ?? [],
+    };
+    if (isRenderableTimelineEntry(entry) && !hasTimelineEntry(entry)) state.lifeTimeline.push(entry);
+  }
 }
 
 function hasTimelineEntry(entry) {
@@ -1133,15 +1147,15 @@ function canonicalTimelineEntryFromEvent(event, kind) {
   };
 }
 
-function timelineEntryFromPlayerContract(contract, kind = "event") {
-  const scene = contract?.currentScene ?? {};
+function timelineEntryFromPlayerSurface(surface, kind = "event") {
+  const scene = surface?.currentScene ?? {};
   return {
     kind,
     nodeType: scene.nodeType ?? "annual_event",
     turnId: `${kind}_${scene.age ?? "current"}_${scene.nodeType ?? "scene"}`,
     age: scene.age,
     body: scene.body ?? "",
-    changes: contract?.visibleChanges ?? [],
+    changes: surface?.visibleChanges ?? [],
   };
 }
 
@@ -1270,7 +1284,7 @@ function sanitizeOpeningTimelineBody(body) {
   return text;
 }
 
-function openingTimelineTitleForAge(age, actionAge) {
+function legacyOpeningTitleForAgeForDebug(age, actionAge) {
   if (age === 0) return "出生底色";
   if (age === 1) return "依附与感知";
   if (age === 2) return "牙牙学语";
@@ -1281,7 +1295,7 @@ function openingTimelineTitleForAge(age, actionAge) {
   return "缓慢成长";
 }
 
-function openingTimelineBodyFallback(session, age, actionAge) {
+function legacyOpeningBodyFallbackForDebug(session, age, actionAge) {
   const worldId = session?.run?.worldId;
   if (age === 0) {
     if (worldId === "cultivation") return "你出生时还只是襁褓中的孩子，家人能看见的不是完整天赋，而是气息、体温、哭声和周围灵气的细小异样。长辈没有把这些当成定论，只在照看你时更加谨慎。";
@@ -1426,13 +1440,14 @@ function renderResolution() {
   els.resolutionChanges.innerHTML = "";
 }
 
-function renderEventFromPlayerContract(contract, session) {
-  const scene = contract?.currentScene ?? {};
-  const choices = Array.isArray(contract?.choices) ? contract.choices : [];
-  els.runMeta.textContent = contract?.header?.title || `${session.run.player.name}｜${worldLabel(session.run.worldId)}｜${session.run.player.age} 岁`;
-  const hasEventContent = hasText(scene.body) || hasVisibleChanges(contract?.visibleChanges) || choices.length > 0;
+function renderEventFromPlayerSurface(surface, session) {
+  const scene = surface?.currentScene ?? {};
+  const choices = Array.isArray(surface?.choices) ? surface.choices : [];
+  const header = surface?.header ?? {};
+  els.runMeta.textContent = header.title || [header.characterName, header.world, header.age !== undefined ? `${header.age} 岁` : ""].filter(Boolean).join("｜");
+  const hasEventContent = hasText(scene.body) || hasVisibleChanges(surface?.visibleChanges) || choices.length > 0;
   els.eventCard.hidden = !hasEventContent;
-  if (els.currentNodeAge) els.currentNodeAge.textContent = hasEventContent ? `${scene.age ?? session.run.player.age} 岁` : "当前";
+  if (els.currentNodeAge) els.currentNodeAge.textContent = hasEventContent ? `${scene.age ?? header.age ?? ""} 岁` : "当前";
   if (!hasEventContent) {
     els.eventTitle.textContent = "";
     els.eventBody.textContent = "";
@@ -1448,7 +1463,7 @@ function renderEventFromPlayerContract(contract, session) {
   // (merged into the corresponding lived timeline node). The event keeps its visibleChanges, so
   // once it scrolls into history as a past timeline node, the change is shown there.
   const isUnresolvedBranch = choices.length > 0;
-  els.visibleChanges.innerHTML = (!isUnresolvedBranch && hasVisibleChanges(contract?.visibleChanges)) ? renderVisibleChanges(contract.visibleChanges) : "";
+  els.visibleChanges.innerHTML = (!isUnresolvedBranch && hasVisibleChanges(surface?.visibleChanges)) ? renderVisibleChanges(surface.visibleChanges) : "";
   els.freeformInput.disabled = state.loading || session.ended || scene.freeformAllowed === false;
   els.freeformButton.disabled = state.loading || session.ended || session.pendingFreeformConfirmation || scene.freeformAllowed === false;
 
@@ -1485,42 +1500,42 @@ function renderEventFromPlayerContract(contract, session) {
 }
 
 function renderEvent(event, session) {
-  return renderEventFromPlayerContract(safePlayerContract(session), session);
+  return renderEventFromPlayerSurface(safePlayerSurface(session), session);
 }
 
-function renderRunFromPlayerContract(contract, run) {
-  const panelViews = contract?.panels ?? currentPanelViews();
+function renderRunFromPlayerSurface(surface, run = {}) {
+  const panelViews = surface?.panels ?? currentPanelViews();
   const mainPanel = panelViews?.main;
   const storyPanel = panelViews?.story;
   const lines = mainPanel?.summaryLines?.length
     ? [...mainPanel.summaryLines]
     : [
-      `${run.player.name} · ${run.player.age}岁 · ${worldLabel(run.worldId)}`,
+      surface?.header?.title ?? "",
     ];
 
-  if (run.ending?.completed) {
+  if (run?.ending?.completed) {
     lines.push(`人生结局：${run.ending.name ?? "已结算"}｜总评 ${run.ending.score ?? run.score ?? 0}`);
   }
   void storyPanel;
 
-  const talentPositionLine = renderTalentPositionLine(run.player.talents ?? [], run.worldId);
+  const talentPositionLine = run?.player ? renderTalentPositionLine(run.player.talents ?? [], run.worldId) : "";
   els.runSummary.innerHTML = [
     ...lines.map((line) => `<div class="summary-line">${escapeHtml(line)}</div>`),
     talentPositionLine ? `<div class="summary-line">${escapeHtml(talentPositionLine)}</div>` : "",
-    renderSummaryTalents(run.player.talents ?? []),
-    renderSummaryAttributes(panelViews?.attributes, run.player.attributes, run.worldId, run.player.growthLedger),
-    `<div class="summary-line">${escapeHtml(renderNpcLine(run.importantNPCs ?? []))}</div>`,
-    `<div class="summary-line">${escapeHtml(renderFactionLine(run.factions ?? []))}</div>`,
+    run?.player ? renderSummaryTalents(run.player.talents ?? []) : "",
+    renderSummaryAttributes(panelViews?.attributes, run?.player?.attributes ?? {}, run?.worldId, run?.player?.growthLedger),
+    run?.importantNPCs ? `<div class="summary-line">${escapeHtml(renderNpcLine(run.importantNPCs ?? []))}</div>` : "",
+    run?.factions ? `<div class="summary-line">${escapeHtml(renderFactionLine(run.factions ?? []))}</div>` : "",
   ].join("");
 }
 
 function renderRun(run) {
-  return renderRunFromPlayerContract(safePlayerContract(), run);
+  return renderRunFromPlayerSurface(safePlayerSurface(), run);
 }
 
 function currentPanelViews(session) {
-  if (!session) return state.session?.panelViews ?? state.session?.run?.panelViews ?? {};
-  return session?.panelViews ?? session?.run?.panelViews ?? {};
+  if (!session) return state.session?.playerView?.panels ?? state.session?.panelViews ?? state.session?.run?.panelViews ?? {};
+  return session?.playerView?.panels ?? session?.panelViews ?? session?.run?.panelViews ?? {};
 }
 
 function renderVisibleChanges(changes = []) {

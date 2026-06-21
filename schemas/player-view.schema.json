@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lifesimulation.local/schemas/player-view.schema.json",
+  "title": "PlayerView",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "viewId",
+    "sourceLifeNodeIds",
+    "sourceEventIds",
+    "header",
+    "currentScene",
+    "timeline",
+    "choices",
+    "panels",
+    "visibleChanges",
+    "generatedAtTurn",
+    "safetyHash"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "mvp.player_view.v1" },
+    "viewId": { "type": "string" },
+    "sourceLifeNodeIds": { "type": "array", "items": { "type": "string" } },
+    "sourceEventIds": { "type": "array", "items": { "type": "string" } },
+    "header": { "type": "object" },
+    "currentScene": { "type": "object" },
+    "timeline": { "type": "array" },
+    "choices": { "type": "array" },
+    "panels": { "type": "object" },
+    "visibleChanges": { "type": "array" },
+    "generatedAtTurn": { "type": "integer", "minimum": 0 },
+    "safetyHash": { "type": "string" }
+  }
+}

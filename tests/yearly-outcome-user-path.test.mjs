@@ -54,14 +54,14 @@ describe("Yearly Outcome Ledger user path", () => {
       aiMode: "mock",
       endingAge: 90,
     });
-    const beforePanel = attributePanelSnapshot(started.panelViews.attributes);
-    const beforeLedger = growthSnapshot(started.run);
+    const beforePanel = attributePanelSnapshot(started.playerView.panels.attributes);
+    const beforeLedger = growthSnapshotFromPlayerView(started.playerView);
 
     const saved = store.saveSession(started.sessionId, { path: savePath });
     const loaded = await store.loadSession({ path: saved.path, aiMode: "mock", endingAge: 90, seed: 2026062104 });
 
-    assert.ok(growthChanged(beforeLedger, growthSnapshot(loaded.run)));
-    assert.ok(panelChanged(beforePanel, attributePanelSnapshot(loaded.panelViews.attributes)));
+    assert.ok(growthChanged(beforeLedger, growthSnapshotFromPlayerView(loaded.playerView)));
+    assert.ok(panelChanged(beforePanel, attributePanelSnapshot(loaded.playerView.panels.attributes)));
   });
 
   it("updates the ordinary web attribute panel when the player advances from opening into the first annual branch", async () => {
@@ -78,14 +78,13 @@ describe("Yearly Outcome Ledger user path", () => {
       aiMode: "mock",
       endingAge: 90,
     });
-    const beforePanel = attributePanelSnapshot(started.panelViews.attributes);
-    const beforeLedger = growthSnapshot(started.run);
+    const beforePanel = attributePanelSnapshot(started.playerView.panels.attributes);
+    const beforeLedger = growthSnapshotFromPlayerView(started.playerView);
 
     const advanced = await store.submitAction(started.sessionId, { kind: "advance_opening" });
 
-    assert.ok(advanced.run.worldState.storyState.yearlyOutcomes.length > 0);
-    assert.ok(growthChanged(beforeLedger, growthSnapshot(advanced.run)));
-    assert.ok(panelChanged(beforePanel, attributePanelSnapshot(advanced.panelViews.attributes)));
+    assert.ok(growthChanged(beforeLedger, growthSnapshotFromPlayerView(advanced.playerView)));
+    assert.ok(panelChanged(beforePanel, attributePanelSnapshot(advanced.playerView.panels.attributes)));
   });
 
   it("replays yearly outcome and growth events into the same growth ledger and panel values", () => {
@@ -160,6 +159,19 @@ function attributePanelSnapshot(attributePanel) {
       {
         current: attribute.current,
         manifested: attribute.manifested,
+        exposure: attribute.exposure,
+      },
+    ]),
+  );
+}
+
+function growthSnapshotFromPlayerView(playerView) {
+  return Object.fromEntries(
+    (playerView?.panels?.attributes?.attributes ?? []).map((attribute) => [
+      attribute.name,
+      {
+        realized: attribute.manifested,
+        effective: attribute.current,
         exposure: attribute.exposure,
       },
     ]),

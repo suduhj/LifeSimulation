@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  assertPlayerContractSafe,
+  assertPlayerSurfaceSafe,
   createWebSessionStore,
   loadMvpWorlds,
 } from "../src/index.js";
 
-describe("web session PlayerContract serialization", () => {
-  it("serializes a safe playerContract for ordinary UI consumption", async () => {
+describe("web session Player Surface serialization", () => {
+  it("serializes only a safe PlayerView for ordinary UI consumption", async () => {
     const worlds = loadMvpWorlds();
     const store = createWebSessionStore({
       worlds,
@@ -34,9 +34,10 @@ describe("web session PlayerContract serialization", () => {
       endingAge: 90,
     });
 
-    assert.ok(session.playerContract, "session payload must include playerContract");
-    assertPlayerContractSafe(session.playerContract);
-    const serialized = JSON.stringify(session.playerContract);
-    assert.doesNotMatch(serialized, /currentEvent|eventHistory|playerText|statePatch|annualFactPackage|curriculumSlot|threeLayerFocus|debug|gmView/);
+    assert.deepEqual(Object.keys(session).sort(), ["playerView", "sessionId"].sort());
+    assert.ok(session.playerView, "ordinary session payload must include playerView");
+    assertPlayerSurfaceSafe(session.playerView);
+    const serialized = JSON.stringify(session);
+    assert.doesNotMatch(serialized, /currentEvent|eventHistory|playerText|statePatch|annualFactPackage|curriculumSlot|threeLayerFocus|debug|gmView|playerContract|rawContract|panelViews/);
   });
 });

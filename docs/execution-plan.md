@@ -128,6 +128,29 @@ At the end of each development session:
 4. List remaining todos.
 5. Update docs when standards or scope changed.
 
+## Spec-to-Proof Execution Gate
+
+For any non-trivial fix, architecture change, AI-output change, UI-visible behavior change, persistence/replay change, state synchronization change, or repeated bug, do not start implementation immediately.
+
+First produce a Proof Contract following `docs/spec-to-proof-operating-system.md` and wait until the user explicitly says:
+
+```text
+确认 Proof Contract，开始实现
+```
+
+Before that confirmation, the only allowed work is read-only inspection: read files, inspect logs, and run read-only commands. Do not modify files, add tests, format, generate, migrate, build, commit, push, or claim implementation has started.
+
+After confirmation, execute in this order:
+
+1. Write death tests first.
+2. Confirm those death tests fail before the fix.
+3. Replace the real Source -> Transform -> Sink.
+4. Delete, disable, migrate, isolate as debug-only, runtime reject, or test-block the old path.
+5. Verify the actual acceptance entry point: UI, API, CLI, saved JSON, replay, or reload.
+6. Deliver the Replacement Matrix, death tests, evidence package, modified files, actual user-entry verification, and unhandled items.
+
+If the old Source -> Transform -> Sink cannot be identified, stop and report the gap instead of implementing a speculative fix.
+
 ## GitHub PR Workflow Rule
 
 Feature work should land through branches and pull requests, not direct pushes to `main`.

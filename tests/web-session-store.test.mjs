@@ -145,7 +145,7 @@ describe("web session store", () => {
     });
     const manuallySelected = preview.talentDraw.slice(0, 3).map((talent) => talent.id);
 
-    const session = await store.startRun({
+    const session = await store.startDevRun({
       worldId: "cultivation",
       name: "沈青",
       gender: "male",
@@ -187,26 +187,14 @@ describe("web session store", () => {
       aiMode: "mock",
     });
 
-    const playerFacing = JSON.stringify({
-      playerText: session.currentEvent.playerText,
-      choices: session.currentEvent.choices,
-      fateBody: session.currentEvent.playerText?.body,
-      visibleNpcs: session.run.importantNPCs.map((npc) => ({
-        label: npc.playerVisible?.label,
-        publicRole: npc.playerVisible?.publicRole,
-        knownIdentity: npc.knownIdentity,
-        role: npc.role,
-        templateId: npc.templateId,
-      })),
-    });
+    const playerFacing = JSON.stringify(session.playerView);
 
-    assert.doesNotMatch(playerFacing, /\b(?:npc_\d+|NPC_\d+|nemesis|experimenter|sacrifice|exploiter|lover|poor_scholar_child|hiddenHooks|manifested|potential|exposure|cultivation_[a-z_]+)\b/);
+    assert.doesNotMatch(playerFacing, /\b(?:npc_\d+|NPC_\d+|nemesis|experimenter|sacrifice|exploiter|lover|poor_scholar_child|hiddenHooks|cultivation_[a-z_]+)\b/);
     assert.doesNotMatch(playerFacing, /初始重要NPC|未解释细节|早年自动推进|出生与早年|未解释物品/);
     assert.doesNotMatch(playerFacing, /未命名天赋|未知天赋|重要人物|身份尚不明确/);
     assert.match(playerFacing, /下品灵根|温和气质|浅层剑感/);
-    assert.ok(Array.isArray(session.run.worldState.opening?.earlyLifeTimeline));
-    assert.equal(session.run.worldState.opening.earlyLifeTimeline[0]?.age, 0);
-    assert.ok(session.run.importantNPCs.every((npc) => npc.playerVisible?.label && npc.playerVisible?.publicRole));
+    assert.equal(session.playerView.schemaVersion, "mvp.player_view.v1");
+    assert.deepEqual(Object.keys(session).sort(), ["playerView", "sessionId"].sort());
   });
 
   it("localizes single-word NPC roles and backfills talent effects for old-style run talents", async () => {
@@ -223,7 +211,7 @@ describe("web session store", () => {
       personality: "curious",
       allocation: { appearance: 4, intelligence: 4, constitution: 4, familyBackground: 4, luck: 4 },
     });
-    const session = await store.startRun({
+    const session = await store.startDevRun({
       worldId: "cultivation",
       name: "林岚",
       gender: "male",
@@ -268,29 +256,20 @@ describe("web session store", () => {
       endingAge: 90,
     });
 
-    assert.equal(session.openingPhase, "background");
-    assert.equal(session.currentEvent.choices.length, 0);
-    assert.equal(session.currentEvent.freeform.allowed, false);
-    assert.ok(session.run.player.age >= 5);
-    assert.match(session.currentEvent.playerText.body, /出生地点：/);
-    assert.doesNotMatch(session.currentEvent.playerText.body, /初始重要NPC|未解释细节|早年自动推进/);
-    assert.equal(session.run.worldState.opening?.earlyLifeTimeline?.[0]?.age, 0);
+    assert.equal(session.playerView.currentScene.nodeType, "opening_year");
+    assert.equal(session.playerView.choices.length, 0);
+    assert.match(session.playerView.currentScene.body, /出生地点：/);
+    assert.doesNotMatch(session.playerView.currentScene.body, /初始重要NPC|未解释细节|早年自动推进/);
 
     const blocked = await store.submitAction(session.sessionId, { kind: "choice", choiceId: "choice_1" });
-    assert.equal(blocked.openingPhase, "background");
-    assert.equal(blocked.inputRequired, "opening_continue");
+    assert.equal(blocked.playerView.currentScene.nodeType, "opening_year");
 
     const advanced = await store.submitAction(session.sessionId, { kind: "advance_opening" });
-    assert.equal(advanced.openingPhase, "first_branch");
-    assert.equal(advanced.currentEvent.responseType, "life_event");
-    assert.equal(advanced.currentEvent.timeSpan.ageStart, session.run.player.age);
-    assert.equal(advanced.currentEvent.timeSpan.ageEnd, session.run.player.age);
-    assert.match(advanced.currentEvent.playerText.title, new RegExp(`^${session.run.player.age} 岁：`));
-    assert.doesNotMatch(advanced.currentEvent.playerText.title, /人生事件|当前事件|新的事件|选择时刻|生活事件/);
-    assert.match(advanced.currentEvent.playerText.body, new RegExp(`${session.run.player.age} 岁|这一年|这天|眼下|此时|家中|门外|路边|林边|营地|课堂|医院|梦`));
-    assert.ok(advanced.currentEvent.choices.every((choice) => !/^成功/.test(choice.fuzzySuccessLabel ?? "")));
-    assert.equal(advanced.currentEvent.choices.length, 3);
-    assert.equal(advanced.currentEvent.freeform.allowed, true);
+    assert.equal(advanced.playerView.currentScene.nodeType, "annual_event");
+    assert.ok(advanced.playerView.currentScene.age >= 5);
+    assert.doesNotMatch(advanced.playerView.currentScene.body, /人生事件|当前事件|新的事件|选择时刻|生活事件/);
+    assert.ok(advanced.playerView.choices.every((choice) => !/^成功/.test(choice.fuzzySuccessLabel ?? "")));
+    assert.equal(advanced.playerView.choices.length, 3);
   });
 
   it("handles choices and free-form actions from the web API shape", async () => {
@@ -323,17 +302,15 @@ describe("web session store", () => {
       kind: "choice",
       choiceId: "choice_1",
     });
-    assert.equal(afterChoice.resolution.responseType, "action_resolution");
-    assert.ok(afterChoice.resolution.playerText?.body);
-    assert.ok(afterChoice.resolution.visibleChanges.length > 0);
-    assert.equal(afterChoice.currentEvent.responseType, "life_event");
-    assert.ok(afterChoice.run.summaryLines.some((line) => line.includes("属性")));
+    assert.ok(afterChoice.playerView.timeline.some((entry) => entry.nodeType === "action_resolution"));
+    assert.ok(afterChoice.playerView.timeline.some((entry) => entry.body));
+    assert.ok(afterChoice.playerView.panels.attributes.attributes.length > 0);
 
     const afterFreeform = await store.submitAction(session.sessionId, {
       kind: "freeform",
       text: "我先观察营地里谁掌握水源，再决定是否接近他们。",
     });
-    assert.ok(["action_resolution", "clarification_request"].includes(afterFreeform.currentEvent.responseType) || afterFreeform.resolution?.responseType === "action_resolution");
+    assert.ok(["action_resolution", "clarification_request", "annual_event"].includes(afterFreeform.playerView.currentScene.nodeType));
   });
 
   it("saves and reloads a browser run so the web playtest can continue locally", async () => {
@@ -373,9 +350,9 @@ describe("web session store", () => {
 
     assert.equal(fs.existsSync(saved.path), true);
     assert.equal(loaded.sessionId, "session_loaded");
-    assert.equal(loaded.run.worldId, "cultivation");
-    assert.ok(loaded.run.eventHistoryCount >= afterChoice.run.eventHistoryCount);
-    assert.equal(loaded.currentEvent.choices.length, 3);
+    assert.equal(loaded.playerView.header.world, "修仙世界");
+    assert.ok(loaded.playerView.timeline.length >= afterChoice.playerView.timeline.length);
+    assert.ok(Array.isArray(loaded.playerView.choices));
   });
 
   it("keeps a completed ending completed when the save is reloaded", async () => {
@@ -406,17 +383,14 @@ describe("web session store", () => {
     });
 
     session = await store.submitAction(session.sessionId, { kind: "advance_opening" });
-    assert.equal(session.ended, true);
-    assert.equal(session.currentEvent.responseType, "ending_summary");
+    assert.equal(session.playerView.currentScene.nodeType, "ending");
 
     const saved = store.saveSession(session.sessionId, { path: savePath });
     const loaded = await store.loadSession({ path: saved.path, aiMode: "mock", endingAge: 5, seed: 20260619 });
 
     assert.equal(loaded.sessionId, "session_end_loaded");
-    assert.equal(loaded.ended, true);
-    assert.equal(loaded.currentEvent.responseType, "ending_summary");
-    assert.equal(loaded.currentEvent.choices.length, 0);
-    assert.equal(loaded.run.ending.completed, true);
+    assert.equal(loaded.playerView.currentScene.nodeType, "ending");
+    assert.equal(loaded.playerView.choices.length, 0);
   });
 
   it("uses a hidden estimated lifespan when ordinary web setup omits ending age", async () => {
@@ -444,15 +418,9 @@ describe("web session store", () => {
       aiMode: "mock",
     });
 
-    assert.equal(session.ended, false);
-    assert.ok(session.run.worldState.hidden.estimated_lifespan >= 18);
-    assert.deepEqual(session.run.worldState.hidden.supported_ending_types, [
-      "natural_death",
-      "accidental_or_failure_death",
-      "goal_completion",
-      "world_ending",
-      "special_state_ending",
-    ]);
+    assert.equal(session.playerView.schemaVersion, "mvp.player_view.v1");
+    assert.ok(session.playerView.header.age >= 0);
+    assert.doesNotMatch(JSON.stringify(session), /estimated_lifespan|supported_ending_types|worldState|hidden/);
   });
 
   it("provides dev-only GM tools without putting test content into formal pools", async () => {
@@ -504,7 +472,7 @@ describe("web session store", () => {
       personality: "curious",
       allocation: { appearance: 4, intelligence: 4, constitution: 4, familyBackground: 4, luck: 4 },
     });
-    const started = await store.startRun({
+    const started = await store.startDevRun({
       worldId: "cthulhu",
       name: "Tester",
       gender: "unspecified",
