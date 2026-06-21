@@ -12,7 +12,7 @@ import {
   selectCurriculumSlot,
 } from "./life-curriculum.js";
 import { selectExperienceIntent } from "./player-experience-director.js";
-import { assetRoleMustNotInclude, assetRolesFromTopicProfile } from "./story-asset-lifecycle.js";
+import { assetRoleMustNotInclude, assetRolesFromTopicProfile, storyAssetBudgetFromRoles } from "./story-asset-lifecycle.js";
 import { buildTopicProfile, forbiddenTopicProfiles } from "./topic-ledger.js";
 import { applyYearlyOutcomeToResponse, buildYearlyOutcome } from "./yearly-outcome.js";
 import { compileSceneObject } from "./scene-object-compiler.js";
@@ -106,6 +106,7 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
     backgroundThreads,
     age,
   });
+  const storyAssetBudget = storyAssetBudgetFromRoles(assetRoles);
   const experiencePlan = selectExperienceIntent({
     experience: storyState.experience,
     age,
@@ -128,6 +129,8 @@ export function buildAnnualFactPackage({ run, worlds, seed = 1 } = {}) {
     forbiddenTopics,
     threeLayerFocus,
     experiencePlan,
+    assetRoles,
+    storyAssetBudget,
   });
 
   return {
@@ -531,7 +534,18 @@ function buildThreeLayerFocus({ run, primaryDelta, backgroundThreads, curriculum
   };
 }
 
-function buildAnnualAgenda({ age, curriculumPlan, primaryDelta, selectedAxes, topicProfile, forbiddenTopics, threeLayerFocus, experiencePlan } = {}) {
+function buildAnnualAgenda({
+  age,
+  curriculumPlan,
+  primaryDelta,
+  selectedAxes,
+  topicProfile,
+  forbiddenTopics,
+  threeLayerFocus,
+  experiencePlan,
+  assetRoles,
+  storyAssetBudget,
+} = {}) {
   return {
     age,
     lifeStage: curriculumPlan.lifeStage,
@@ -545,6 +559,8 @@ function buildAnnualAgenda({ age, curriculumPlan, primaryDelta, selectedAxes, to
     forbiddenTopicFamilies: [...new Set(forbiddenTopics.map((topic) => topic.topicFamily).filter(Boolean))],
     experienceIntent: experiencePlan?.intent ?? "",
     threeLayerFocus,
+    assetRoles: structuredClone(assetRoles ?? {}),
+    storyAssetBudget: structuredClone(storyAssetBudget ?? {}),
   };
 }
 

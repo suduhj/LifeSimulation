@@ -116,17 +116,35 @@ export function evaluateAssetRoles({ assetLedger, age = 0, assets = [] } = {}) {
 }
 
 export function assetRolesFromTopicProfile({ assetLedger, topicProfile, backgroundThreads = [], age = 0 } = {}) {
+  const ledger = normalizeAssetLedger(assetLedger);
   const assetIds = unique([
     topicProfile?.objectFocus,
     topicProfile?.arena,
     topicProfile?.institutionFocus,
     ...backgroundThreads,
+    ...Object.keys(DEFAULT_ASSETS),
+    ...Object.keys(ledger.assets ?? {}),
     "jade_token",
     "back_mountain",
     "scripture_pavilion",
     "sect_mine",
   ].filter((item) => item && item !== "none"));
-  return evaluateAssetRoles({ assetLedger, age, assets: assetIds });
+  return evaluateAssetRoles({ assetLedger: ledger, age, assets: assetIds });
+}
+
+export function storyAssetBudgetFromRoles(assetRoles = {}) {
+  const budget = {};
+  for (const [assetId, role] of Object.entries(assetRoles ?? {})) {
+    if (!role || typeof role !== "object") continue;
+    budget[assetId] = {
+      roleThisYear: role.role === "background_only" ? "background_echo" : role.role ?? "eligible_supporting",
+      maxSentences: Number.isFinite(role.maxSentences) ? role.maxSentences : 1,
+      cannotOpenScene: role.cannotOpenScene !== false,
+      cannotDriveChoices: role.cannotDriveChoices !== false,
+      textSignals: unique(role.textSignals ?? []),
+    };
+  }
+  return budget;
 }
 
 export function assetRoleMustNotInclude(assetRoles = {}) {

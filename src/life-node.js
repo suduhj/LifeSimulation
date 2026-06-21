@@ -196,8 +196,10 @@ function storyAssetBudgetsFor({ observableScene, response }) {
     budgets[key] = {
       roleThisYear: echo.role ?? "background_echo",
       maxSentences: Number.isFinite(echo.maxSentences) ? echo.maxSentences : 1,
-      cannotOpenScene: echo.titleAllowed === false,
+      cannotOpenScene: echo.firstParagraphAllowed === false,
       cannotDriveChoices: echo.choiceDriverAllowed === false,
+      textSignals: Array.isArray(echo.textSignals) ? [...echo.textSignals] : [],
+      mainPressureAllowed: echo.mainPressureAllowed !== false,
     };
   }
   for (const [key, role] of Object.entries(response?.event?.assetRoles ?? {})) {
@@ -207,6 +209,8 @@ function storyAssetBudgetsFor({ observableScene, response }) {
       maxSentences: Number.isFinite(role?.maxSentences) ? role.maxSentences : budgets[safeId(key)]?.maxSentences ?? 1,
       cannotOpenScene: role?.cannotOpenScene ?? true,
       cannotDriveChoices: role?.cannotDriveChoices ?? true,
+      textSignals: Array.isArray(role?.textSignals) ? [...role.textSignals] : budgets[safeId(key)]?.textSignals ?? [],
+      mainPressureAllowed: role?.mainPressureAllowed !== false && budgets[safeId(key)]?.mainPressureAllowed !== false,
     };
   }
   return budgets;

@@ -1,152 +1,167 @@
-# Active Proof Contract: Annual Year Tick v2
+# Active Proof Contract: Story Asset Budget
 
 ## Status
 
 - Phase: Verification
 - User confirmed: yes
 - Confirmed at: 2026-06-21
-- Branch: `codex/annual-year-tick-v2-repair`
-- Latest user instruction: only Annual Year Tick v2; do not implement Yearly Outcome Ledger; do not implement old asset budget.
-- Note: `origin/main` was merged into this branch after PR creation to resolve conflicts. The active proof contract remains this Annual Year Tick v2 repair.
+- Branch: `codex/story-asset-budget-repair`
+- Latest user instruction: only Story Asset Budget; do not implement a new annual director, Yearly Outcome Ledger, opening variation, or attribute system changes.
 
 ## 1. Intent Lock
 
 - User-visible result that must change:
-  - From age 5 through 10, annual events must not repeatedly advance the same back mountain / jade / sect topic.
-  - Annual events must have a clear human-life main change.
-  - Ordinary PlayerView timeline must show annual LifeNodes, not raw AI playerText or eventHistory fallback.
+  - White deer, back mountain, jade token, booklet, mine, scripture pavilion, sect, spirit beast, and similar old assets cannot repeatedly take over yearly main events.
+  - Old adventure assets may appear only as budgeted background echoes.
+  - Choices must not keep driving the player back to old assets when the yearly curriculum is about a human-life change.
+  - Violating old-asset text must not enter ordinary `PlayerView.timeline`, `currentScene`, or `choices`.
 - Not the goal:
-  - Do not implement Yearly Outcome Ledger in this task.
-  - Do not implement the full old asset budget system in this task.
-  - Do not change the 0-6 opening variation system in this task.
-  - Do not redesign the attribute growth panel in this task.
+  - Do not implement a new annual director.
+  - Do not implement Yearly Outcome Ledger.
+  - Do not rewrite the 0-6 opening variation system.
+  - Do not redesign the attribute system or attribute panel.
+  - Do not rely on prompt wording alone.
 
 ## 2. Stage Lock
 
-- Current phase: Verification.
+- Current phase: Repair.
 - Normal in this phase:
-  - Death tests have been written and red/green verified.
-  - The real annual event generation path has been replaced.
-  - Old repeated-topic paths are test-blocked or runtime-rejected.
+  - Story Asset Lifecycle, AnnualFactPackage asset roles, Observable Scene, SceneComplianceValidator, LifeNode, and PlayerView already exist.
+  - The task is to make the asset budget authoritative on the real user path and prove old paths are blocked.
 - Actual bug:
-  - A new curriculum/topic module existing beside the old annual path is not enough.
-  - Annual events can still repeat if raw AI/mock playerText, stale topic paths, or eventHistory fallback can affect ordinary PlayerView timeline.
+  - `assetRoles` can remain advisory unless `AnnualAgenda`, validators, LifeNode validation, and PlayerView projection all enforce it.
+  - A polluted or unvalidated LifeNode can still carry old-asset text toward ordinary PlayerView unless `LifeNodeValidator` and Player Surface projection reject it.
+  - Prompt-only asset instructions are not sufficient proof.
 
 ## 3. Failure Lock
 
 - Current observable failure:
-  - Age 7+ annual events can feel like the same back mountain / jade / sect event repeating.
-  - Human-life yearly change is not guaranteed as the main event.
-  - Ordinary timeline must be proven to come from LifeNode / PlayerView, not raw fallback.
+  - Old assets can open the annual body, appear in multiple sentences, drive all choices, or become yearly pressure even when the curriculum slot is unrelated.
+  - Directly polluted LifeNodes may bypass response validators.
 - Success condition:
-  - Ages 5-10 cover at least four distinct life curriculum slots.
-  - The same curriculumSlot does not appear in consecutive annual years.
-  - The same topicFamily, arena, or objectFocus cannot consecutively dominate annual years.
-  - Annual event text and choices must satisfy the required human-life delta.
-  - Ordinary PlayerView timeline displays annual LifeNodes.
-  - Ordinary UI does not read AI raw playerText or eventHistory fallback.
+  - Old assets cannot appear in the first paragraph when budgeted as background-only.
+  - Old assets can appear in at most one body sentence when budgeted as a background echo.
+  - Old assets cannot drive choices.
+  - An asset with a recent `primary_driver` spotlight cannot become `primary_driver` again during cooldown.
+  - If the current `curriculumSlot` is not about that asset, the asset cannot become the main pressure.
+  - `LifeNodeValidator` rejects asset-budget violations.
+  - Ordinary `PlayerView` rejects or preserves a previous safe view instead of showing polluted budget violations.
 - Acceptance entry point:
-  - PlayerView snapshot.
-  - Ordinary web UI.
-  - eventLog replay / saved run JSON.
+  - `createPlaySession` / `handlePlayerInput`
+  - `applyAiResponseToRun`
+  - `projectPlayerSurface` / `buildPlayerViewSnapshot`
+  - ordinary web `playerView`
+  - eventLog replay / saved JSON
 
 ## 4. Path Lock
 
 - Old Source -> Transform -> Sink:
-  - `generateMockLifeEvent` or `aiProvider.generateLifeEvent`
-  - -> raw AI/mock `playerText`
-  - -> `applyAiResponseToRun`
-  - -> `patch-to-events`
+  - `storyState.assetLedger`, old facts, old threads, or recent topic profile
+  - -> `buildAnnualFactPackage()`
+  - -> `assetRoles` inside annual facts
+  - -> `compileSceneObject()` / `observableScene.backgroundEchoes`
+  - -> AI/mock `playerText` and `choices`
+  - -> partial `assertStoryContract()` / `validateSceneCompliance()`
+  - -> `buildLifeNodeFromResponse()`
   - -> `life.node_recorded`
+  - -> reducer stores `storyState.lifeNodes`
+  - -> `getStoryPanelView()`
+  - -> `buildPlayerViewSnapshot()`
+  - -> ordinary web timeline/current scene/choices.
+- Old dangerous bypass:
+  - Direct or replayed `life.node_recorded`
   - -> `storyState.lifeNodes`
-  - -> `getStoryPanelView`
-  - -> `buildPlayerViewSnapshot`
-  - -> ordinary web timeline.
-- Old dangerous fallback:
-  - `getStoryPanelView()` could fall back to `run.eventHistory` when `storyState.lifeNodes` was empty.
-  - That path could let raw events reach ordinary PlayerView timeline.
+  - -> `LifeNodeValidator` does not check `storyAssetBudgets`
+  - -> PlayerView can display old-asset budget violations.
 - New Source -> Transform -> Sink:
-  - `buildNextEventContract`
-  - -> `buildAnnualFactPackage`
-  - -> `selectCurriculumSlot`
-  - -> `buildTopicProfile` / `forbiddenTopicProfiles`
-  - -> `threeLayerFocus`
-  - -> `AnnualAgenda`
-  - -> AI/mock renderer bound by contract
-  - -> `assertStoryContract`
-  - -> `applyAnnualFactPackageToResponse`
-  - -> DomainEvents: `story.curriculum_recorded`, `story.topic_recorded`, `story.annual_agenda_recorded`, `life.node_recorded`
+  - StoryAssetLifecycle
+  - -> StoryAssetBudget
+  - -> `AnnualFactPackage.assetRoles`
+  - -> `AnnualAgenda.assetRoles` / `storyAssetBudget`
+  - -> sanitized AI prompt with player-visible budget constraints
+  - -> AI/mock response
+  - -> StoryContractValidator + SceneComplianceValidator runtime reject
+  - -> LifeNodeValidator budget check
+  - -> `life.node_recorded`
   - -> reducer
   - -> `storyState.lifeNodes`
-  - -> `getStoryPanelView`
-  - -> `buildPlayerViewSnapshot`
-  - -> ordinary web timeline.
+  - -> Player Surface validation
+  - -> ordinary PlayerView timeline/current scene/choices.
 - Real user entry point:
-  - `createPlaySession` / `createPlaySessionAsync`
-  - `advanceOpening`
-  - `resolvePlayerAction`
-  - web UI consuming PlayerView.
+  - `createPlaySession()`
+  - `createPlaySessionAsync()`
+  - `advanceOpeningSync()` / `advanceOpeningAsync()`
+  - `handlePlayerInput()` / `handlePlayerInputAsync()`
+  - `createWebSessionStore().startRun()` / `submitAction()`
 
 ## 5. Authority Lock
 
 - Single correct authority:
-  - Annual topic and yearly human-life direction: AnnualFactPackage / AnnualAgenda.
-  - Ordinary player display: LifeNode -> PlayerView timeline.
+  - Old asset eligibility and yearly role: StoryAssetLifecycle / StoryAssetBudget.
+  - Annual contract carrier: AnnualAgenda asset budget fields.
+  - Player-visible admission: SceneComplianceValidator + LifeNodeValidator + Player Surface validation.
+  - Ordinary display: LifeNode -> PlayerView.
 - Old sources that must lose authority:
-  - Raw AI/mock `playerText`.
-  - `run.eventHistory` fallback for ordinary timeline.
-  - Stale jade/back mountain/sect threads as annual primary drivers.
-  - Prompt-only avoidance of repeated topics.
+  - AI raw `playerText`.
+  - AI raw `choices`.
+  - `eventHistory`.
+  - Prompt-only avoidance.
+  - Unvalidated `storyState.lifeNodes`.
+  - Old threads/facts directly turning an old asset into the yearly main pressure.
 
 ## 6. Replacement Lock
 
 | New or changed item | Old path replaced | Old path handling |
 | --- | --- | --- |
-| Contracted annual play-session branches | direct `generateMockLifeEvent` / provider raw life event | migrate + test-block |
-| Life Curriculum in annual package | AI/mock freely choosing annual theme | migrate + test-block |
-| Active Topic Ledger annual focus selection | repeated topic only detected after selection | migrate + test-block |
-| Three-Layer Focus | old consequence line stealing annual primary event | runtime reject + test-block |
-| AnnualAgenda contract | loose raw event generation | migrate + test-block |
-| `assertStoryContract` forbidden-topic checks | repeated forbidden topic entering timeline | runtime reject |
-| curriculum/topic/agenda domain events | temporary storyState-only tracking | migrate |
-| ordinary PlayerView timeline from LifeNodes | `eventHistory` raw fallback in ordinary player path | disable + test-block |
+| explicit StoryAssetBudget object | loose `assetRoles` without yearly contract authority | migrate |
+| `AnnualAgenda.assetRoles/storyAssetBudget` | annual agenda not carrying asset budget | migrate + test-block |
+| prompt-safe asset budget view | raw/internal asset budget fields in AI context | disable + test-block |
+| SceneCompliance budget death tests | prompt-only old-asset avoidance | runtime reject + test-block |
+| LifeNodeValidator budget checks | polluted LifeNodes accepted despite asset budget violations | runtime reject + test-block |
+| PlayerView polluted LifeNode rejection | old-asset violations reaching ordinary UI | runtime reject + test-block |
+| asset spotlight replay proof | temporary runtime-only cooldown | migrate + test-block |
 
 ## 7. Proof Lock
 
 | Goal | Proof method | Evidence |
 | --- | --- | --- |
-| Ages 5-10 cover at least four distinct curriculum slots | death test through real play/session path | `storyState.curriculum.recentSlots` |
-| Same curriculumSlot does not repeat consecutively | death test through real play/session path | `storyState.curriculum.recentSlots` |
-| Same topicFamily / arena / objectFocus cannot consecutively dominate | death test with seeded topicLedger and annual package selection | `topicProfile` changes |
-| Annual event has human-life main delta | story-contract tests and annual package tests | `requiredHumanDelta` / validator |
-| Ordinary timeline displays LifeNode | death test against PlayerView snapshot | PlayerView timeline `nodeType: annual_event` |
-| Raw eventHistory cannot affect ordinary PlayerView | death test with legacy eventHistory and no LifeNodes | PlayerView timeline empty/safe |
+| old assets cannot open first paragraph | death test with background-only asset in first paragraph | validator error |
+| old assets can appear at most one sentence | death test with two asset-bearing sentences | sentence budget error |
+| old assets cannot drive choices | death test with choices all centered on old asset | choice-driver error |
+| recently primary asset cannot be primary again | death test seeded asset ledger age N then annual package N+1 | `assetRoles` / budget role |
+| unrelated curriculum cannot use old asset as main pressure | death test with `learning_path` + old asset main pressure | contract/scene validation error |
+| LifeNodeValidator blocks budget violation | death test polluted LifeNode with `storyAssetBudgets` | `validateLifeNode().ok === false` |
+| polluted LifeNode cannot affect PlayerView | death test through `projectPlayerSurface()` | rejected view or previous safe view |
+| AI prompt is sanitized | death test serializing annual provider prompt | no raw budget ids/fields such as `assetRoles`, `primary_driver` |
 
 ## 8. Scope Lock
 
 - Allowed changes:
-  - `src/life-curriculum.js`
-  - `src/topic-ledger.js`
+  - `src/story-asset-lifecycle.js`
   - `src/annual-state-transition.js`
-  - `src/narrative-director.js`
+  - `src/observable-year-delta.js`
+  - `src/scene-object-compiler.js`
+  - `src/scene-compliance-validator.js`
   - `src/story-contract-validator.js`
-  - `src/selectors/story-panel-selector.js`
-  - `src/player-surface-projector.js`
-  - domain event/reducer code only where annual curriculum/topic/agenda/lifeNode persistence requires it
-  - tests for Annual Year Tick v2 and PlayerView timeline path
+  - `src/life-node-validator.js`
+  - `src/life-node.js`
+  - `src/player-surface-projector.js` or `src/player-surface-validator.js` only to block polluted LifeNodes from ordinary PlayerView
+  - domain event / reducer / story-state wiring only if required for asset budget replay
+  - tests for Story Asset Budget and PlayerView old-asset pollution
   - docs and dev log
 - Forbidden changes:
+  - New annual director.
   - Yearly Outcome Ledger.
-  - Attribute growth system.
-  - Full old asset budget system.
-  - Opening variation rewrite.
-  - Broad UI redesign.
-- Not handled in this task:
-  - Asset sentence budgets.
-  - Attribute panel changes.
   - 0-6 opening variation.
+  - Attribute growth/type system.
+  - Broad UI redesign.
+  - Direct merge to `main`.
+- Not handled in this task:
+  - New content pool writing.
+  - Full semantic 70/30 classifier.
+  - World-specific story expansion.
 - If a new issue is discovered:
-  - Record it as follow-up and do not expand this task unless the user explicitly confirms a new Proof Contract.
+  - Record it as follow-up and do not expand this task without a new confirmed Proof Contract.
 
 ## 9. Delivery Lock
 
@@ -161,21 +176,25 @@ Final response must include:
 
 ## Death Tests
 
-- [x] Ages 5-10 real play path covers at least four distinct curriculum slots.
-- [x] Consecutive annual years cannot use the same curriculumSlot.
-- [x] Seeded topicLedger blocks repeated topicFamily / arena / objectFocus dominance.
-- [x] Forbidden-topic AI/mock response is rejected before entering PlayerView timeline.
-- [x] Ordinary PlayerView timeline does not display legacy raw eventHistory fallback.
-- [x] Ordinary PlayerView timeline displays annual LifeNodes.
+- [x] recently primary old asset cannot become primary again during cooldown.
+- [x] AnnualAgenda carries asset budget fields.
+- [x] first paragraph old-asset violation is rejected.
+- [x] old asset exceeding one sentence is rejected.
+- [x] old asset choice-driver violation is rejected.
+- [x] unrelated curriculum + old asset main pressure is rejected.
+- [x] LifeNodeValidator rejects `storyAssetBudgets` violations.
+- [x] polluted LifeNode cannot reach ordinary PlayerView.
+- [x] annual provider prompt does not expose raw asset budget internals.
 
 ## Implementation Checklist
 
 - [x] Write death tests.
 - [x] Run death tests and capture RED evidence.
-- [x] Replace or block any old ordinary timeline fallback path found by the tests.
-- [x] Ensure real annual play path consumes AnnualFactPackage / AnnualAgenda.
-- [x] Ensure topic/curriculum records persist through DomainEvents and replay.
-- [x] Ensure validator runtime-rejects repeated forbidden topics and missing human-life delta.
+- [x] Make StoryAssetBudget explicit and carried by AnnualAgenda.
+- [x] Enforce budget in scene/story validators.
+- [x] Enforce budget in LifeNode validation.
+- [x] Ensure PlayerView rejects polluted LifeNode path.
+- [x] Sanitize prompt budget fields.
 - [x] Update docs and dev log.
 
 ## Evidence Checklist
