@@ -151,6 +151,7 @@ function backgroundEchoesFor(annualFactPackage) {
       titleAllowed: false,
       firstParagraphAllowed: role.cannotOpenScene === false ? true : false,
       choiceDriverAllowed: role.cannotDriveChoices === false ? true : false,
+      mainPressureAllowed: false,
     };
   });
 }

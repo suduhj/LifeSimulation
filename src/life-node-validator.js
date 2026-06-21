@@ -41,6 +41,11 @@ export function validateLifeNode(lifeNode = {}) {
     ...(lifeNode.choices ?? []).map((choice) => choice?.text ?? ""),
     ...visibleChangeTexts(lifeNode.visibleChanges),
   ].join("\n");
+  errors.push(...validateStoryAssetBudgets({
+    paragraphs,
+    choices: lifeNode.choices ?? [],
+    storyAssetBudgets: lifeNode.storyAssetBudgets ?? {},
+  }));
   for (const alias of LIFE_NODE_FORBIDDEN_ATTRIBUTE_ALIASES) {
     if (allText.includes(alias)) errors.push(`LifeNode uses world-specific attribute alias: ${alias}`);
   }
@@ -63,4 +68,52 @@ function visibleChangeTexts(changes = []) {
   return (Array.isArray(changes) ? changes : [])
     .map((change) => typeof change === "string" ? change : change?.text)
     .filter((text) => typeof text === "string");
+}
+
+function validateStoryAssetBudgets({ paragraphs = [], choices = [], storyAssetBudgets = {} } = {}) {
+  const errors = [];
+  const firstParagraph = String(paragraphs[0] ?? "");
+  const body = paragraphs.join("\n");
+  const choicesText = (choices ?? []).map((choice) => choice?.text ?? "").join("\n");
+  for (const [assetId, budget] of Object.entries(storyAssetBudgets ?? {})) {
+    const signals = Array.isArray(budget?.textSignals) ? budget.textSignals.filter(Boolean) : [];
+    if (!signals.length) continue;
+    if (budget.cannotOpenScene === true && containsAny(firstParagraph, signals)) {
+      errors.push(`LifeNode asset budget violation: ${assetId} appears in first paragraph`);
+    }
+    if (budget.cannotDriveChoices === true && containsAny(choicesText, signals)) {
+      errors.push(`LifeNode asset budget violation: ${assetId} drives choices`);
+    }
+    const maxSentences = Number.isFinite(budget.maxSentences) ? budget.maxSentences : undefined;
+    if (Number.isFinite(maxSentences) && countSentencesContainingSignals(body, signals) > maxSentences) {
+      errors.push(`LifeNode asset budget violation: ${assetId} exceeds sentence budget`);
+    }
+    if (budget.mainPressureAllowed === false && oldAssetTakesMainPressure(body, signals)) {
+      errors.push(`LifeNode asset budget violation: ${assetId} becomes main pressure`);
+    }
+  }
+  return errors;
+}
+
+function containsAny(text, signals = []) {
+  return signals.some((signal) => signal && String(text ?? "").includes(signal));
+}
+
+function countSentencesContainingSignals(text, signals = []) {
+  const sentences = String(text ?? "")
+    .split(/[銆傦紒锛??锛?\n.?!]+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  return sentences.filter((sentence) => containsAny(sentence, signals)).length;
+}
+
+function oldAssetTakesMainPressure(text, signals = []) {
+  const sentences = String(text ?? "")
+    .split(/[銆傦紒锛??锛?\n.?!]+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  return sentences.some((sentence) => (
+    containsAny(sentence, signals)
+    && /(main pressure|main event|whole year|real reason|core|primary|driv|今年.*(主|核心|压力|真正)|主线|主事|核心|推动|抢走)/i.test(sentence)
+  ));
 }

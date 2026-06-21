@@ -5,9 +5,22 @@ import {
   PLAYER_VIEW_SCHEMA_VERSION,
   validatePlayerSurface,
 } from "./player-surface-validator.js";
+import { validateLifeNode } from "./life-node-validator.js";
 
 export function projectPlayerSurface({ run } = {}) {
   const previous = run?.worldState?.playerSurface?.currentView;
+  const lifeNodeValidation = validateSourceLifeNodes(run);
+  if (!lifeNodeValidation.ok) {
+    return {
+      accepted: false,
+      view: previous,
+      rejection: {
+        schemaVersion: "mvp.player_surface_rejection.v1",
+        reason: "life_node_validation_failed",
+        errors: lifeNodeValidation.errors,
+      },
+    };
+  }
   const view = buildPlayerViewSnapshot(run);
   const validation = validatePlayerSurface(view);
   if (!validation.ok) {
@@ -23,6 +36,17 @@ export function projectPlayerSurface({ run } = {}) {
     };
   }
   return { accepted: true, view, rejection: undefined };
+}
+
+function validateSourceLifeNodes(run) {
+  const errors = [];
+  for (const node of run?.worldState?.storyState?.lifeNodes ?? []) {
+    const result = validateLifeNode(node);
+    if (!result.ok) {
+      errors.push(...result.errors.map((error) => `${node?.nodeId ?? "lifeNode"}: ${error}`));
+    }
+  }
+  return { ok: errors.length === 0, errors };
 }
 
 export function buildPlayerViewSnapshot(run) {

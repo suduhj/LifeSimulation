@@ -107,6 +107,12 @@ function buildVisibleScene(scene) {
     requiredVisibleDelta: cleanPromptText(scene.mainScene?.requiredVisibleDelta ?? ""),
     openingBeat: cleanPromptText(scene.mainScene?.openingBeat ?? ""),
     worldFlavor: cleanPromptText(scene.worldFlavor?.text ?? scene.worldFlavor?.element ?? ""),
+    backgroundEchoes: (scene.backgroundEchoes ?? []).slice(0, 3).map((echo) => ({
+      label: cleanPromptText(echo.label ?? ""),
+      maxSentences: Number.isFinite(echo.maxSentences) ? Math.max(0, Math.floor(echo.maxSentences)) : 1,
+      cannotOpenScene: echo.firstParagraphAllowed === false || echo.cannotOpenScene === true,
+      cannotDriveChoices: echo.choiceDriverAllowed === false || echo.cannotDriveChoices === true,
+    })).filter((echo) => echo.label),
     choices: (scene.choices ?? []).slice(0, 3).map((choice, index) => ({
       id: choice.id ?? `choice_${index + 1}`,
       textSeed: cleanPromptText(choice.textSeed ?? choice.text ?? ""),

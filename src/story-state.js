@@ -363,6 +363,8 @@ function normalizeAnnualAgenda(value = {}) {
     secondaryAxis: typeof value.secondaryAxis === "string" ? value.secondaryAxis : "",
     topicFamily: typeof value.topicFamily === "string" ? value.topicFamily : "",
     arena: typeof value.arena === "string" ? value.arena : "",
+    assetRoles: structuredClone(value.assetRoles ?? {}),
+    storyAssetBudget: structuredClone(value.storyAssetBudget ?? {}),
   };
 }
 

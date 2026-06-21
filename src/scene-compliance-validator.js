@@ -30,6 +30,9 @@ export function validateSceneCompliance(response, scene) {
     if (echo.choiceDriverAllowed === false && containsAny(choicesText, signals)) {
       errors.push(`background echo cannot drive choices: ${echo.label}`);
     }
+    if (echo.mainPressureAllowed === false && oldAssetTakesMainPressure(body, signals)) {
+      errors.push(`background echo cannot become main pressure/main event: ${echo.label}`);
+    }
     const mentionCount = countSignals([title, body, choicesText].join("\n"), signals);
     if (Number.isFinite(echo.maxMentions) && mentionCount > echo.maxMentions) {
       errors.push(`background echo mentioned too often: ${echo.label}`);
@@ -76,4 +79,16 @@ function countSentencesContainingSignals(text, signals = []) {
     .map((sentence) => sentence.trim())
     .filter(Boolean);
   return sentences.filter((sentence) => containsAny(sentence, signals)).length;
+}
+
+function oldAssetTakesMainPressure(text, signals = []) {
+  if (!signals.length) return false;
+  const sentences = String(text ?? "")
+    .split(/[銆傦紒锛??锛?\n.?!]+/)
+    .map((sentence) => sentence.trim())
+    .filter(Boolean);
+  return sentences.some((sentence) => (
+    containsAny(sentence, signals)
+    && /(main pressure|main event|whole year|real reason|core|primary|driv|今年.*(主|核心|压力|真正)|主线|主事|核心|推动|抢走)/i.test(sentence)
+  ));
 }
