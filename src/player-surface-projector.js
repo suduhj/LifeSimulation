@@ -28,7 +28,7 @@ export function projectPlayerSurface({ run } = {}) {
 export function buildPlayerViewSnapshot(run) {
   const panelViews = buildPanelViews(run);
   const projectedTimeline = buildTimeline(panelViews);
-  const projectedCurrentScene = projectedTimeline.at(-1) ?? emptyScene(run);
+  const projectedCurrentScene = currentSceneFromOpeningPreview(run) ?? projectedTimeline.at(-1) ?? emptyScene(run);
   const currentNodeId = projectedCurrentScene.rawNodeId ?? "";
   const timeline = projectedTimeline.map(publicTimelineEntry);
   const currentScene = publicTimelineEntry(projectedCurrentScene);
@@ -62,6 +62,22 @@ export function buildPlayerViewSnapshot(run) {
   return {
     ...base,
     safetyHash: safetyHash(base),
+  };
+}
+
+function currentSceneFromOpeningPreview(run) {
+  const openingNode = (run?.worldState?.storyState?.lifeNodes ?? []).findLast((node) => node?.nodeType === "opening_year");
+  const latestNode = (run?.worldState?.storyState?.lifeNodes ?? []).at(-1);
+  if (!openingNode || latestNode?.nodeType !== "opening_year") return undefined;
+  const body = String(run?.eventHistory?.findLast((event) => event?.event?.sourceType === "opening_sequence")?.playerText?.body ?? "").trim();
+  if (!body) return undefined;
+  return {
+    age: safeAge(run),
+    nodeType: "opening_year",
+    rawNodeId: openingNode.nodeId,
+    nodeId: publicNodeId(openingNode.nodeId, openingNode),
+    body,
+    changes: [],
   };
 }
 

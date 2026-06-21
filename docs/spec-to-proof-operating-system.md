@@ -165,6 +165,34 @@ A valid death test must show that polluted or wrong old-path input cannot affect
 
 If an old path is kept as debug-only, the agent must prove it is unreachable from the normal user entry point.
 
+## Context Persistence
+
+A Proof Contract must not live only in chat context.
+
+For any confirmed Proof Contract, the agent must persist it to:
+
+```text
+docs/active-proof-contract.md
+```
+
+The file must include:
+
+- Proof Contract
+- confirmation status
+- current phase: Proof / Repair / Verification
+- death tests planned
+- replacement matrix
+- implementation checklist
+- evidence checklist
+
+After any context compaction, resume, or new side conversation, the agent must read `docs/active-proof-contract.md` before continuing implementation.
+
+If `docs/active-proof-contract.md` is missing, empty, stale, or inconsistent with the latest user instruction, the agent must stop and ask for confirmation before modifying code.
+
+If the active proof contract cannot be loaded, the agent must not continue implementation.
+
+If `docs/active-proof-contract.md` conflicts with the latest user instruction, the latest user instruction controls, but the agent must stop and ask the user to confirm an updated Proof Contract before implementation continues.
+
 ## Proof Contract Template
 
 ```markdown
@@ -230,4 +258,3 @@ Final response must include:
 - Actual user entry verification
 - Unhandled items
 ```
-
