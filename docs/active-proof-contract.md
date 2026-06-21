@@ -1,180 +1,190 @@
-# Active Proof Contract
+# Active Proof Contract: Annual Year Tick v2
 
 ## Status
 
-- Phase: Verification
+- Phase: Repair
 - User confirmed: yes
-- Confirmed phrase: `确认 Proof Contract，开始实现`
 - Confirmed at: 2026-06-21
-- Branch: current working branch
-- Last verified commit: not recorded yet
+- Branch: codex/annual-year-tick-v2-repair
+- Last verified commit: origin/main at branch creation
 
-## Proof Contract
-
-### 1. Intent Lock
+## 1. Intent Lock
 
 - User-visible result that must change:
-  - Ordinary player 0-6 early timeline must no longer show the fixed template titles `出生底色`, `依附与感知`, `牙牙学语`, `好奇初醒`, `家庭边界`, `性格成形`, or `岔路前夜`.
-  - Ordinary player timeline must be read from `LifeNode -> PlayerView`.
-  - 0-6 opening text must vary by world, character/profile, attributes, and family background.
-  - High and low family background must create different age-0 birth reality.
-  - The three MVP worlds must produce different opening text.
-  - Polluted legacy opening fallback data must not appear in ordinary PlayerView or ordinary web UI.
+  - From age 5 through 10, annual events must not repeatedly advance the same back mountain / jade / sect topic.
+  - Annual events must have a clear human-life main change.
+  - Ordinary PlayerView timeline must show annual LifeNodes, not raw AI playerText or eventHistory fallback.
 - Not the goal:
-  - Do not change the annual director, yearly outcome ledger, growth ledger, AI provider protocol, attribute panel, or post-opening annual repetition behavior.
-  - Do not introduce a large new architecture.
+  - Do not implement Yearly Outcome Ledger in this task.
+  - Do not implement the full old asset budget system in this task.
+  - Do not change the 0-6 opening variation system in this task.
+  - Do not redesign the attribute growth panel in this task.
 
-### 2. Stage Lock
+## 2. Stage Lock
 
-- Current phase: MVP bugfix.
+- Current phase: Repair.
 - Normal in this phase:
-  - Same seed and same setup may produce stable results.
-  - GM/debug data may retain legacy opening data for diagnosis.
-  - Opening can remain engine-generated.
+  - Write death tests first.
+  - Confirm death tests fail before production changes.
+  - Replace the real annual event generation path.
+  - Test-block or runtime-reject old repeated-topic paths.
 - Actual bug:
-  - Ordinary player pages can still show fixed 0-6 opening template titles.
-  - Per-age opening content is not fully represented as authoritative LifeNodes for the ordinary timeline.
-  - Legacy `opening.earlyLifeTimeline` and web fallback paths can still influence ordinary UI.
+  - A new curriculum/topic module existing beside the old annual path is not enough.
+  - Annual events can still repeat if raw AI/mock playerText, stale topic paths, or eventHistory fallback can affect ordinary PlayerView timeline.
 
-### 3. Failure Lock
+## 3. Failure Lock
 
 - Current observable failure:
-  - Ordinary timeline shows `0 岁：出生底色`, `1 岁：依附与感知`, `2 岁：牙牙学语`, `3 岁：好奇初醒`, `4 岁：家庭边界`, `5 岁：性格成形`, `6 岁：岔路前夜`.
+  - Age 7+ annual events can feel like the same back mountain / jade / sect event repeating.
+  - Human-life yearly change is not guaranteed as the main event.
+  - Ordinary timeline must be proven to come from LifeNode / PlayerView, not raw fallback.
 - Success condition:
-  - Ordinary `playerView.timeline` does not contain the fixed opening template titles.
-  - Ordinary `playerView.timeline` has opening LifeNodes for ages `0..firstActionAge-1`.
-  - Different character/profile/allocation/familyBackground setups in the same world do not produce identical 0-6 bodies.
-  - High/low family background age-0 bodies differ.
-  - Cultivation, Cthulhu, and Wasteland opening bodies differ.
-  - Polluted legacy opening fallback data cannot affect ordinary PlayerView or web timeline.
+  - Ages 5-10 cover at least four distinct life curriculum slots.
+  - The same curriculumSlot does not appear in consecutive annual years.
+  - The same topicFamily, arena, or objectFocus cannot consecutively dominate annual years.
+  - Annual event text and choices must satisfy the required human-life delta.
+  - Ordinary PlayerView timeline displays annual LifeNodes.
+  - Ordinary UI does not read AI raw playerText or eventHistory fallback.
 - Acceptance entry point:
-  - API/store: `createWebSessionStore().startRun()` and `submitAction(... advance_opening ...)`.
-  - Ordinary surface: `mvp.player_view.v1`.
-  - UI: `web/app.js` ordinary timeline rendering.
-  - Reload: `loadSession()` returning ordinary PlayerView.
+  - PlayerView snapshot.
+  - Ordinary web UI.
+  - eventLog replay / saved run JSON.
 
-### 4. Path Lock
+## 4. Path Lock
 
 - Old Source -> Transform -> Sink:
-  - `src/opening-origin-ledger.js` `buildOpeningOriginLedger()` / `stageTitleForAge()` / `bodyForAge()` creates fixed stage titles.
-  - `src/opening-sequence.js` `generateOpeningSequence()` maps origin ledger nodes into `statePatch.worldStateChanges: opening.earlyLifeTimeline`; legacy `buildEarlyLifeTimeline()` / `earlyLifeTitleForAge()` remains a fixed-title path.
-  - `src/domain/events/patch-to-events.js` records `opening.origin_recorded` and only one `life.node_recorded` for the whole opening response, so per-age opening nodes do not become LifeNode authority.
-  - `src/selectors/story-panel-selector.js` builds ordinary story timeline from `storyState.lifeNodes`, falling back to legacy event history if LifeNodes are absent.
-  - `web/app.js` `buildOpeningTimeline()` / `openingTimelineTitleForAge()` / `openingTimelineBodyFallback()` / `buildTimelineFromLoadedSession()` can push fixed opening entries into `state.lifeTimeline`.
-  - `web/app.js` `renderTimeline()` renders `state.lifeTimeline` as the ordinary UI sink.
+  - `generateMockLifeEvent` or `aiProvider.generateLifeEvent`
+  - -> raw AI/mock `playerText`
+  - -> `applyAiResponseToRun`
+  - -> `patch-to-events`
+  - -> `life.node_recorded`
+  - -> `storyState.lifeNodes`
+  - -> `getStoryPanelView`
+  - -> `buildPlayerViewSnapshot`
+  - -> ordinary web timeline.
+- Old dangerous fallback:
+  - `getStoryPanelView()` can fall back to `run.eventHistory` when `storyState.lifeNodes` is empty.
+  - This can let polluted raw events reach ordinary PlayerView timeline.
 - New Source -> Transform -> Sink:
-  - Opening origin data produces player-visible opening LifeNodes without fixed template titles.
-  - `patchToDomainEvents()` converts opening response per-age origin nodes into `life.node_recorded` events.
-  - `run-reducer` stores those nodes in `worldState.storyState.lifeNodes`.
-  - `story-panel-selector` projects timeline from `storyState.lifeNodes`.
-  - `player-surface-projector` creates ordinary `playerView.timeline`.
-  - `web/app.js` ordinary timeline reads `session.playerView.timeline` through `syncTimelineFromPlayerSurface()`.
+  - `buildNextEventContract`
+  - -> `buildAnnualFactPackage`
+  - -> `selectCurriculumSlot`
+  - -> `buildTopicProfile` / `forbiddenTopicProfiles`
+  - -> `threeLayerFocus`
+  - -> `AnnualAgenda`
+  - -> AI/mock renderer bound by contract
+  - -> `assertStoryContract`
+  - -> `applyAnnualFactPackageToResponse`
+  - -> DomainEvents: `story.curriculum_recorded`, `story.topic_recorded`, `story.annual_agenda_recorded`, `life.node_recorded`
+  - -> reducer
+  - -> `storyState.lifeNodes`
+  - -> `getStoryPanelView`
+  - -> `buildPlayerViewSnapshot`
+  - -> ordinary web timeline.
 - Real user entry point:
-  - Browser start flow: `/api/run/start`, then `/api/run/action` with `advance_opening`, then ordinary timeline rendering from `session.playerView.timeline`.
+  - `createPlaySession` / `createPlaySessionAsync`
+  - `advanceOpening`
+  - `resolvePlayerAction`
+  - web UI consuming PlayerView.
 
-### 5. Authority Lock
+## 5. Authority Lock
 
 - Single correct authority:
-  - Timeline content authority: `LifeNode`.
-  - Ordinary player projection: `PlayerView` / Player Surface.
-  - Ordinary UI may render only `PlayerView.timeline`.
+  - Annual topic and yearly human-life direction: AnnualFactPackage / AnnualAgenda.
+  - Ordinary player display: LifeNode -> PlayerView timeline.
 - Old sources that must lose authority:
-  - `opening.earlyLifeTimeline`.
-  - `originLedger.nodes[].title`.
-  - `openingTimelineTitleForAge()`.
-  - `openingTimelineBodyFallback()`.
-  - Ordinary use of `buildOpeningTimeline()`.
-  - Event-history fallback in ordinary PlayerView timeline.
-  - Raw `currentEvent.playerText`.
+  - Raw AI/mock `playerText`.
+  - `run.eventHistory` fallback for ordinary timeline.
+  - Stale jade/back mountain/sect threads as annual primary drivers.
+  - Prompt-only avoidance of repeated topics.
 
-### 6. Replacement Lock
+## 6. Replacement Lock
 
 | New or changed item | Old path replaced | Old path handling |
 | --- | --- | --- |
-| Per-age opening LifeNodes from event conversion | `opening.earlyLifeTimeline` directly or indirectly driving ordinary timeline | migrate |
-| Multiple `opening_year` LifeNodes | One opening preview LifeNode representing all 0-6 years | migrate |
-| PlayerView timeline from LifeNodes only | `story-panel-selector` eventHistory fallback in ordinary surface | disable + test-block |
-| Web ordinary timeline from `session.playerView.timeline` only | `web/app.js` ordinary `buildOpeningTimeline()` fallback | runtime reject + test-block |
-| Origin ledger stage titles | Fixed player-visible opening titles | debug-only + test-block |
-| Legacy `buildEarlyLifeTimeline()` path | Old hardcoded per-age opening templates | delete or debug-only |
-| Player surface validation/static tests | Polluted old opening fallback entering ordinary UI | runtime reject + test-block |
+| Life Curriculum in annual package | AI/mock freely choosing annual theme | migrate + test-block |
+| Topic Ledger forbidden profiles | narrative memory or prompt hoping to avoid repetition | migrate + test-block |
+| Three-Layer Focus | old consequence line stealing annual primary event | runtime reject + test-block |
+| AnnualAgenda contract | loose raw event generation | migrate + test-block |
+| `assertStoryContract` forbidden-topic checks | repeated forbidden topic entering timeline | runtime reject |
+| curriculum/topic/agenda domain events | temporary storyState-only tracking | migrate |
+| ordinary PlayerView timeline from LifeNodes | `eventHistory` raw fallback in ordinary player path | disable or runtime reject + test-block |
 
-Allowed handling: delete / disable / migrate / debug-only / runtime reject / test-block.
-
-### 7. Proof Lock
+## 7. Proof Lock
 
 | Goal | Proof method | Evidence |
 | --- | --- | --- |
-| PlayerView does not show fixed opening titles | Death test through `startRun` / `advance_opening`, scanning `playerView.timeline` | Red/green test output |
-| Same-world different setups vary 0-6 opening bodies | Death test comparing timeline bodies for different setup inputs | Red/green test output |
-| High/low family background age-0 bodies differ | Death test comparing age-0 bodies | Red/green test output |
-| Three worlds produce different opening bodies | Death test over cultivation / cthulhu / wasteland | Red/green test output |
-| Polluted legacy fallback is unreachable | Death test injecting polluted `opening.earlyLifeTimeline` and legacy data before PlayerView projection | Red/green test output |
-| Ordinary web no longer renders old fallback | Static/death test plus `smoke:web` and screenshot | Evidence package |
-| Old path handling is explicit | Replacement Matrix and diff | Final response |
+| Ages 5-10 cover at least four distinct curriculum slots | death test through real play/session path | `storyState.curriculum.recentSlots` |
+| Same curriculumSlot does not repeat consecutively | death test with seeded recentSlots | generated annual package / LifeNode metadata |
+| Same topicFamily / arena / objectFocus cannot consecutively dominate | death test with seeded topicLedger and forbidden topic response | `forbiddenTopicProfiles` and validator error |
+| Annual event has human-life main delta | death test response missing requiredHumanDelta | `assertStoryContract` rejection |
+| Ordinary timeline displays LifeNode | death test against PlayerView snapshot | `panelViews.story.timeline` / PlayerView timeline entry source |
+| Polluted raw eventHistory cannot affect ordinary PlayerView | death test with polluted eventHistory and empty/controlled LifeNodes | PlayerView timeline excludes polluted text |
 
-### 8. Scope Lock
+## 8. Scope Lock
 
 - Allowed changes:
-  - `docs/active-proof-contract.md`.
-  - Opening/LifeNode/PlayerView/timeline source files needed to replace the actual user path.
-  - Opening / PlayerView / contract tests.
-  - Relevant docs and `dev-logs/2026-06-21.md`.
+  - `src/life-curriculum.js`
+  - `src/topic-ledger.js`
+  - `src/annual-state-transition.js`
+  - `src/narrative-director.js`
+  - `src/story-contract-validator.js`
+  - `src/selectors/story-panel-selector.js`
+  - `src/player-surface-projector.js`
+  - domain event/reducer code only where annual curriculum/topic/agenda/lifeNode persistence requires it
+  - tests for Annual Year Tick v2 and PlayerView timeline path
+  - docs and dev log
 - Forbidden changes:
-  - Annual director.
-  - Yearly outcome ledger.
-  - Growth ledger.
-  - AI provider protocol broad rewrite.
-  - Attribute panel behavior.
-  - Post-opening repetition systems.
-  - Direct merge to main.
+  - Yearly Outcome Ledger.
+  - Attribute growth system.
+  - Full old asset budget system.
+  - Opening variation rewrite.
+  - Broad UI redesign.
 - Not handled in this task:
-  - 7+ annual event repetition.
-  - Old asset budgets for back mountain, white deer, jade token, etc.
-  - Attribute growth linkage.
+  - Asset sentence budgets.
+  - Attribute panel changes.
+  - 0-6 opening variation.
 - If a new issue is discovered:
-  - Stop expanding scope, record it as follow-up, and do not mix it into this repair.
+  - Record it as follow-up and do not expand this task unless the user explicitly confirms a new Proof Contract.
 
-### 9. Delivery Lock
+## 9. Delivery Lock
 
 Final response must include:
 
 - Replacement Matrix.
-- Death tests.
+- Death tests with red and green evidence.
 - Evidence package.
 - Modified files.
 - Actual user entry verification.
 - Unhandled items.
-- PR link.
 
 ## Death Tests
 
-- [x] Ordinary `PlayerView.timeline` must not show fixed opening template titles.
-- [x] Same world with different character/attributes/familyBackground must not produce identical 0-6 opening bodies.
-- [x] High and low family background age-0 birth reality must differ.
-- [x] Cultivation, Cthulhu, and Wasteland opening text must differ.
-- [x] Polluted old opening fallback must not appear in ordinary PlayerView or ordinary web UI.
+- [ ] Ages 5-10 real play path covers at least four distinct curriculum slots.
+- [ ] Consecutive annual years cannot use the same curriculumSlot.
+- [ ] Seeded topicLedger blocks repeated topicFamily / arena / objectFocus dominance.
+- [ ] Forbidden-topic AI/mock response is rejected before entering PlayerView timeline.
+- [ ] Ordinary PlayerView timeline does not display polluted raw eventHistory fallback.
+- [ ] Ordinary PlayerView timeline displays annual LifeNodes.
 
 ## Implementation Checklist
 
-- [x] Write death tests first.
-- [x] Run death tests and record red failure.
-- [x] Convert per-age opening origin nodes into LifeNodes.
-- [x] Remove or debug-isolate fixed opening title authority.
-- [x] Disable ordinary web fallback path from legacy opening templates.
-- [x] Update docs and dev log.
-- [x] Run full verification.
-- [x] Push branch and create PR without merging main.
+- [ ] Write death tests.
+- [ ] Run death tests and capture RED evidence.
+- [ ] Replace or block any old ordinary timeline fallback path found by the tests.
+- [ ] Ensure real annual play path consumes AnnualFactPackage / AnnualAgenda.
+- [ ] Ensure topic/curriculum records persist through DomainEvents and replay.
+- [ ] Ensure validator runtime-rejects repeated forbidden topics and missing human-life delta.
+- [ ] Update docs and dev log.
 
 ## Evidence Checklist
 
-- [x] Death tests failed before fix.
-- [x] Death tests passed after fix.
-- [x] `npm test`.
-- [x] `npm run test:contracts`.
-- [x] `npm run validate:data`.
-- [x] `npm run smoke:web`.
-- [x] Ordinary player entry screenshot.
-- [x] `PlayerView.timeline` fragment.
-- [x] `git diff --stat`.
-- [ ] Replacement Matrix in final response.
+- [ ] Death tests failed before fix.
+- [ ] Death tests passed after fix.
+- [ ] `npm test`.
+- [ ] `npm run test:contracts`.
+- [ ] `npm run validate:data`.
+- [ ] `npm run smoke:web`.
+- [ ] Actual PlayerView entry verified.
+- [ ] Replacement Matrix included.
+- [ ] Unhandled items listed.

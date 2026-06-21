@@ -1,7 +1,6 @@
 import {
   cleanText,
   pressureLabel,
-  publicEventEntry,
   storyAxisLabel,
   threadLabel,
   topPressureFromStoryState,
@@ -13,12 +12,7 @@ export function getStoryPanelView(run) {
     .slice(-24)
     .map((node) => publicLifeNodeEntry(node))
     .filter((entry) => entry.body);
-  const timeline = lifeNodeTimeline.length
-    ? lifeNodeTimeline.slice(-8)
-    : (run?.eventHistory ?? [])
-      .slice(-8)
-      .map((event) => publicEventEntry(event))
-      .filter((entry) => entry.title || entry.body);
+  const timeline = lifeNodeTimeline.slice(-8);
   const recentEvents = timeline.slice(-4);
   const threads = (storyState.threads ?? [])
     .slice(-5)
